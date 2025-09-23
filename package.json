@@ -1,5 +1,27 @@
 {
-  "dependencies": {
+  "name": "meetsolis",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "cd apps/web && npm run dev",
+    "dev:web": "cd apps/web && npm run dev",
+    "build": "cd apps/web && npm run build",
+    "test": "cd apps/web && npm run test",
+    "test:unit": "cd apps/web && npm run test:unit",
+    "test:e2e": "cd apps/web && npm run test:e2e",
+    "lint": "cd apps/web && npm run lint",
+    "lint:fix": "cd apps/web && npm run lint -- --fix",
+    "format": "cd apps/web && npm run format",
+    "type-check": "cd apps/web && npm run type-check",
+    "db:migrate": "cd apps/web && npm run db:migrate",
+    "db:seed": "cd apps/web && npm run db:seed",
+    "db:reset": "cd apps/web && npm run db:reset"
+  },
+  "devDependencies": {
     "@modelcontextprotocol/server-sequential-thinking": "^2025.7.1"
   }
 }
