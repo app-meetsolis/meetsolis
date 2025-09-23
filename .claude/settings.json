@@ -1,0 +1,6 @@
+{
+  "statusLine": {
+    "type": "command",
+    "command": "powershell.exe -Command \"$input = Get-Content | ConvertFrom-Json; $model = $input.model.display_name; $dir = Split-Path $input.workspace.current_dir -Leaf; Write-Host \"$model | $dir\" -NoNewline\""
+  }
+}

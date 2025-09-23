@@ -1,0 +1,26 @@
+# MeetSolis Fullstack Architecture Document
+
+## Table of Contents
+
+- [MeetSolis Fullstack Architecture Document](#table-of-contents)
+  - [Starter Template or Existing Project](#starter-template-or-existing-project)
+  - [High Level Architecture](#high-level-architecture)
+  - [Tech Stack](#tech-stack)
+  - [Data Models](#data-models)
+  - [API Specification](#api-specification)
+  - [Components](#components)
+  - [External APIs](#external-apis)
+  - [Core Workflows](#core-workflows)
+  - [Database Schema](#database-schema)
+  - [Frontend Architecture](#frontend-architecture)
+  - [Backend Architecture](#backend-architecture)
+  - [Unified Project Structure](#unified-project-structure)
+  - [Development Workflow](#development-workflow)
+  - [Deployment Architecture](#deployment-architecture)
+  - [Security and Performance](#security-and-performance)
+  - [Testing Strategy](#testing-strategy)
+  - [Coding Standards](#coding-standards)
+  - [Error Handling Strategy](#error-handling-strategy)
+  - [Monitoring and Observability](#monitoring-and-observability)
+  - [Risk Mitigations](#risk-mitigations)
+  - [Checklist Results Report](#checklist-results-report)
