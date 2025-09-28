@@ -1,4 +1,11 @@
-import { AuthService, DatabaseService, AIService, TranslationService, SMSService, AnalyticsService } from '@meetsolis/shared';
+import {
+  AuthService,
+  DatabaseService,
+  AIService,
+  TranslationService,
+  SMSService,
+  AnalyticsService,
+} from '@meetsolis/shared';
 import { serviceConfig } from './config/services';
 
 // Mock services
@@ -29,7 +36,9 @@ export class ServiceFactory {
       } else {
         // Real Clerk service would be created here
         // this.instances.set('auth', new ClerkAuthService());
-        throw new Error('Real Clerk authentication service not yet implemented. Set USE_MOCK_SERVICES=true');
+        throw new Error(
+          'Real Clerk authentication service not yet implemented. Set USE_MOCK_SERVICES=true'
+        );
       }
     }
 
@@ -45,7 +54,9 @@ export class ServiceFactory {
       } else {
         // Real Supabase service would be created here
         // this.instances.set('database', new SupabaseService());
-        throw new Error('Real Supabase database service not yet implemented. Set USE_MOCK_SERVICES=true');
+        throw new Error(
+          'Real Supabase database service not yet implemented. Set USE_MOCK_SERVICES=true'
+        );
       }
     }
 
@@ -61,7 +72,9 @@ export class ServiceFactory {
       } else {
         // Real OpenAI service would be created here
         // this.instances.set('ai', new OpenAIService());
-        throw new Error('Real OpenAI service not yet implemented. Set USE_MOCK_SERVICES=true');
+        throw new Error(
+          'Real OpenAI service not yet implemented. Set USE_MOCK_SERVICES=true'
+        );
       }
     }
 
@@ -77,7 +90,9 @@ export class ServiceFactory {
       } else {
         // Real DeepL service would be created here
         // this.instances.set('translation', new DeepLTranslationService());
-        throw new Error('Real DeepL translation service not yet implemented. Set USE_MOCK_SERVICES=true');
+        throw new Error(
+          'Real DeepL translation service not yet implemented. Set USE_MOCK_SERVICES=true'
+        );
       }
     }
 
@@ -93,7 +108,9 @@ export class ServiceFactory {
       } else {
         // Real Twilio service would be created here
         // this.instances.set('sms', new TwilioSMSService());
-        throw new Error('Real Twilio SMS service not yet implemented. Set USE_MOCK_SERVICES=true');
+        throw new Error(
+          'Real Twilio SMS service not yet implemented. Set USE_MOCK_SERVICES=true'
+        );
       }
     }
 
@@ -109,7 +126,9 @@ export class ServiceFactory {
       } else {
         // Real PostHog service would be created here
         // this.instances.set('analytics', new PostHogAnalyticsService());
-        throw new Error('Real PostHog analytics service not yet implemented. Set USE_MOCK_SERVICES=true');
+        throw new Error(
+          'Real PostHog analytics service not yet implemented. Set USE_MOCK_SERVICES=true'
+        );
       }
     }
 
@@ -161,7 +180,10 @@ export class ServiceFactory {
     return healthChecks;
   }
 
-  static async validateAllServices(): Promise<{ isValid: boolean; errors: string[] }> {
+  static async validateAllServices(): Promise<{
+    isValid: boolean;
+    errors: string[];
+  }> {
     const errors: string[] = [];
     const config = serviceConfig.getConfig();
 
@@ -177,11 +199,16 @@ export class ServiceFactory {
       // Validate configuration
       const credentialValidation = serviceConfig.validateCredentials();
       if (!credentialValidation.isValid && !config.useMockServices) {
-        errors.push(`Missing credentials for services: ${credentialValidation.missingServices.join(', ')}`);
+        errors.push(
+          `Missing credentials for services: ${credentialValidation.missingServices.join(', ')}`
+        );
       }
-
     } catch (error) {
-      errors.push(error instanceof Error ? error.message : 'Unknown service validation error');
+      errors.push(
+        error instanceof Error
+          ? error.message
+          : 'Unknown service validation error'
+      );
     }
 
     return {

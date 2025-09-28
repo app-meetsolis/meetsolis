@@ -6,7 +6,8 @@ export default function Home() {
           Welcome to MeetSolis
         </h1>
         <p className="text-center text-gray-600 mb-8">
-          Professional video conferencing platform for freelancers and small agencies
+          Professional video conferencing platform for freelancers and small
+          agencies
         </p>
         <div className="text-center">
           <a
@@ -18,5 +19,5 @@ export default function Home() {
         </div>
       </div>
     </main>
-  )
+  );
 }

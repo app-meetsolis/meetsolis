@@ -35,7 +35,8 @@ export class MockAIService extends BaseService implements AIService {
     return {
       name: 'Mock AI Service',
       version: '1.0.0',
-      description: 'Mock AI service providing template-based responses for development and testing',
+      description:
+        'Mock AI service providing template-based responses for development and testing',
       dependencies: [],
     };
   }
@@ -52,15 +53,21 @@ export class MockAIService extends BaseService implements AIService {
   }
 
   async generateSummary(text: string): Promise<string> {
-    console.log('[MockAIService] Generating summary for text length:', text.length);
+    console.log(
+      '[MockAIService] Generating summary for text length:',
+      text.length
+    );
 
     this.requestCount++;
 
     // Simulate AI processing delay
-    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+    await new Promise(resolve =>
+      setTimeout(resolve, 1000 + Math.random() * 2000)
+    );
 
     const templates = this.templateResponses.get('summary') || [];
-    const randomTemplate = templates[Math.floor(Math.random() * templates.length)];
+    const randomTemplate =
+      templates[Math.floor(Math.random() * templates.length)];
 
     // Add some text analysis
     const wordCount = text.split(/\s+/).length;
@@ -70,12 +77,17 @@ export class MockAIService extends BaseService implements AIService {
   }
 
   async analyzeText(text: string): Promise<any> {
-    console.log('[MockAIService] Analyzing text:', text.substring(0, 50) + '...');
+    console.log(
+      '[MockAIService] Analyzing text:',
+      text.substring(0, 50) + '...'
+    );
 
     this.requestCount++;
 
     // Simulate analysis delay
-    await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1200));
+    await new Promise(resolve =>
+      setTimeout(resolve, 800 + Math.random() * 1200)
+    );
 
     const wordCount = text.split(/\s+/).length;
     const keywords = this.extractKeywords(text);
@@ -96,13 +108,26 @@ export class MockAIService extends BaseService implements AIService {
 
   private extractKeywords(text: string): string[] {
     // Simple keyword extraction
-    const words = text.toLowerCase()
+    const words = text
+      .toLowerCase()
       .replace(/[^\w\s]/g, '')
       .split(/\s+/)
       .filter(word => word.length > 3);
 
     // Remove common words
-    const stopWords = new Set(['that', 'this', 'with', 'from', 'they', 'have', 'been', 'will', 'would', 'could', 'should']);
+    const stopWords = new Set([
+      'that',
+      'this',
+      'with',
+      'from',
+      'they',
+      'have',
+      'been',
+      'will',
+      'would',
+      'could',
+      'should',
+    ]);
     const filteredWords = words.filter(word => !stopWords.has(word));
 
     // Return most frequent words
@@ -119,8 +144,24 @@ export class MockAIService extends BaseService implements AIService {
 
   private analyzeSentiment(text: string): { score: number; label: string } {
     // Simple sentiment analysis
-    const positiveWords = ['good', 'great', 'excellent', 'success', 'achieve', 'progress', 'improve'];
-    const negativeWords = ['bad', 'poor', 'fail', 'problem', 'issue', 'concern', 'delay'];
+    const positiveWords = [
+      'good',
+      'great',
+      'excellent',
+      'success',
+      'achieve',
+      'progress',
+      'improve',
+    ];
+    const negativeWords = [
+      'bad',
+      'poor',
+      'fail',
+      'problem',
+      'issue',
+      'concern',
+      'delay',
+    ];
 
     const words = text.toLowerCase().split(/\s+/);
     let score = 0;
@@ -130,7 +171,10 @@ export class MockAIService extends BaseService implements AIService {
       if (negativeWords.some(neg => word.includes(neg))) score -= 1;
     });
 
-    const normalizedScore = Math.max(-1, Math.min(1, score / words.length * 10));
+    const normalizedScore = Math.max(
+      -1,
+      Math.min(1, (score / words.length) * 10)
+    );
 
     let label = 'neutral';
     if (normalizedScore > 0.3) label = 'positive';
@@ -141,10 +185,38 @@ export class MockAIService extends BaseService implements AIService {
 
   private identifyTopics(text: string): string[] {
     const topicKeywords = {
-      'technology': ['system', 'software', 'development', 'code', 'api', 'database'],
-      'business': ['market', 'customer', 'revenue', 'strategy', 'growth', 'sales'],
-      'project': ['deadline', 'milestone', 'deliverable', 'timeline', 'task', 'scope'],
-      'team': ['collaboration', 'communication', 'meeting', 'discussion', 'team', 'member'],
+      technology: [
+        'system',
+        'software',
+        'development',
+        'code',
+        'api',
+        'database',
+      ],
+      business: [
+        'market',
+        'customer',
+        'revenue',
+        'strategy',
+        'growth',
+        'sales',
+      ],
+      project: [
+        'deadline',
+        'milestone',
+        'deliverable',
+        'timeline',
+        'task',
+        'scope',
+      ],
+      team: [
+        'collaboration',
+        'communication',
+        'meeting',
+        'discussion',
+        'team',
+        'member',
+      ],
     };
 
     const lowerText = text.toLowerCase();

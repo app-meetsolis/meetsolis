@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ServiceFactory } from '@/lib/service-factory';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const startTime = Date.now();
 
@@ -12,7 +12,9 @@ export async function GET(request: NextRequest) {
     const responseTime = endTime - startTime;
 
     // Determine overall status
-    const statuses = Object.values(healthChecks).map((check: any) => check.status);
+    const statuses = Object.values(healthChecks).map(
+      (check: any) => check.status
+    );
     const hasUnavailable = statuses.includes('unavailable');
     const hasDegraded = statuses.includes('degraded');
 
@@ -33,28 +35,36 @@ export async function GET(request: NextRequest) {
     };
 
     // Set appropriate HTTP status code
-    const httpStatus = overallStatus === 'healthy' ? 200 :
-                      overallStatus === 'degraded' ? 200 : 503;
+    const httpStatus =
+      overallStatus === 'healthy'
+        ? 200
+        : overallStatus === 'degraded'
+          ? 200
+          : 503;
 
     return NextResponse.json(response, { status: httpStatus });
-
   } catch (error) {
     console.error('Health check error:', error);
 
-    return NextResponse.json({
-      status: 'unavailable',
-      timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.message : 'Unknown error',
-      environment: process.env.NODE_ENV,
-    }, { status: 503 });
+    return NextResponse.json(
+      {
+        status: 'unavailable',
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : 'Unknown error',
+        environment: process.env.NODE_ENV,
+      },
+      { status: 503 }
+    );
   }
 }
 
-export async function HEAD(request: NextRequest) {
+export async function HEAD(_request: NextRequest) {
   // Lightweight health check for load balancers
   try {
     const healthChecks = await ServiceFactory.healthCheckAllServices();
-    const statuses = Object.values(healthChecks).map((check: any) => check.status);
+    const statuses = Object.values(healthChecks).map(
+      (check: any) => check.status
+    );
     const hasUnavailable = statuses.includes('unavailable');
 
     if (hasUnavailable) {

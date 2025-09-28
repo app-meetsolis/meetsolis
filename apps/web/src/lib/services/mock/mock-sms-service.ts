@@ -26,7 +26,8 @@ export class MockSMSService extends BaseService implements SMSService {
     return {
       name: 'Mock SMS Service',
       version: '1.0.0',
-      description: 'Mock SMS service with console logging and delivery status simulation',
+      description:
+        'Mock SMS service with console logging and delivery status simulation',
       dependencies: [],
     };
   }
@@ -54,11 +55,15 @@ export class MockSMSService extends BaseService implements SMSService {
 
     // Validate message length
     if (message.length > 160) {
-      console.warn('[MockSMSService] Message exceeds 160 characters, will be sent as multiple SMS');
+      console.warn(
+        '[MockSMSService] Message exceeds 160 characters, will be sent as multiple SMS'
+      );
     }
 
     // Simulate sending delay
-    await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+    await new Promise(resolve =>
+      setTimeout(resolve, 500 + Math.random() * 1000)
+    );
 
     const smsMessage: SMSMessage = {
       id: `mock-sms-${this.messageCounter}`,
@@ -79,7 +84,9 @@ export class MockSMSService extends BaseService implements SMSService {
     setTimeout(() => {
       // 95% success rate simulation
       smsMessage.status = Math.random() > 0.05 ? 'delivered' : 'failed';
-      console.log(`[MockSMSService] SMS ${smsMessage.id} status: ${smsMessage.status}`);
+      console.log(
+        `[MockSMSService] SMS ${smsMessage.id} status: ${smsMessage.status}`
+      );
     }, 3000);
 
     // Log to console for development visibility
@@ -126,7 +133,12 @@ export class MockSMSService extends BaseService implements SMSService {
     return this.sentMessages.length;
   }
 
-  getDeliveryStats(): { total: number; sent: number; delivered: number; failed: number } {
+  getDeliveryStats(): {
+    total: number;
+    sent: number;
+    delivered: number;
+    failed: number;
+  } {
     const stats = {
       total: this.sentMessages.length,
       sent: 0,
@@ -156,7 +168,9 @@ export class MockSMSService extends BaseService implements SMSService {
     const message = this.getMessageById(messageId);
     if (message) {
       message.status = 'failed';
-      console.log(`[MockSMSService] Simulated failure for message ${messageId}`);
+      console.log(
+        `[MockSMSService] Simulated failure for message ${messageId}`
+      );
     }
   }
 
@@ -165,7 +179,9 @@ export class MockSMSService extends BaseService implements SMSService {
     if (message) {
       setTimeout(() => {
         message.status = 'delivered';
-        console.log(`[MockSMSService] Delayed delivery for message ${messageId}`);
+        console.log(
+          `[MockSMSService] Delayed delivery for message ${messageId}`
+        );
       }, delayMs);
     }
   }

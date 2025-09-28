@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ServiceFactory } from '@/lib/service-factory';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const startTime = Date.now();
 
@@ -37,14 +37,16 @@ export async function GET(request: NextRequest) {
       environment: process.env.NODE_ENV,
       useMockServices: process.env.USE_MOCK_SERVICES === 'true',
     });
-
   } catch (error) {
     console.error('Service details error:', error);
 
-    return NextResponse.json({
-      timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.message : 'Unknown error',
-      services: {},
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : 'Unknown error',
+        services: {},
+      },
+      { status: 500 }
+    );
   }
 }

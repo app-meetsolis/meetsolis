@@ -56,7 +56,10 @@ export class MockAuthService extends BaseService implements AuthService {
     };
   }
 
-  async authenticate(credentials: { email: string; password: string }): Promise<any> {
+  async authenticate(credentials: {
+    email: string;
+    password: string;
+  }): Promise<any> {
     console.log('[MockAuthService] Authenticating user:', credentials.email);
 
     // Simulate authentication delay

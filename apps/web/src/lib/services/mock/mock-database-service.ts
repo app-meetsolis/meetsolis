@@ -1,9 +1,13 @@
 import { DatabaseService, ServiceStatus, ServiceInfo } from '@meetsolis/shared';
 import { BaseService } from '../base-service';
 
-export class MockDatabaseService extends BaseService implements DatabaseService {
+export class MockDatabaseService
+  extends BaseService
+  implements DatabaseService
+{
   private tables = new Map<string, Map<string, any>>();
-  private queryLog: Array<{ sql: string; params?: any[]; timestamp: Date }> = [];
+  private queryLog: Array<{ sql: string; params?: any[]; timestamp: Date }> =
+    [];
 
   constructor() {
     super();
@@ -27,7 +31,8 @@ export class MockDatabaseService extends BaseService implements DatabaseService 
     return {
       name: 'Mock Database Service',
       version: '1.0.0',
-      description: 'In-memory mock database service for development and testing',
+      description:
+        'In-memory mock database service for development and testing',
       dependencies: [],
     };
   }
@@ -73,7 +78,7 @@ export class MockDatabaseService extends BaseService implements DatabaseService 
     return { rows: [], rowCount: 0 };
   }
 
-  private handleSelect(sql: string, params?: any[]): any {
+  private handleSelect(sql: string, _params?: any[]): any {
     // Extract table name (very basic parsing)
     const tableMatch = sql.match(/FROM\s+(\w+)/i);
     if (!tableMatch) {
@@ -141,7 +146,7 @@ export class MockDatabaseService extends BaseService implements DatabaseService 
     return { rows: [], rowCount: updatedCount };
   }
 
-  private handleDelete(sql: string, params?: any[]): any {
+  private handleDelete(sql: string, _params?: any[]): any {
     // Basic delete handling
     const tableMatch = sql.match(/DELETE\s+FROM\s+(\w+)/i);
     if (!tableMatch) {

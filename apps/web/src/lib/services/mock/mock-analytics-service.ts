@@ -1,4 +1,8 @@
-import { AnalyticsService, ServiceStatus, ServiceInfo } from '@meetsolis/shared';
+import {
+  AnalyticsService,
+  ServiceStatus,
+  ServiceInfo,
+} from '@meetsolis/shared';
 import { BaseService } from '../base-service';
 
 interface AnalyticsEvent {
@@ -17,7 +21,10 @@ interface UserProfile {
   eventCount: number;
 }
 
-export class MockAnalyticsService extends BaseService implements AnalyticsService {
+export class MockAnalyticsService
+  extends BaseService
+  implements AnalyticsService
+{
   private events: AnalyticsEvent[] = [];
   private users: Map<string, UserProfile> = new Map();
   private sessionId: string;
@@ -37,7 +44,8 @@ export class MockAnalyticsService extends BaseService implements AnalyticsServic
     return {
       name: 'Mock Analytics Service',
       version: '1.0.0',
-      description: 'Mock analytics service with console logging and event validation',
+      description:
+        'Mock analytics service with console logging and event validation',
       dependencies: [],
     };
   }

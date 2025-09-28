@@ -1,5 +1,5 @@
-import ServiceDashboard from '@/components/admin/ServiceDashboard'
+import ServiceDashboard from '@/components/admin/ServiceDashboard';
 
 export default function ServicesPage() {
-  return <ServiceDashboard />
+  return <ServiceDashboard />;
 }

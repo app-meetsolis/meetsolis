@@ -55,10 +55,20 @@ class ServiceConfigManager {
   private loadConfig(): ServiceConfig {
     return {
       useMockServices: process.env.USE_MOCK_SERVICES === 'true',
-      timeout: parseInt(process.env.SERVICE_TIMEOUT_MS || String(SERVICE_TIMEOUTS.DEFAULT)),
-      retryAttempts: parseInt(process.env.RETRY_ATTEMPTS || String(CIRCUIT_BREAKER_CONFIG.RETRY_ATTEMPTS)),
-      circuitBreakerThreshold: parseInt(process.env.CIRCUIT_BREAKER_THRESHOLD || String(CIRCUIT_BREAKER_CONFIG.FAILURE_THRESHOLD)),
-      healthCheckInterval: parseInt(process.env.HEALTH_CHECK_INTERVAL || '60000'),
+      timeout: parseInt(
+        process.env.SERVICE_TIMEOUT_MS || String(SERVICE_TIMEOUTS.DEFAULT)
+      ),
+      retryAttempts: parseInt(
+        process.env.RETRY_ATTEMPTS ||
+          String(CIRCUIT_BREAKER_CONFIG.RETRY_ATTEMPTS)
+      ),
+      circuitBreakerThreshold: parseInt(
+        process.env.CIRCUIT_BREAKER_THRESHOLD ||
+          String(CIRCUIT_BREAKER_CONFIG.FAILURE_THRESHOLD)
+      ),
+      healthCheckInterval: parseInt(
+        process.env.HEALTH_CHECK_INTERVAL || '60000'
+      ),
     };
   }
 
@@ -107,14 +117,25 @@ class ServiceConfigManager {
     return this.credentials;
   }
 
+  refresh(): void {
+    this.config = this.loadConfig();
+    this.credentials = this.loadCredentials();
+  }
+
   validateCredentials(): { isValid: boolean; missingServices: string[] } {
     const missingServices: string[] = [];
 
     if (!this.config.useMockServices) {
-      if (!this.credentials.clerk?.secretKey || !this.credentials.clerk?.publishableKey) {
+      if (
+        !this.credentials.clerk?.secretKey ||
+        !this.credentials.clerk?.publishableKey
+      ) {
         missingServices.push('clerk');
       }
-      if (!this.credentials.supabase?.url || !this.credentials.supabase?.serviceRoleKey) {
+      if (
+        !this.credentials.supabase?.url ||
+        !this.credentials.supabase?.serviceRoleKey
+      ) {
         missingServices.push('supabase');
       }
       if (!this.credentials.openai?.apiKey) {
@@ -123,7 +144,10 @@ class ServiceConfigManager {
       if (!this.credentials.deepl?.apiKey) {
         missingServices.push('deepl');
       }
-      if (!this.credentials.twilio?.accountSid || !this.credentials.twilio?.authToken) {
+      if (
+        !this.credentials.twilio?.accountSid ||
+        !this.credentials.twilio?.authToken
+      ) {
         missingServices.push('twilio');
       }
     }

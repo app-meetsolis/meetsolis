@@ -1,7 +1,14 @@
-import { TranslationService, ServiceStatus, ServiceInfo } from '@meetsolis/shared';
+import {
+  TranslationService,
+  ServiceStatus,
+  ServiceInfo,
+} from '@meetsolis/shared';
 import { BaseService } from '../base-service';
 
-export class MockTranslationService extends BaseService implements TranslationService {
+export class MockTranslationService
+  extends BaseService
+  implements TranslationService
+{
   private supportedLanguages = new Map<string, string>([
     ['en', 'English'],
     ['es', 'Spanish'],
@@ -30,7 +37,8 @@ export class MockTranslationService extends BaseService implements TranslationSe
     return {
       name: 'Mock Translation Service',
       version: '1.0.0',
-      description: 'Mock translation service providing passthrough and language detection for development',
+      description:
+        'Mock translation service providing passthrough and language detection for development',
       dependencies: [],
     };
   }
@@ -47,12 +55,17 @@ export class MockTranslationService extends BaseService implements TranslationSe
   }
 
   async translate(text: string, targetLanguage: string): Promise<string> {
-    console.log(`[MockTranslationService] Translating to ${targetLanguage}:`, text.substring(0, 50) + '...');
+    console.log(
+      `[MockTranslationService] Translating to ${targetLanguage}:`,
+      text.substring(0, 50) + '...'
+    );
 
     this.translationCount++;
 
     // Simulate translation delay
-    await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 700));
+    await new Promise(resolve =>
+      setTimeout(resolve, 300 + Math.random() * 700)
+    );
 
     // Check if target language is supported
     if (!this.supportedLanguages.has(targetLanguage)) {
@@ -60,7 +73,7 @@ export class MockTranslationService extends BaseService implements TranslationSe
     }
 
     // In mock mode, we'll add a prefix to indicate translation
-    const languageName = this.supportedLanguages.get(targetLanguage);
+    const _languageName = this.supportedLanguages.get(targetLanguage);
 
     // For demonstration, we'll modify the text slightly based on target language
     switch (targetLanguage) {
@@ -89,36 +102,66 @@ export class MockTranslationService extends BaseService implements TranslationSe
   }
 
   async detectLanguage(text: string): Promise<string> {
-    console.log('[MockTranslationService] Detecting language for:', text.substring(0, 30) + '...');
+    console.log(
+      '[MockTranslationService] Detecting language for:',
+      text.substring(0, 30) + '...'
+    );
 
     // Simulate detection delay
-    await new Promise(resolve => setTimeout(resolve, 200 + Math.random() * 300));
+    await new Promise(resolve =>
+      setTimeout(resolve, 200 + Math.random() * 300)
+    );
 
     // Simple heuristic language detection based on common words/patterns
     const lowerText = text.toLowerCase();
 
     // Spanish indicators
-    if (lowerText.includes('el ') || lowerText.includes('la ') || lowerText.includes('de ') || lowerText.includes('que ')) {
+    if (
+      lowerText.includes('el ') ||
+      lowerText.includes('la ') ||
+      lowerText.includes('de ') ||
+      lowerText.includes('que ')
+    ) {
       return 'es';
     }
 
     // French indicators
-    if (lowerText.includes('le ') || lowerText.includes('la ') || lowerText.includes('du ') || lowerText.includes('que ')) {
+    if (
+      lowerText.includes('le ') ||
+      lowerText.includes('la ') ||
+      lowerText.includes('du ') ||
+      lowerText.includes('que ')
+    ) {
       return 'fr';
     }
 
     // German indicators
-    if (lowerText.includes('der ') || lowerText.includes('die ') || lowerText.includes('das ') || lowerText.includes('und ')) {
+    if (
+      lowerText.includes('der ') ||
+      lowerText.includes('die ') ||
+      lowerText.includes('das ') ||
+      lowerText.includes('und ')
+    ) {
       return 'de';
     }
 
     // Italian indicators
-    if (lowerText.includes('il ') || lowerText.includes('la ') || lowerText.includes('di ') || lowerText.includes('che ')) {
+    if (
+      lowerText.includes('il ') ||
+      lowerText.includes('la ') ||
+      lowerText.includes('di ') ||
+      lowerText.includes('che ')
+    ) {
       return 'it';
     }
 
     // Portuguese indicators
-    if (lowerText.includes('o ') || lowerText.includes('a ') || lowerText.includes('de ') || lowerText.includes('que ')) {
+    if (
+      lowerText.includes('o ') ||
+      lowerText.includes('a ') ||
+      lowerText.includes('de ') ||
+      lowerText.includes('que ')
+    ) {
       return 'pt';
     }
 

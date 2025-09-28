@@ -1,0 +1,11 @@
+{
+  "name": "@meetsolis/config",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "files": [
+    "eslint-config.js",
+    "typescript-config.json",
+    "jest-config.js"
+  ]
+}

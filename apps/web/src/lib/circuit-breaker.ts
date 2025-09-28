@@ -17,10 +17,14 @@ export class CircuitBreaker {
 
   constructor(options: Partial<CircuitBreakerOptions> = {}) {
     this.options = {
-      failureThreshold: options.failureThreshold || CIRCUIT_BREAKER_CONFIG.FAILURE_THRESHOLD,
-      resetTimeout: options.resetTimeout || CIRCUIT_BREAKER_CONFIG.RESET_TIMEOUT,
-      retryAttempts: options.retryAttempts || CIRCUIT_BREAKER_CONFIG.RETRY_ATTEMPTS,
-      backoffMultiplier: options.backoffMultiplier || CIRCUIT_BREAKER_CONFIG.BACKOFF_MULTIPLIER,
+      failureThreshold:
+        options.failureThreshold || CIRCUIT_BREAKER_CONFIG.FAILURE_THRESHOLD,
+      resetTimeout:
+        options.resetTimeout || CIRCUIT_BREAKER_CONFIG.RESET_TIMEOUT,
+      retryAttempts:
+        options.retryAttempts || CIRCUIT_BREAKER_CONFIG.RETRY_ATTEMPTS,
+      backoffMultiplier:
+        options.backoffMultiplier || CIRCUIT_BREAKER_CONFIG.BACKOFF_MULTIPLIER,
     };
   }
 

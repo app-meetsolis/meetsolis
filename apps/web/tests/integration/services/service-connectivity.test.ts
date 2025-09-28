@@ -15,11 +15,14 @@ describe('Service Connectivity Tests', () => {
   beforeEach(() => {
     // Clear service instances between tests
     ServiceFactory.clearAllServices();
+    // Refresh service configuration to pick up environment changes
+    serviceConfig.refresh();
   });
 
   describe('Mock Services Connectivity', () => {
     beforeEach(() => {
       process.env.USE_MOCK_SERVICES = 'true';
+      serviceConfig.refresh();
     });
 
     it('should successfully connect to mock authentication service', async () => {
@@ -235,6 +238,8 @@ describe('Service Connectivity Tests', () => {
       delete process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
       delete process.env.NEXT_PUBLIC_SUPABASE_URL;
       delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+      // Refresh configuration after environment changes
+      serviceConfig.refresh();
     });
 
     it('should fail gracefully when real services are not configured', async () => {

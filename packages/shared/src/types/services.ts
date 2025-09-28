@@ -17,6 +17,7 @@ export interface ExternalService {
   fallbackMode(): boolean;
   healthCheck(): Promise<ServiceStatus>;
   getServiceInfo(): ServiceInfo;
+  getCircuitBreakerState(): string;
 }
 
 export interface AuthService extends ExternalService {

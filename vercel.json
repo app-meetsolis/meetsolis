@@ -1,0 +1,50 @@
+{
+  "buildCommand": "cd apps/web && npm run build",
+  "outputDirectory": "apps/web/.next",
+  "installCommand": "npm install",
+  "devCommand": "cd apps/web && npm run dev",
+  "framework": "nextjs",
+  "env": {
+    "USE_MOCK_SERVICES": "true",
+    "NODE_ENV": "production"
+  },
+  "build": {
+    "env": {
+      "USE_MOCK_SERVICES": "true"
+    }
+  },
+  "functions": {
+    "apps/web/src/app/api/**/*.ts": {
+      "runtime": "@vercel/node"
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/apps/web/src/app/api/$1"
+    }
+  ]
+}
