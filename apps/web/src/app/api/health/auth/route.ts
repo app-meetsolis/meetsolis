@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { ServiceFactory } from '@/lib/service-factory';
 
 export async function GET() {

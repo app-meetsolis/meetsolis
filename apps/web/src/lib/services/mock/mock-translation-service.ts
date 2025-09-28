@@ -73,7 +73,6 @@ export class MockTranslationService
     }
 
     // In mock mode, we'll add a prefix to indicate translation
-    const _languageName = this.supportedLanguages.get(targetLanguage);
 
     // For demonstration, we'll modify the text slightly based on target language
     switch (targetLanguage) {
