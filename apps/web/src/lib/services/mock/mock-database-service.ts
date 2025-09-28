@@ -65,13 +65,13 @@ export class MockDatabaseService
     const sqlUpper = sql.trim().toUpperCase();
 
     if (sqlUpper.startsWith('SELECT')) {
-      return this.handleSelect(sql, params);
+      return this.handleSelect(sql);
     } else if (sqlUpper.startsWith('INSERT')) {
       return this.handleInsert(sql, params);
     } else if (sqlUpper.startsWith('UPDATE')) {
       return this.handleUpdate(sql, params);
     } else if (sqlUpper.startsWith('DELETE')) {
-      return this.handleDelete(sql, params);
+      return this.handleDelete(sql);
     }
 
     // For unknown queries, return empty result
