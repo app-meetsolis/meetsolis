@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ServiceFactory } from '@/lib/service-factory';
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     const startTime = Date.now();
 
@@ -58,7 +58,7 @@ export async function GET(_request: NextRequest) {
   }
 }
 
-export async function HEAD(_request: NextRequest) {
+export async function HEAD() {
   // Lightweight health check for load balancers
   try {
     const healthChecks = await ServiceFactory.healthCheckAllServices();

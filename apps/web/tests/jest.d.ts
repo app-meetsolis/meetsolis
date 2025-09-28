@@ -29,7 +29,7 @@ declare global {
     }
   }
 
-  var expect: {
+  const expect: {
     <T = any>(actual: T): jest.Matchers<void>;
     objectContaining(object: Record<string, any>): any;
     stringContaining(expected: string): any;
@@ -37,24 +37,24 @@ declare global {
     any(constructor: any): any;
   };
 
-  var it: {
+  const it: {
     (name: string, fn?: jest.ProvidesCallback, timeout?: number): void;
     each<T extends readonly any[] | readonly readonly any[]>(table: T): (name: string, fn: (...args: T[number]) => void, timeout?: number) => void;
     skip: typeof it;
     only: typeof it;
   };
 
-  var test: typeof it;
-  var describe: {
+  const test: typeof it;
+  const describe: {
     (name: string, fn: () => void): void;
     skip: typeof describe;
     only: typeof describe;
   };
 
-  var beforeEach: (fn: jest.ProvidesCallback) => void;
-  var afterEach: (fn: jest.ProvidesCallback) => void;
-  var beforeAll: (fn: jest.ProvidesCallback) => void;
-  var afterAll: (fn: jest.ProvidesCallback) => void;
+  const beforeEach: (fn: jest.ProvidesCallback) => void;
+  const afterEach: (fn: jest.ProvidesCallback) => void;
+  const beforeAll: (fn: jest.ProvidesCallback) => void;
+  const afterAll: (fn: jest.ProvidesCallback) => void;
 }
 
 export {};
