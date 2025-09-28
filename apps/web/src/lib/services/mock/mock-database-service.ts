@@ -78,7 +78,7 @@ export class MockDatabaseService
     return { rows: [], rowCount: 0 };
   }
 
-  private handleSelect(sql: string, _params?: any[]): any {
+  private handleSelect(sql: string): any {
     // Extract table name (very basic parsing)
     const tableMatch = sql.match(/FROM\s+(\w+)/i);
     if (!tableMatch) {
@@ -146,7 +146,7 @@ export class MockDatabaseService
     return { rows: [], rowCount: updatedCount };
   }
 
-  private handleDelete(sql: string, _params?: any[]): any {
+  private handleDelete(sql: string): any {
     // Basic delete handling
     const tableMatch = sql.match(/DELETE\s+FROM\s+(\w+)/i);
     if (!tableMatch) {
