@@ -232,8 +232,24 @@ export class DataExporter {
   private static async logDataProcessing(
     log: Omit<DataProcessingLog, 'id' | 'timestamp'>
   ): Promise<void> {
+    // Generate UUID compatible with Node.js test environment
+    const generateUUID = () => {
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID();
+      }
+      // Fallback UUID generation for Node.js test environment
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
+        /[xy]/g,
+        function (c) {
+          const r = (Math.random() * 16) | 0;
+          const v = c === 'x' ? r : (r & 0x3) | 0x8;
+          return v.toString(16);
+        }
+      );
+    };
+
     const fullLog: DataProcessingLog = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       timestamp: new Date(),
       ...log,
     };
