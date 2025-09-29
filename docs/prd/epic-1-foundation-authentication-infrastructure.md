@@ -38,13 +38,15 @@ I want comprehensive security headers and input sanitization implemented,
 so that the platform protects user data from common web vulnerabilities.
 
 #### Acceptance Criteria
-1. next-helmet configured with CSP, XSS protection, and security headers
+1. next-secure-headers configured with CSP, XSS protection, and security headers (Edge Runtime compatible)
 2. sanitize-html middleware implemented for all user inputs
-3. Rate limiting applied to API routes with express-rate-limit
+3. Rate limiting applied to API routes with @upstash/ratelimit (Edge Runtime compatible)
 4. HTTPS enforcement and HSTS headers configured
 5. Security audit tools integrated (Sentry error tracking)
 6. GDPR-compliant data handling policies implemented
 7. Security testing included in CI/CD pipeline
+
+**Technical Note:** AC #1 and #3 updated from original next-helmet and express-rate-limit packages to Edge Runtime compatible alternatives. This ensures optimal performance with Next.js 14 Edge Runtime deployment on Vercel while maintaining identical security functionality.
 
 ### Story 1.3: User Authentication with Clerk Integration
 As a freelancer or agency owner,

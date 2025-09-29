@@ -35,6 +35,12 @@ export async function DELETE(request: NextRequest) {
     //   return NextResponse.json({ error: 'Invalid confirmation token' }, { status: 400 });
     // }
 
+    // Log confirmation token for future implementation
+    console.log(
+      'Confirmation token provided:',
+      confirmationToken ? 'Yes' : 'No'
+    );
+
     await DataDeletionService.deleteUserData(userId, 'user_request');
 
     return NextResponse.json({

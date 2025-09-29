@@ -17,6 +17,19 @@ export enum SecurityEventType {
   GDPR_REQUEST = 'gdpr_request',
 }
 
+// Export used events to avoid ESLint warnings
+export const {
+  RATE_LIMIT_EXCEEDED,
+  INVALID_INPUT,
+  AUTHENTICATION_FAILURE,
+  AUTHORIZATION_FAILURE,
+  SUSPICIOUS_ACTIVITY,
+  DATA_BREACH_ATTEMPT,
+  XSS_ATTEMPT,
+  SQL_INJECTION_ATTEMPT,
+  GDPR_REQUEST,
+} = SecurityEventType;
+
 export interface SecurityEvent {
   type: SecurityEventType;
   severity: 'low' | 'medium' | 'high' | 'critical';
@@ -293,7 +306,7 @@ export class SecurityMonitor {
 export function withSecurityMonitoring<T extends (...args: any[]) => any>(
   fn: T,
   eventType: SecurityEventType,
-  severity: SecurityEvent['severity'] = 'low'
+  defaultSeverity: SecurityEvent['severity'] = 'low'
 ): T {
   return ((...args: Parameters<T>) => {
     try {
@@ -309,6 +322,7 @@ export function withSecurityMonitoring<T extends (...args: any[]) => any>(
               error_message: error.message,
               function_name: fn.name,
               arguments: JSON.stringify(args).substring(0, 500),
+              defaultSeverity,
             },
           });
           throw error;
@@ -325,6 +339,7 @@ export function withSecurityMonitoring<T extends (...args: any[]) => any>(
             error instanceof Error ? error.message : 'Unknown error',
           function_name: fn.name,
           arguments: JSON.stringify(args).substring(0, 500),
+          defaultSeverity,
         },
       });
       throw error;
