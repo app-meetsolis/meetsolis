@@ -7,13 +7,14 @@ export const securityHeaders = {
   // Content Security Policy - prevents XSS and other injection attacks
   'Content-Security-Policy': [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://*.clerk.dev https://*.paddle.com https://*.razorpay.com",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.clerk.dev https://*.deepl.com",
-    "img-src 'self' data: https:",
+    "script-src 'self' 'unsafe-inline' https://*.clerk.dev https://*.clerk.accounts.dev https://challenges.cloudflare.com https://*.paddle.com https://*.razorpay.com",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.clerk.dev https://*.clerk.accounts.dev https://*.deepl.com",
+    "img-src 'self' data: https: https://img.clerk.com",
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self' data:",
-    "frame-src 'self' https://*.clerk.dev",
+    "frame-src 'self' https://*.clerk.dev https://*.clerk.accounts.dev https://challenges.cloudflare.com",
     "media-src 'self'",
+    "worker-src 'self' blob:",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -49,13 +50,14 @@ export const developmentSecurityHeaders = {
   // More permissive CSP for development
   'Content-Security-Policy': [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.dev",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.clerk.dev https://*.deepl.com ws://localhost:*",
-    "img-src 'self' data: https:",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.dev https://*.clerk.accounts.dev https://challenges.cloudflare.com",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.clerk.dev https://*.clerk.accounts.dev https://*.deepl.com ws://localhost:*",
+    "img-src 'self' data: https: https://img.clerk.com",
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self' data:",
-    "frame-src 'self' https://*.clerk.dev",
+    "frame-src 'self' https://*.clerk.dev https://*.clerk.accounts.dev https://challenges.cloudflare.com",
     "media-src 'self'",
+    "worker-src 'self' blob:",
   ].join('; '),
 };
 
