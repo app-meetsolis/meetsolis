@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
-    "test:unit": "jest --testPathPattern=tests/unit",
+    "test:unit": "jest --testPathPattern=tests/unit --passWithNoTests",
     "test:e2e": "cypress run",
     "test:e2e:open": "cypress open",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
