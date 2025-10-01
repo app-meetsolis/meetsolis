@@ -50,11 +50,29 @@ export function sanitizeHtmlContent(input: string): string {
 }
 
 /**
- * Strict sanitization - removes all HTML tags and attributes
+ * Strict sanitization - removes all HTML tags, attributes, and dangerous URL schemes
  */
 export function sanitizeText(input: string): string {
   if (typeof input !== 'string') return '';
-  return sanitizeHtml(input.trim(), STRICT_SANITIZE_OPTIONS);
+
+  // First remove HTML tags
+  let cleaned = sanitizeHtml(input.trim(), STRICT_SANITIZE_OPTIONS);
+
+  // Then remove dangerous URL schemes from plain text
+  // These can be used for XSS attacks even in plain text contexts
+  const dangerousSchemes = [
+    /javascript:/gi,
+    /data:/gi,
+    /vbscript:/gi,
+    /file:/gi,
+    /about:/gi,
+  ];
+
+  dangerousSchemes.forEach(scheme => {
+    cleaned = cleaned.replace(scheme, '');
+  });
+
+  return cleaned;
 }
 
 /**
@@ -70,12 +88,9 @@ export function sanitizeObject<T extends Record<string, any>>(
   for (const [key, value] of Object.entries(obj)) {
     if (typeof value === 'string') {
       sanitized[key as keyof T] = sanitizer(value) as T[keyof T];
-    } else if (
-      typeof value === 'object' &&
-      value !== null &&
-      !Array.isArray(value)
-    ) {
-      sanitized[key as keyof T] = sanitizeObject(value, strict);
+    } else if (value instanceof Date) {
+      // Preserve Date objects
+      sanitized[key as keyof T] = value;
     } else if (Array.isArray(value)) {
       sanitized[key as keyof T] = value.map(item =>
         typeof item === 'string'
@@ -84,6 +99,8 @@ export function sanitizeObject<T extends Record<string, any>>(
             ? sanitizeObject(item, strict)
             : item
       ) as T[keyof T];
+    } else if (typeof value === 'object' && value !== null) {
+      sanitized[key as keyof T] = sanitizeObject(value, strict);
     } else {
       sanitized[key as keyof T] = value;
     }

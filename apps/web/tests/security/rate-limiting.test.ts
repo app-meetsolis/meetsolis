@@ -20,16 +20,25 @@ jest.mock('@upstash/redis', () => ({
 }));
 
 // Mock Upstash Ratelimit
-jest.mock('@upstash/ratelimit', () => ({
-  Ratelimit: jest.fn().mockImplementation(() => ({
-    limit: jest.fn().mockResolvedValue({
-      success: true,
-      limit: 100,
-      remaining: 99,
-      reset: Date.now() + 60000,
-    }),
-  })),
-}));
+jest.mock('@upstash/ratelimit', () => {
+  const mockLimit = jest.fn().mockResolvedValue({
+    success: true,
+    limit: 100,
+    remaining: 99,
+    reset: Date.now() + 60000,
+  });
+
+  return {
+    Ratelimit: Object.assign(
+      jest.fn().mockImplementation(() => ({ limit: mockLimit })),
+      {
+        slidingWindow: jest.fn(() => 'sliding-window-limiter'),
+        fixedWindow: jest.fn(() => 'fixed-window-limiter'),
+        tokenBucket: jest.fn(() => 'token-bucket-limiter'),
+      }
+    ),
+  };
+});
 
 describe.skip('Rate Limiting - TEMPORARILY DISABLED (Upstash API Fix Needed)', () => {
   describe('getRateLimitIdentifier', () => {

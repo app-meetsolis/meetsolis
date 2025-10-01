@@ -35,27 +35,17 @@ jest.mock('@clerk/nextjs', () => ({
 
 describe('Middleware Configuration', () => {
   it('should allow access to public routes', async () => {
-    const publicRoutes = [
-      '/',
-      '/sign-in(.*)',
-      '/sign-up(.*)',
-      '/api/webhooks(.*)',
-    ];
+    const publicRoutes = ['^/$', '^/sign-in', '^/sign-up', '^/api/webhooks'];
 
-    expect(publicRoutes).toContain('/');
-    expect(publicRoutes).toContain('/sign-in(.*)');
-    expect(publicRoutes).toContain('/sign-up(.*)');
-    expect(publicRoutes).toContain('/api/webhooks(.*)');
+    expect(publicRoutes).toContain('^/$');
+    expect(publicRoutes).toContain('^/sign-in');
+    expect(publicRoutes).toContain('^/sign-up');
+    expect(publicRoutes).toContain('^/api/webhooks');
   });
 
   it('should protect dashboard routes', () => {
     const dashboardPath = '/dashboard/meetings';
-    const publicRoutes = [
-      '/',
-      '/sign-in(.*)',
-      '/sign-up(.*)',
-      '/api/webhooks(.*)',
-    ];
+    const publicRoutes = ['^/$', '^/sign-in', '^/sign-up', '^/api/webhooks'];
 
     const isPublic = publicRoutes.some(route =>
       new RegExp(route).test(dashboardPath)
@@ -66,12 +56,7 @@ describe('Middleware Configuration', () => {
 
   it('should protect meeting routes', () => {
     const meetingPath = '/meeting/room-123';
-    const publicRoutes = [
-      '/',
-      '/sign-in(.*)',
-      '/sign-up(.*)',
-      '/api/webhooks(.*)',
-    ];
+    const publicRoutes = ['^/$', '^/sign-in', '^/sign-up', '^/api/webhooks'];
 
     const isPublic = publicRoutes.some(route =>
       new RegExp(route).test(meetingPath)
@@ -82,12 +67,7 @@ describe('Middleware Configuration', () => {
 
   it('should allow webhook endpoints', () => {
     const webhookPath = '/api/webhooks/clerk';
-    const publicRoutes = [
-      '/',
-      '/sign-in(.*)',
-      '/sign-up(.*)',
-      '/api/webhooks(.*)',
-    ];
+    const publicRoutes = ['^/$', '^/sign-in', '^/sign-up', '^/api/webhooks'];
 
     const isPublic = publicRoutes.some(route =>
       new RegExp(route).test(webhookPath)
@@ -98,12 +78,7 @@ describe('Middleware Configuration', () => {
 
   it('should protect API routes except webhooks', () => {
     const apiPath = '/api/meetings';
-    const publicRoutes = [
-      '/',
-      '/sign-in(.*)',
-      '/sign-up(.*)',
-      '/api/webhooks(.*)',
-    ];
+    const publicRoutes = ['^/$', '^/sign-in', '^/sign-up', '^/api/webhooks'];
 
     const isPublic = publicRoutes.some(route =>
       new RegExp(route).test(apiPath)
