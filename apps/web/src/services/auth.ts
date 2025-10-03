@@ -1,10 +1,17 @@
 /**
  * Authentication Service
- * Service layer for authentication operations
+ * Service layer for authentication operations with Supabase sync
  */
 
-import { User, UserRole } from '@meetsolis/shared/types';
+import {
+  User,
+  UserRole,
+  UserInsert,
+  UserUpdate,
+} from '@meetsolis/shared/types';
 import { getDefaultRole } from '@/lib/auth/roles';
+import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { executeQuery } from '@/lib/supabase/utils';
 
 /**
  * Create user profile in Supabase database
@@ -19,25 +26,40 @@ export async function createUserProfile(
   const name = `${firstName} ${lastName}`.trim() || 'User';
   const role: UserRole = getDefaultRole();
 
-  const user: User = {
-    id: clerkUserId,
+  const supabase = getSupabaseServerClient();
+
+  const userInsert: UserInsert = {
+    clerk_id: clerkUserId,
     email,
     name,
     role,
     verified_badge: false,
     preferences: {
-      auto_mute_on_join: false,
-      default_video_off: false,
-      preferred_view: 'gallery',
       theme: 'light',
+      language: 'en',
+      notifications: {
+        email: true,
+        push: true,
+        sms: false,
+      },
+      meeting_defaults: {
+        waiting_room: true,
+        mute_on_join: false,
+        video_on_join: true,
+      },
     },
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
   };
 
-  // TODO: Store in Supabase when database is ready
-  // For now, return the user object
-  return user;
+  const result = await executeQuery(
+    supabase.from('users').insert(userInsert).select().single() as any
+  );
+
+  if (!result.success) {
+    console.error('Failed to create user in Supabase:', result.error);
+    throw new Error(`Failed to create user: ${result.error}`);
+  }
+
+  return result.data as User;
 }
 
 /**
@@ -52,25 +74,28 @@ export async function updateUserProfile(
 ): Promise<User | null> {
   const name = `${firstName} ${lastName}`.trim() || 'User';
 
-  // TODO: Update in Supabase when database is ready
-  // For now, return a mock user
-  const user: User = {
-    id: clerkUserId,
+  const supabase = getSupabaseServerClient();
+
+  const userUpdate: UserUpdate = {
     email,
     name,
-    role: 'participant',
-    verified_badge: false,
-    preferences: {
-      auto_mute_on_join: false,
-      default_video_off: false,
-      preferred_view: 'gallery',
-      theme: 'light',
-    },
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
   };
 
-  return user;
+  const result = await executeQuery(
+    supabase
+      .from('users')
+      .update(userUpdate)
+      .eq('clerk_id', clerkUserId)
+      .select()
+      .single() as any
+  );
+
+  if (!result.success) {
+    console.error('Failed to update user in Supabase:', result.error);
+    return null;
+  }
+
+  return result.data as User;
 }
 
 /**
@@ -78,18 +103,41 @@ export async function updateUserProfile(
  * Called from Clerk webhook on user deletion
  */
 export async function deleteUserProfile(clerkUserId: string): Promise<void> {
-  // TODO: Delete from Supabase when database is ready
-  console.log(`User ${clerkUserId} deleted`);
+  const supabase = getSupabaseServerClient();
+
+  // Hard delete from database (CASCADE will handle related records)
+  const result = await executeQuery(
+    supabase.from('users').delete().eq('clerk_id', clerkUserId) as any
+  );
+
+  if (!result.success) {
+    console.error('Failed to delete user from Supabase:', result.error);
+    throw new Error(`Failed to delete user: ${result.error}`);
+  }
+
+  console.log(`User ${clerkUserId} deleted from Supabase`);
 }
 
 /**
  * Get user profile from Supabase database
  */
-// eslint-disable-next-line no-unused-vars
 export async function getUserProfile(
-  _clerkUserId: string
+  clerkUserId: string
 ): Promise<User | null> {
-  // TODO: Fetch from Supabase when database is ready
-  // For now, return null
-  return null;
+  const supabase = getSupabaseServerClient();
+
+  const result = await executeQuery(
+    supabase
+      .from('users')
+      .select('*')
+      .eq('clerk_id', clerkUserId)
+      .single() as any
+  );
+
+  if (!result.success) {
+    console.error('Failed to get user from Supabase:', result.error);
+    return null;
+  }
+
+  return result.data as User;
 }
