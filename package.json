@@ -23,6 +23,12 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@modelcontextprotocol/server-sequential-thinking": "^2025.7.1"
+    "@modelcontextprotocol/server-sequential-thinking": "^2025.7.1",
+    "supabase": "^2.47.2"
+  },
+  "dependencies": {
+    "@supabase/realtime-js": "^2.15.6",
+    "@supabase/storage-js": "^2.12.2",
+    "@supabase/supabase-js": "^2.58.0"
   }
 }

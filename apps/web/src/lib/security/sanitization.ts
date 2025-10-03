@@ -90,7 +90,7 @@ export function sanitizeObject<T extends Record<string, any>>(
       sanitized[key as keyof T] = sanitizer(value) as T[keyof T];
     } else if (value instanceof Date) {
       // Preserve Date objects
-      sanitized[key as keyof T] = value;
+      sanitized[key as keyof T] = value as T[keyof T];
     } else if (Array.isArray(value)) {
       sanitized[key as keyof T] = value.map(item =>
         typeof item === 'string'

@@ -19,6 +19,7 @@ export function useAuth(): AuthState {
   const user: User | null = clerkUser
     ? {
         id: clerkUser.id,
+        clerk_id: clerkUser.id,
         email: clerkUser.emailAddresses[0]?.emailAddress ?? '',
         name:
           `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim() ||
@@ -27,10 +28,18 @@ export function useAuth(): AuthState {
         verified_badge:
           clerkUser.emailAddresses[0]?.verification?.status === 'verified',
         preferences: {
-          auto_mute_on_join: false,
-          default_video_off: false,
-          preferred_view: 'gallery',
           theme: 'light',
+          language: 'en',
+          notifications: {
+            email: true,
+            push: true,
+            sms: false,
+          },
+          meeting_defaults: {
+            waiting_room: true,
+            mute_on_join: false,
+            video_on_join: true,
+          },
         },
         created_at: clerkUser.createdAt?.toString() ?? new Date().toISOString(),
         updated_at: clerkUser.updatedAt?.toString() ?? new Date().toISOString(),

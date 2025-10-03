@@ -12,19 +12,28 @@ export type UserRole = 'host' | 'co-host' | 'participant';
  * User preferences for personalization
  */
 export interface UserPreferences {
-  auto_mute_on_join: boolean;
-  default_video_off: boolean;
-  preferred_view: 'gallery' | 'speaker';
-  theme: 'light' | 'dark';
+  theme?: 'light' | 'dark' | 'system';
+  language?: string;
+  notifications?: {
+    email?: boolean;
+    push?: boolean;
+    sms?: boolean;
+  };
+  meeting_defaults?: {
+    waiting_room?: boolean;
+    mute_on_join?: boolean;
+    video_on_join?: boolean;
+  };
 }
 
 /**
- * Complete user profile
+ * Complete user profile (synced with Supabase database)
  */
 export interface User {
   id: string;
+  clerk_id: string;
   email: string;
-  name: string;
+  name: string | null;
   role: UserRole;
   verified_badge: boolean;
   preferences: UserPreferences;
