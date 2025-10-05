@@ -7,45 +7,51 @@ import { NextRequest } from 'next/server';
  * Uses Upstash Redis for edge-optimized performance
  */
 
-// Initialize Redis client for rate limiting
-const redis = Redis.fromEnv();
+// Initialize Redis client for rate limiting (only if env vars are configured)
+const redis =
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+    ? Redis.fromEnv()
+    : null;
 
 /**
  * Different rate limits for different types of requests
+ * Note: If Redis is not configured, rate limiters will be null and rate limiting will be skipped
  */
-export const rateLimiters = {
-  // General API routes: 100 requests per minute per user
-  api: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(100, '60s'),
-    analytics: true,
-    prefix: 'ratelimit:api',
-  }),
+export const rateLimiters = redis
+  ? {
+      // General API routes: 100 requests per minute per user
+      api: new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(100, '60s'),
+        analytics: true,
+        prefix: 'ratelimit:api',
+      }),
 
-  // Authentication routes: 1000 requests per hour per user
-  auth: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(1000, '3600s'),
-    analytics: true,
-    prefix: 'ratelimit:auth',
-  }),
+      // Authentication routes: 1000 requests per hour per user
+      auth: new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(1000, '3600s'),
+        analytics: true,
+        prefix: 'ratelimit:auth',
+      }),
 
-  // Anonymous requests (by IP): 50 requests per minute
-  anonymous: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(50, '60s'),
-    analytics: true,
-    prefix: 'ratelimit:anon',
-  }),
+      // Anonymous requests (by IP): 50 requests per minute
+      anonymous: new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(50, '60s'),
+        analytics: true,
+        prefix: 'ratelimit:anon',
+      }),
 
-  // Strict rate limiting for sensitive operations: 10 per minute
-  strict: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(10, '60s'),
-    analytics: true,
-    prefix: 'ratelimit:strict',
-  }),
-};
+      // Strict rate limiting for sensitive operations: 10 per minute
+      strict: new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(10, '60s'),
+        analytics: true,
+        prefix: 'ratelimit:strict',
+      }),
+    }
+  : null;
 
 /**
  * Get identifier for rate limiting (user ID or IP address)
@@ -99,11 +105,19 @@ export async function checkRateLimit(
  */
 export async function withRateLimit(
   request: NextRequest,
-  limiterType: keyof typeof rateLimiters = 'api',
+  limiterType: 'api' | 'auth' | 'anonymous' | 'strict' = 'api',
   userId?: string
 ) {
   // Skip rate limiting for health check endpoints
   if (request.nextUrl.pathname === '/api/health') {
+    return { success: true, headers: {} };
+  }
+
+  // Skip rate limiting if Redis is not configured
+  if (!rateLimiters) {
+    console.warn(
+      'Rate limiting is disabled - Redis environment variables not configured'
+    );
     return { success: true, headers: {} };
   }
 
@@ -140,7 +154,7 @@ export function createRateLimitResponse(resetTime: Date) {
  */
 export function getRateLimiterForRoute(
   pathname: string
-): keyof typeof rateLimiters {
+): 'api' | 'auth' | 'anonymous' | 'strict' {
   // Authentication routes get higher limits
   if (
     pathname.startsWith('/api/auth') ||

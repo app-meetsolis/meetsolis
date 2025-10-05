@@ -5,6 +5,7 @@ import * as Sentry from '@sentry/nextjs';
  * Integrates with Sentry for security event tracking
  */
 
+/* eslint-disable no-unused-vars */
 export enum SecurityEventType {
   RATE_LIMIT_EXCEEDED = 'rate_limit_exceeded',
   INVALID_INPUT = 'invalid_input',
@@ -16,19 +17,7 @@ export enum SecurityEventType {
   SQL_INJECTION_ATTEMPT = 'sql_injection_attempt',
   GDPR_REQUEST = 'gdpr_request',
 }
-
-// Export used events to avoid ESLint warnings
-export const {
-  RATE_LIMIT_EXCEEDED,
-  INVALID_INPUT,
-  AUTHENTICATION_FAILURE,
-  AUTHORIZATION_FAILURE,
-  SUSPICIOUS_ACTIVITY,
-  DATA_BREACH_ATTEMPT,
-  XSS_ATTEMPT,
-  SQL_INJECTION_ATTEMPT,
-  GDPR_REQUEST,
-} = SecurityEventType;
+/* eslint-enable no-unused-vars */
 
 export interface SecurityEvent {
   type: SecurityEventType;
@@ -303,7 +292,8 @@ export class SecurityMonitor {
 /**
  * Middleware for automatic security event logging
  */
-export function withSecurityMonitoring<T extends (...args: any[]) => any>(
+// eslint-disable-next-line no-unused-vars
+export function withSecurityMonitoring<T extends (..._args: any[]) => any>(
   fn: T,
   eventType: SecurityEventType,
   defaultSeverity: SecurityEvent['severity'] = 'low'
