@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom'
+import '@testing-library/jest-dom';
 
 // Mock Next.js router
 jest.mock('next/router', () => ({
@@ -20,9 +20,9 @@ jest.mock('next/router', () => ({
         emit: jest.fn(),
       },
       isFallback: false,
-    }
+    };
   },
-}))
+}));
 
 // Mock Next.js navigation (App Router)
 jest.mock('next/navigation', () => ({
@@ -34,22 +34,22 @@ jest.mock('next/navigation', () => ({
       back: jest.fn(),
       forward: jest.fn(),
       prefetch: jest.fn(),
-    }
+    };
   },
   useSearchParams() {
-    return new URLSearchParams()
+    return new URLSearchParams();
   },
   usePathname() {
-    return '/'
+    return '/';
   },
-}))
+}));
 
 // Mock environment variables for tests
-process.env.USE_MOCK_SERVICES = 'true'
-process.env.NODE_ENV = 'test'
-process.env.SERVICE_TIMEOUT_MS = '1000'
-process.env.CIRCUIT_BREAKER_THRESHOLD = '3'
-process.env.RETRY_ATTEMPTS = '2'
+process.env.USE_MOCK_SERVICES = 'true';
+process.env.NODE_ENV = 'test';
+process.env.SERVICE_TIMEOUT_MS = '1000';
+process.env.CIRCUIT_BREAKER_THRESHOLD = '3';
+process.env.RETRY_ATTEMPTS = '2';
 
 // WebRTC Mocks
 const mockMediaStreamTrack = {
@@ -65,7 +65,7 @@ const mockMediaStreamTrack = {
   addEventListener: jest.fn(),
   removeEventListener: jest.fn(),
   dispatchEvent: jest.fn(),
-}
+};
 
 const mockMediaStream = {
   id: 'mock-stream-id',
@@ -79,11 +79,11 @@ const mockMediaStream = {
   addEventListener: jest.fn(),
   removeEventListener: jest.fn(),
   dispatchEvent: jest.fn(),
-}
+};
 
 // Mock WebRTC APIs
-global.MediaStream = jest.fn(() => mockMediaStream)
-global.MediaStreamTrack = jest.fn(() => mockMediaStreamTrack)
+global.MediaStream = jest.fn(() => mockMediaStream);
+global.MediaStreamTrack = jest.fn(() => mockMediaStreamTrack);
 
 global.RTCPeerConnection = jest.fn(() => ({
   localDescription: null,
@@ -92,8 +92,12 @@ global.RTCPeerConnection = jest.fn(() => ({
   iceConnectionState: 'new',
   connectionState: 'new',
   iceGatheringState: 'new',
-  createOffer: jest.fn().mockResolvedValue({ type: 'offer', sdp: 'mock-offer' }),
-  createAnswer: jest.fn().mockResolvedValue({ type: 'answer', sdp: 'mock-answer' }),
+  createOffer: jest
+    .fn()
+    .mockResolvedValue({ type: 'offer', sdp: 'mock-offer' }),
+  createAnswer: jest
+    .fn()
+    .mockResolvedValue({ type: 'answer', sdp: 'mock-answer' }),
   setLocalDescription: jest.fn().mockResolvedValue(),
   setRemoteDescription: jest.fn().mockResolvedValue(),
   addIceCandidate: jest.fn().mockResolvedValue(),
@@ -104,7 +108,7 @@ global.RTCPeerConnection = jest.fn(() => ({
   addEventListener: jest.fn(),
   removeEventListener: jest.fn(),
   dispatchEvent: jest.fn(),
-}))
+}));
 
 global.navigator.mediaDevices = {
   getUserMedia: jest.fn().mockResolvedValue(mockMediaStream),
@@ -123,7 +127,7 @@ global.navigator.mediaDevices = {
   })),
   addEventListener: jest.fn(),
   removeEventListener: jest.fn(),
-}
+};
 
 // Mock screen wake lock API
 global.navigator.wakeLock = {
@@ -134,45 +138,135 @@ global.navigator.wakeLock = {
     addEventListener: jest.fn(),
     removeEventListener: jest.fn(),
   }),
-}
+};
 
 // Global test setup
 beforeEach(() => {
   // Clear all mocks before each test
-  jest.clearAllMocks()
+  jest.clearAllMocks();
 
   // Reset environment to known state
-  process.env.USE_MOCK_SERVICES = 'true'
-})
+  process.env.USE_MOCK_SERVICES = 'true';
+});
 
 // Suppress console warnings in tests unless debugging
-const originalWarn = console.warn
-const originalError = console.error
+const originalWarn = console.warn;
+const originalError = console.error;
 
 beforeAll(() => {
   console.warn = (...args) => {
-    if (args[0]?.includes && (
-      args[0].includes('Warning: ReactDOM.render') ||
-      args[0].includes('Warning: act') ||
-      args[0].includes('Warning: useLayoutEffect')
-    )) {
-      return
+    if (
+      args[0]?.includes &&
+      (args[0].includes('Warning: ReactDOM.render') ||
+        args[0].includes('Warning: act') ||
+        args[0].includes('Warning: useLayoutEffect'))
+    ) {
+      return;
     }
-    originalWarn.call(console, ...args)
-  }
+    originalWarn.call(console, ...args);
+  };
 
   console.error = (...args) => {
-    if (args[0]?.includes && (
-      args[0].includes('Warning:') ||
-      args[0].includes('Error: Not implemented')
-    )) {
-      return
+    if (
+      args[0]?.includes &&
+      (args[0].includes('Warning:') ||
+        args[0].includes('Error: Not implemented'))
+    ) {
+      return;
     }
-    originalError.call(console, ...args)
-  }
-})
+    originalError.call(console, ...args);
+  };
+});
 
 afterAll(() => {
-  console.warn = originalWarn
-  console.error = originalError
-})
+  console.warn = originalWarn;
+  console.error = originalError;
+});
+
+// Mock Next.js Edge Runtime Request/Response for API route tests
+if (typeof Request === 'undefined') {
+  global.Request = class Request {
+    constructor(input, init) {
+      this.url = typeof input === 'string' ? input : input.url;
+      this.method = init?.method || 'GET';
+      this.headers = new Headers(init?.headers || {});
+      this.body = init?.body;
+    }
+
+    async json() {
+      return this.body ? JSON.parse(this.body) : {};
+    }
+
+    async text() {
+      return this.body || '';
+    }
+  };
+}
+
+if (typeof Response === 'undefined') {
+  global.Response = class Response {
+    constructor(body, init) {
+      this.body = body;
+      this.status = init?.status || 200;
+      this.statusText = init?.statusText || 'OK';
+      this.headers = new Headers(init?.headers || {});
+    }
+
+    async json() {
+      return typeof this.body === 'string' ? JSON.parse(this.body) : this.body;
+    }
+
+    async text() {
+      return typeof this.body === 'string'
+        ? this.body
+        : JSON.stringify(this.body);
+    }
+  };
+}
+
+if (typeof Headers === 'undefined') {
+  global.Headers = class Headers {
+    constructor(init) {
+      this.map = new Map(Object.entries(init || {}));
+    }
+
+    get(name) {
+      return this.map.get(name.toLowerCase());
+    }
+
+    set(name, value) {
+      this.map.set(name.toLowerCase(), value);
+    }
+
+    has(name) {
+      return this.map.has(name.toLowerCase());
+    }
+
+    delete(name) {
+      this.map.delete(name.toLowerCase());
+    }
+
+    entries() {
+      return this.map.entries();
+    }
+  };
+}
+
+// JSDOM Polyfills for Radix UI
+if (typeof Element !== 'undefined') {
+  // Polyfill hasPointerCapture for Radix UI Select
+  Element.prototype.hasPointerCapture =
+    Element.prototype.hasPointerCapture ||
+    function () {
+      return false;
+    };
+
+  Element.prototype.setPointerCapture =
+    Element.prototype.setPointerCapture || function () {};
+  Element.prototype.releasePointerCapture =
+    Element.prototype.releasePointerCapture || function () {};
+
+  // Polyfill scrollIntoView
+  Element.prototype.scrollIntoView =
+    Element.prototype.scrollIntoView || function () {};
+}

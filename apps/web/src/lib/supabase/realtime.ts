@@ -23,7 +23,8 @@ export const RealtimeChannels = {
  */
 export function subscribeToParticipants(
   meetingId: string,
-  callback: (payload: any) => void
+  // eslint-disable-next-line no-unused-vars
+  callback: (_payload: any) => void
 ): RealtimeChannel {
   const supabase = getSupabaseClient();
   const channelName = RealtimeChannels.participants(meetingId);
@@ -50,7 +51,8 @@ export function subscribeToParticipants(
  */
 export function subscribeToMessages(
   meetingId: string,
-  callback: (payload: any) => void
+  // eslint-disable-next-line no-unused-vars
+  callback: (_payload: any) => void
 ): RealtimeChannel {
   const supabase = getSupabaseClient();
   const channelName = RealtimeChannels.messages(meetingId);
@@ -77,7 +79,8 @@ export function subscribeToMessages(
  */
 export function subscribeToReactions(
   meetingId: string,
-  callback: (payload: any) => void
+  // eslint-disable-next-line no-unused-vars
+  callback: (_payload: any) => void
 ): RealtimeChannel {
   const supabase = getSupabaseClient();
   const channelName = RealtimeChannels.reactions(meetingId);

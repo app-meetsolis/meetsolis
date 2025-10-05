@@ -6,3 +6,4 @@
 export * from './auth';
 export * from './services';
 export * from './database';
+export * from './dashboard';
