@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ServiceFactory } from '@/lib/service-factory';
+import { config } from '@/lib/config/env';
 
 export async function GET() {
   try {
@@ -34,8 +35,8 @@ export async function GET() {
       responseTime,
       serviceCount: Object.keys(serviceDetails).length,
       services: serviceDetails,
-      environment: process.env.NODE_ENV,
-      useMockServices: process.env.USE_MOCK_SERVICES === 'true',
+      environment: config.app.env,
+      useMockServices: config.useMockServices,
     });
   } catch (error) {
     console.error('Service details error:', error);

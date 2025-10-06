@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ServiceFactory } from '@/lib/service-factory';
+import { config } from '@/lib/config/env';
 
 export async function GET() {
   try {
@@ -30,8 +31,8 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       responseTime,
       services: healthChecks,
-      environment: process.env.NODE_ENV,
-      useMockServices: process.env.USE_MOCK_SERVICES === 'true',
+      environment: config.app.env,
+      useMockServices: config.useMockServices,
     };
 
     // Set appropriate HTTP status code
@@ -51,7 +52,7 @@ export async function GET() {
         status: 'unavailable',
         timestamp: new Date().toISOString(),
         error: error instanceof Error ? error.message : 'Unknown error',
-        environment: process.env.NODE_ENV,
+        environment: config.app.env,
       },
       { status: 503 }
     );

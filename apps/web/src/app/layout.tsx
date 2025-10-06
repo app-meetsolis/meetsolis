@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { ClerkProvider } from '@clerk/nextjs';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Providers } from './providers';
+import { CookieConsent } from '@/components/common/CookieConsent';
+import { AnalyticsProvider } from '@/components/analytics/AnalyticsProvider';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -24,7 +28,12 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body className={inter.className}>
-          <Providers>{children}</Providers>
+          <AnalyticsProvider>
+            <Providers>{children}</Providers>
+            <CookieConsent />
+          </AnalyticsProvider>
+          <Analytics />
+          <SpeedInsights />
         </body>
       </html>
     </ClerkProvider>

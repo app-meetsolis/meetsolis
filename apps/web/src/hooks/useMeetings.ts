@@ -6,6 +6,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import type { MeetingInsert, MeetingUpdate } from '@meetsolis/shared';
+import { isApiError } from '@meetsolis/shared';
 import {
   getMeetings,
   getMeetingById,
@@ -49,9 +50,13 @@ export function useCreateMeeting() {
       queryClient.invalidateQueries({ queryKey: ['meetings'] });
       toast.success('Meeting created successfully!');
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.error?.message || 'Failed to create meeting';
+    onError: (error: unknown) => {
+      let message = 'Failed to create meeting';
+
+      if (isApiError(error)) {
+        message = error.response?.data?.error?.message || message;
+      }
+
       toast.error(message);
     },
   });
@@ -73,9 +78,13 @@ export function useUpdateMeeting() {
       });
       toast.success('Meeting updated successfully!');
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.error?.message || 'Failed to update meeting';
+    onError: (error: unknown) => {
+      let message = 'Failed to update meeting';
+
+      if (isApiError(error)) {
+        message = error.response?.data?.error?.message || message;
+      }
+
       toast.error(message);
     },
   });
@@ -93,9 +102,13 @@ export function useDeleteMeeting() {
       queryClient.invalidateQueries({ queryKey: ['meetings'] });
       toast.success('Meeting deleted successfully!');
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.error?.message || 'Failed to delete meeting';
+    onError: (error: unknown) => {
+      let message = 'Failed to delete meeting';
+
+      if (isApiError(error)) {
+        message = error.response?.data?.error?.message || message;
+      }
+
       toast.error(message);
     },
   });
