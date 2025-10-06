@@ -5,6 +5,7 @@ const envSchema = z.object({
   // Clerk Authentication
   CLERK_SECRET_KEY: z.string().optional(),
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().optional(),
+  CLERK_WEBHOOK_SECRET: z.string().optional(),
 
   // Supabase Configuration
   NEXT_PUBLIC_SUPABASE_URL: z.string().optional(),
@@ -28,12 +29,22 @@ const envSchema = z.object({
   // Analytics and Monitoring
   NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
   NEXT_PUBLIC_POSTHOG_HOST: z.string().optional(),
+  NEXT_PUBLIC_MIXPANEL_TOKEN: z.string().optional(),
+  NEXT_PUBLIC_HOTJAR_ID: z.string().optional(),
+  NEXT_PUBLIC_HOTJAR_SV: z.string().optional(),
   SENTRY_DSN: z.string().optional(),
   NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
+  NEXT_PUBLIC_APP_VERSION: z.string().optional(),
+
+  // Alerting
+  SLACK_WEBHOOK_URL: z.string().optional(),
 
   // Service Configuration
   USE_MOCK_SERVICES: z.string().default('true'),
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  NEXT_PUBLIC_USE_MOCK_SERVICES: z.string().default('true'),
+  NODE_ENV: z
+    .enum(['development', 'production', 'test'])
+    .default('development'),
 
   // Circuit Breaker & Retry Configuration
   SERVICE_TIMEOUT_MS: z.string().default('5000'),
@@ -49,6 +60,9 @@ const envSchema = z.object({
   TURN_SERVER_URL: z.string().optional(),
   TURN_SERVER_USERNAME: z.string().optional(),
   TURN_SERVER_CREDENTIAL: z.string().optional(),
+
+  // Application Configuration
+  NEXT_PUBLIC_APP_URL: z.string().default('http://localhost:3000'),
 
   // Security
   NEXTAUTH_URL: z.string().default('http://localhost:3000'),
@@ -79,10 +93,17 @@ export const config = {
   healthCheckInterval: parseInt(env.HEALTH_CHECK_INTERVAL, 10),
   enableServiceMonitoring: env.ENABLE_SERVICE_MONITORING === 'true',
 
+  // Application configuration
+  app: {
+    url: env.NEXT_PUBLIC_APP_URL,
+    env: env.NODE_ENV,
+  },
+
   // Service endpoints and keys
   clerk: {
     secretKey: env.CLERK_SECRET_KEY,
     publishableKey: env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+    webhookSecret: env.CLERK_WEBHOOK_SECRET,
   },
 
   supabase: {
@@ -111,8 +132,13 @@ export const config = {
   analytics: {
     posthogKey: env.NEXT_PUBLIC_POSTHOG_KEY,
     posthogHost: env.NEXT_PUBLIC_POSTHOG_HOST,
+    mixpanelToken: env.NEXT_PUBLIC_MIXPANEL_TOKEN,
+    hotjarId: env.NEXT_PUBLIC_HOTJAR_ID,
+    hotjarSv: env.NEXT_PUBLIC_HOTJAR_SV,
     sentryDsn: env.SENTRY_DSN,
     publicSentryDsn: env.NEXT_PUBLIC_SENTRY_DSN,
+    appVersion: env.NEXT_PUBLIC_APP_VERSION,
+    slackWebhook: env.SLACK_WEBHOOK_URL,
   },
 
   webrtc: {

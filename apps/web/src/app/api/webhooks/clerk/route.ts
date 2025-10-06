@@ -12,12 +12,13 @@ import {
   updateUserProfile,
   deleteUserProfile,
 } from '@/services/auth';
+import { config } from '@/lib/config/env';
 
 /**
  * Verify webhook signature from Clerk
  */
 function verifyWebhook(req: NextRequest, body: string): WebhookEvent | null {
-  const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
+  const WEBHOOK_SECRET = config.clerk.webhookSecret;
 
   if (!WEBHOOK_SECRET) {
     console.error('Missing CLERK_WEBHOOK_SECRET environment variable');

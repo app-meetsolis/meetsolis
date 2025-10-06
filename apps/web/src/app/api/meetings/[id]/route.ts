@@ -9,6 +9,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import { config } from '@/lib/config/env';
+import { getUserByClerkId } from '@/lib/helpers/user';
 
 const UpdateMeetingSchema = z.object({
   title: z.string().min(1).max(200).optional(),
@@ -45,16 +47,12 @@ export async function GET(
     }
 
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      config.supabase.url!,
+      config.supabase.serviceRoleKey!
     );
 
     // Get user's database ID
-    const { data: user } = await supabase
-      .from('users')
-      .select('id')
-      .eq('clerk_id', userId)
-      .single();
+    const user = await getUserByClerkId(supabase, userId);
 
     if (!user) {
       return NextResponse.json(
@@ -118,16 +116,12 @@ export async function PATCH(
     }
 
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      config.supabase.url!,
+      config.supabase.serviceRoleKey!
     );
 
     // Get user's database ID
-    const { data: user } = await supabase
-      .from('users')
-      .select('id')
-      .eq('clerk_id', userId)
-      .single();
+    const user = await getUserByClerkId(supabase, userId);
 
     if (!user) {
       return NextResponse.json(
@@ -206,16 +200,12 @@ export async function DELETE(
     }
 
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      config.supabase.url!,
+      config.supabase.serviceRoleKey!
     );
 
     // Get user's database ID
-    const { data: user } = await supabase
-      .from('users')
-      .select('id')
-      .eq('clerk_id', userId)
-      .single();
+    const user = await getUserByClerkId(supabase, userId);
 
     if (!user) {
       return NextResponse.json(

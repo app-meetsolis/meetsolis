@@ -9,6 +9,8 @@ import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { nanoid } from 'nanoid';
+import { config } from '@/lib/config/env';
+import { getUserByClerkId } from '@/lib/helpers/user';
 
 // Request validation schema
 const CreateMeetingSchema = z.object({
@@ -31,7 +33,7 @@ const CreateMeetingSchema = z.object({
 // Helper function to generate unique invite link
 function generateInviteLink(): string {
   const meetingId = nanoid(10);
-  return `${process.env.NEXT_PUBLIC_APP_URL}/meeting/${meetingId}`;
+  return `${config.app.url}/meeting/${meetingId}`;
 }
 
 // Default meeting settings
@@ -59,16 +61,12 @@ export async function GET(request: NextRequest) {
     }
 
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      config.supabase.url!,
+      config.supabase.serviceRoleKey!
     );
 
     // Get user's database ID from clerk_id
-    const { data: user } = await supabase
-      .from('users')
-      .select('id')
-      .eq('clerk_id', userId)
-      .single();
+    const user = await getUserByClerkId(supabase, userId);
 
     if (!user) {
       return NextResponse.json(
@@ -151,16 +149,12 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      config.supabase.url!,
+      config.supabase.serviceRoleKey!
     );
 
     // Get user's database ID from clerk_id
-    const { data: user } = await supabase
-      .from('users')
-      .select('id')
-      .eq('clerk_id', userId)
-      .single();
+    const user = await getUserByClerkId(supabase, userId);
 
     if (!user) {
       return NextResponse.json(
