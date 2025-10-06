@@ -48,25 +48,19 @@ export function initializeSentry(): void {
       return event;
     },
 
-    integrations: [
-      // Browser tracing for performance monitoring
-      new Sentry.BrowserTracing({
-        tracePropagationTargets: [
-          'localhost',
-          /^https:\/\/.*\.vercel\.app/,
-          process.env.NEXT_PUBLIC_APP_URL || '',
-        ],
-      }),
+    // Integration configuration for browser tracing
+    tracePropagationTargets: [
+      'localhost',
+      /^https:\/\/.*\.vercel\.app/,
+      process.env.NEXT_PUBLIC_APP_URL || '',
     ],
   });
 
   // Set default context
-  Sentry.configureScope(scope => {
-    scope.setContext('application', {
-      name: 'MeetSolis',
-      environment: process.env.NODE_ENV,
-      version: process.env.NEXT_PUBLIC_APP_VERSION || 'dev',
-    });
+  Sentry.setContext('application', {
+    name: 'MeetSolis',
+    environment: process.env.NODE_ENV,
+    version: process.env.NEXT_PUBLIC_APP_VERSION || 'dev',
   });
 
   console.log('[Sentry] Initialized successfully');
