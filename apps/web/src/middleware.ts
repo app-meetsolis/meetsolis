@@ -13,7 +13,16 @@ import {
  */
 export default authMiddleware({
   // Public routes accessible without authentication
-  publicRoutes: ['/', '/sign-in(.*)', '/sign-up(.*)', '/api/webhooks(.*)'],
+  publicRoutes: [
+    '/',
+    '/about',
+    '/privacy',
+    '/terms',
+    '/sign-in(.*)',
+    '/sign-up(.*)',
+    '/api/webhooks(.*)',
+    '/admin/services', // Admin page
+  ],
 
   // Custom handler to integrate rate limiting and security headers
   async afterAuth(auth, req) {
