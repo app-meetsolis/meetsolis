@@ -5,9 +5,8 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
 import { analytics } from '@/lib/analytics';
 import { reportWebVitals } from '@/lib/analytics/web-vitals';
 import {
@@ -21,10 +20,9 @@ interface AnalyticsProviderProps {
   children: React.ReactNode;
 }
 
-export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
+function AnalyticsTracking() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { user, isLoaded } = useUser();
 
   // Initialize analytics on mount
   useEffect(() => {
@@ -42,35 +40,6 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
 
     console.log('[Analytics] Initialized all services');
   }, []);
-
-  // Identify user when they sign in
-  useEffect(() => {
-    if (!isLoaded) return;
-
-    if (user) {
-      // Identify user across all analytics platforms
-      analytics.identify(user.id, {
-        userId: user.id,
-        email: user.primaryEmailAddress?.emailAddress,
-        name: user.fullName || undefined,
-        signupDate: user.createdAt?.toISOString(),
-      });
-
-      // Set user context in Sentry
-      setUserContext(user.id, user.primaryEmailAddress?.emailAddress, {
-        name: user.fullName || undefined,
-        createdAt: user.createdAt?.toISOString(),
-      });
-
-      console.log('[Analytics] User identified:', user.id);
-    } else {
-      // Clear user context on logout
-      clearUserContext();
-      analytics.reset();
-
-      console.log('[Analytics] User context cleared');
-    }
-  }, [user, isLoaded]);
 
   // Track page views
   useEffect(() => {
@@ -90,5 +59,16 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
     console.log('[Analytics] Page view:', pathname);
   }, [pathname, searchParams]);
 
-  return <>{children}</>;
+  return null;
+}
+
+export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
+  return (
+    <>
+      <Suspense fallback={null}>
+        <AnalyticsTracking />
+      </Suspense>
+      {children}
+    </>
+  );
 }

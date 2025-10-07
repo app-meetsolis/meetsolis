@@ -270,3 +270,20 @@ if (typeof Element !== 'undefined') {
   Element.prototype.scrollIntoView =
     Element.prototype.scrollIntoView || function () {};
 }
+
+// Mock IntersectionObserver for Framer Motion
+global.IntersectionObserver = class IntersectionObserver {
+  constructor() {}
+  disconnect() {}
+  observe() {}
+  takeRecords() {
+    return [];
+  }
+  unobserve() {}
+};
+
+// Mock Vercel Analytics
+jest.mock('@vercel/analytics', () => ({
+  track: jest.fn(),
+  Analytics: jest.fn(() => null),
+}));
