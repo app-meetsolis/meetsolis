@@ -4,10 +4,12 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
+import { useAuth } from '@clerk/nextjs';
 
 export function MarketingHeader() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isSignedIn, isLoaded } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -55,12 +57,20 @@ export function MarketingHeader() {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link href="/sign-in">
-              <Button variant="ghost">Sign In</Button>
-            </Link>
-            <Link href="/sign-up">
-              <Button>Start Free Trial</Button>
-            </Link>
+            {isLoaded && isSignedIn ? (
+              <Link href="/dashboard">
+                <Button>Go to Dashboard</Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/sign-in">
+                  <Button variant="ghost">Sign In</Button>
+                </Link>
+                <Link href="/sign-up">
+                  <Button>Start Free Trial</Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -103,14 +113,22 @@ export function MarketingHeader() {
                 Testimonials
               </Link>
               <div className="pt-4 space-y-2">
-                <Link href="/sign-in" className="block">
-                  <Button variant="ghost" className="w-full">
-                    Sign In
-                  </Button>
-                </Link>
-                <Link href="/sign-up" className="block">
-                  <Button className="w-full">Start Free Trial</Button>
-                </Link>
+                {isLoaded && isSignedIn ? (
+                  <Link href="/dashboard" className="block">
+                    <Button className="w-full">Go to Dashboard</Button>
+                  </Link>
+                ) : (
+                  <>
+                    <Link href="/sign-in" className="block">
+                      <Button variant="ghost" className="w-full">
+                        Sign In
+                      </Button>
+                    </Link>
+                    <Link href="/sign-up" className="block">
+                      <Button className="w-full">Start Free Trial</Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </nav>
           </div>

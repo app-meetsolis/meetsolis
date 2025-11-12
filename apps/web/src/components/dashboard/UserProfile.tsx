@@ -6,6 +6,7 @@
 'use client';
 
 import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile, getDisplayName } from '@/hooks/useUserProfile';
 import { useClerk } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { Settings, LogOut, User } from 'lucide-react';
@@ -26,9 +27,13 @@ interface UserProfileProps {
 }
 
 export function UserProfile({ className }: UserProfileProps) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
+  const { data: profile, isLoading: profileLoading } = useUserProfile();
   const { signOut } = useClerk();
   const router = useRouter();
+
+  const isLoading = authLoading || profileLoading;
+  const displayName = getDisplayName(profile);
 
   const handleSignOut = async () => {
     await signOut();
@@ -51,13 +56,12 @@ export function UserProfile({ className }: UserProfileProps) {
     return null;
   }
 
-  const initials =
-    user.name
-      ?.split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2) || 'U';
+  const initials = displayName
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2) || 'U';
 
   return (
     <DropdownMenu>
@@ -68,22 +72,22 @@ export function UserProfile({ className }: UserProfileProps) {
           aria-label="User profile menu"
         >
           <Avatar className="h-10 w-10">
-            <AvatarImage src={undefined} alt={user.name || 'User'} />
+            <AvatarImage src={undefined} alt={displayName} />
             <AvatarFallback className="bg-[#00A0B0] text-white">
               {initials}
             </AvatarFallback>
           </Avatar>
           <div className="hidden flex-col items-start md:flex">
-            <p className="text-sm font-medium">{user.name}</p>
-            <p className="text-xs text-gray-500">{user.role}</p>
+            <p className="text-sm font-medium">{displayName}</p>
+            <p className="text-xs text-gray-500">{profile?.title || user.role}</p>
           </div>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>
           <div className="flex flex-col gap-1">
-            <p className="text-sm font-medium">{user.name}</p>
-            <p className="text-xs text-gray-500">{user.email}</p>
+            <p className="text-sm font-medium">{displayName}</p>
+            <p className="text-xs text-gray-500">{profile?.email || user.email}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

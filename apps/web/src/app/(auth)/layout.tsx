@@ -1,14 +1,13 @@
 /**
  * Auth Layout
- * Wraps authentication pages (sign-in, sign-up) with ClerkProvider
+ * Wraps authentication pages (sign-in, sign-up)
+ * Note: ClerkProvider is now in root Providers component
  */
-
-import { ClerkProvider } from '@clerk/nextjs';
 
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <ClerkProvider>{children}</ClerkProvider>;
+  return <>{children}</>;
 }
