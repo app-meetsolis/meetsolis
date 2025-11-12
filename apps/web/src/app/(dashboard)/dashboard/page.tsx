@@ -10,9 +10,13 @@ import { MeetingHistory } from '@/components/dashboard/MeetingHistory';
 import { MetricsPreview } from '@/components/dashboard/MetricsPreview';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile, getDisplayName } from '@/hooks/useUserProfile';
 
 export default function DashboardPage() {
-  const { user, isLoading } = useAuth();
+  const { isLoading: authLoading } = useAuth();
+  const { data: profile, isLoading: profileLoading } = useUserProfile();
+
+  const isLoading = authLoading || profileLoading;
 
   if (isLoading) {
     return (
@@ -37,7 +41,7 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-[#001F3F]">
-            Welcome back, {user?.name?.split(' ')[0]}!
+            Welcome back, {getDisplayName(profile).split(' ')[0]}!
           </h1>
           <p className="mt-2 text-gray-600">
             Manage your meetings and track your productivity

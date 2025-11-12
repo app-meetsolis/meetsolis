@@ -1,9 +1,9 @@
 /**
  * Dashboard Layout
  * Wrapper layout for dashboard pages with navigation
+ * Note: ClerkProvider is now in root Providers component
  */
 
-import { ClerkProvider } from '@clerk/nextjs';
 import { Navigation } from '@/components/dashboard/Navigation';
 import { UserProfile } from '@/components/dashboard/UserProfile';
 import { UserTracking } from '@/components/analytics/UserTracking';
@@ -17,7 +17,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
+    <>
       <UserTracking />
       <ErrorBoundary>
         <div className="min-h-screen bg-gray-50">
@@ -54,6 +54,6 @@ export default function DashboardLayout({
           />
         </div>
       </ErrorBoundary>
-    </ClerkProvider>
+    </>
   );
 }

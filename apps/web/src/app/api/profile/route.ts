@@ -1,52 +1,26 @@
 /**
- * Meetings API Routes
- * GET /api/meetings - Fetch user's meetings
- * POST /api/meetings - Create a new meeting
+ * Profile API Routes
+ * GET /api/profile - Fetch user profile
+ * PUT /api/profile - Update user profile
+ * Story 1.8: User Onboarding & Experience Risk Mitigation
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { nanoid } from 'nanoid';
 import { config } from '@/lib/config/env';
 import { getUserByClerkId } from '@/lib/helpers/user';
 import { createUserProfile } from '@/services/auth';
 
-// Request validation schema
-const CreateMeetingSchema = z.object({
-  title: z.string().min(1).max(200),
-  description: z.string().optional(),
-  scheduled_start: z.string().optional(),
-  settings: z
-    .object({
-      allow_screen_share: z.boolean().optional(),
-      allow_whiteboard: z.boolean().optional(),
-      allow_file_upload: z.boolean().optional(),
-      auto_record: z.boolean().optional(),
-      enable_reactions: z.boolean().optional(),
-      enable_polls: z.boolean().optional(),
-      background_blur_default: z.boolean().optional(),
-    })
-    .optional(),
+// Request validation schema for profile updates
+const UpdateProfileSchema = z.object({
+  display_name: z.string().min(1).max(100).optional(),
+  title: z.string().max(200).optional(),
+  bio: z.string().max(1000).optional(),
+  timezone: z.string().optional(),
+  onboarding_completed: z.boolean().optional(),
 });
-
-// Helper function to generate unique invite link
-function generateInviteLink(): string {
-  const meetingId = nanoid(10);
-  return `${config.app.url}/meeting/${meetingId}`;
-}
-
-// Default meeting settings
-const defaultMeetingSettings = {
-  allow_screen_share: true,
-  allow_whiteboard: true,
-  allow_file_upload: true,
-  auto_record: false,
-  enable_reactions: true,
-  enable_polls: true,
-  background_blur_default: false,
-};
 
 /**
  * Get user from Supabase, or create if doesn't exist
@@ -79,7 +53,7 @@ async function getOrCreateUser(supabase: any, userId: string) {
 }
 
 /**
- * GET /api/meetings - Get user's meetings
+ * GET /api/profile - Get user's profile
  */
 export async function GET(request: NextRequest) {
   try {
@@ -99,42 +73,16 @@ export async function GET(request: NextRequest) {
     // Get user's database ID from clerk_id (or create if doesn't exist)
     const user = await getOrCreateUser(supabase, userId);
 
-    // Parse query parameters for filtering
-    const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status');
-    const search = searchParams.get('search');
-    const dateFrom = searchParams.get('dateFrom');
-    const dateTo = searchParams.get('dateTo');
-
-    // Build query
-    let query = supabase
-      .from('meetings')
-      .select('*')
-      .or(`host_id.eq.${user.id}`)
-      .order('created_at', { ascending: false });
-
-    // Apply filters
-    if (status) {
-      query = query.eq('status', status);
-    }
-
-    if (search) {
-      query = query.ilike('title', `%${search}%`);
-    }
-
-    if (dateFrom) {
-      query = query.gte('created_at', dateFrom);
-    }
-
-    if (dateTo) {
-      query = query.lte('created_at', dateTo);
-    }
-
-    const { data: meetings, error } = await query;
+    // Fetch full user profile
+    const { data: profile, error } = await supabase
+      .from('users')
+      .select('id, clerk_id, email, name, display_name, title, bio, timezone, role, onboarding_completed, onboarding_completed_at, created_at, updated_at')
+      .eq('id', user.id)
+      .single();
 
     if (error) throw error;
 
-    return NextResponse.json(meetings);
+    return NextResponse.json(profile);
   } catch (error) {
     console.error('API Error:', error);
     return NextResponse.json(
@@ -145,9 +93,9 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * POST /api/meetings - Create new meeting
+ * PUT /api/profile - Update user's profile
  */
-export async function POST(request: NextRequest) {
+export async function PUT(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -159,7 +107,7 @@ export async function POST(request: NextRequest) {
 
     // Parse and validate request body
     const body = await request.json();
-    const validation = CreateMeetingSchema.safeParse(body);
+    const validation = UpdateProfileSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
         {
@@ -180,27 +128,33 @@ export async function POST(request: NextRequest) {
     // Get user's database ID from clerk_id (or create if doesn't exist)
     const user = await getOrCreateUser(supabase, userId);
 
-    // Merge default settings with provided settings
-    const settings = {
-      ...defaultMeetingSettings,
-      ...(validation.data.settings || {}),
-    };
+    // Build update object (only include fields that were provided)
+    const updateData: any = {};
 
-    // Insert meeting record
-    const { data: meeting, error } = await supabase
-      .from('meetings')
-      .insert({
-        host_id: user.id,
-        title: validation.data.title,
-        description: validation.data.description,
-        status: validation.data.scheduled_start ? 'scheduled' : 'active',
-        scheduled_start: validation.data.scheduled_start,
-        invite_link: generateInviteLink(),
-        settings,
-        waiting_room_enabled: false,
-        locked: false,
-        max_participants: 100,
-      })
+    if (validation.data.display_name !== undefined) {
+      updateData.display_name = validation.data.display_name;
+    }
+    if (validation.data.title !== undefined) {
+      updateData.title = validation.data.title;
+    }
+    if (validation.data.bio !== undefined) {
+      updateData.bio = validation.data.bio;
+    }
+    if (validation.data.timezone !== undefined) {
+      updateData.timezone = validation.data.timezone;
+    }
+    if (validation.data.onboarding_completed !== undefined) {
+      updateData.onboarding_completed = validation.data.onboarding_completed;
+      if (validation.data.onboarding_completed) {
+        updateData.onboarding_completed_at = new Date().toISOString();
+      }
+    }
+
+    // Update user profile
+    const { data: updatedProfile, error } = await supabase
+      .from('users')
+      .update(updateData)
+      .eq('id', user.id)
       .select()
       .single();
 
@@ -208,7 +162,7 @@ export async function POST(request: NextRequest) {
       throw error;
     }
 
-    return NextResponse.json(meeting, { status: 201 });
+    return NextResponse.json(updatedProfile, { status: 200 });
   } catch (error) {
     console.error('API Error:', error);
     return NextResponse.json(
