@@ -41,6 +41,43 @@ export default authMiddleware({
       return NextResponse.redirect(signInUrl);
     }
 
+    // =============================================================================
+    // HARD ENFORCEMENT: Onboarding Completion Check (Story 1.9)
+    // =============================================================================
+    const hardEnforcementEnabled =
+      process.env.NEXT_PUBLIC_ONBOARDING_HARD_ENFORCEMENT === 'true';
+
+    if (hardEnforcementEnabled && auth.userId) {
+      const isOnboardingRoute = req.nextUrl.pathname.startsWith('/onboarding');
+      const isAdminRoute = req.nextUrl.pathname.startsWith('/admin');
+      const isApiRoute = req.nextUrl.pathname.startsWith('/api');
+
+      // Only enforce on protected routes (not onboarding, admin, or API routes)
+      const shouldEnforceOnboarding =
+        isProtectedRoute && !isOnboardingRoute && !isAdminRoute && !isApiRoute;
+
+      if (shouldEnforceOnboarding) {
+        // Check localStorage via cookie or query param (since middleware can't access localStorage)
+        // In production, this would check the database with caching
+        // For now, gracefully degrade if we can't determine status
+        const onboardingComplete =
+          req.cookies.get('onboarding_complete')?.value === 'true';
+
+        if (!onboardingComplete) {
+          // Check if user is exempt (admin, power user, support team)
+          const userRole = (auth.sessionClaims?.role as string) || 'user';
+          const exemptRoles = ['admin', 'support'];
+
+          if (!exemptRoles.includes(userRole)) {
+            // Redirect to onboarding
+            const onboardingUrl = new URL('/onboarding', req.url);
+            onboardingUrl.searchParams.set('enforced', 'true');
+            return NextResponse.redirect(onboardingUrl);
+          }
+        }
+      }
+    }
+
     // Apply rate limiting to API routes (except webhooks)
     if (
       req.nextUrl.pathname.startsWith('/api/') &&
