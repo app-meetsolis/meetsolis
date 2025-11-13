@@ -1,0 +1,24 @@
+schema: 1
+story: '1.9'
+gate: CONCERNS
+status_reason: 'All acceptance criteria met with solid implementation, but rate limiting uses in-memory storage unsuitable for distributed production environment.'
+reviewer: 'Quinn'
+updated: '2025-11-13T00:00:00Z'
+top_issues:
+  - id: 'ARCH-001'
+    severity: medium
+    finding: 'Rate limiting uses in-memory Map, will not work correctly across multiple Vercel Edge instances'
+    suggested_action: 'Replace in-memory rate limiting with Vercel KV or Redis before production deployment'
+  - id: 'MNT-001'
+    severity: medium
+    finding: 'Admin metrics dashboard uses mock data, not connected to real analytics'
+    suggested_action: 'Connect admin dashboard to PostHog or actual analytics backend for production use'
+  - id: 'TEST-001'
+    severity: low
+    finding: 'API route tests fail due to NextRequest mocking issues; only validation tests passing'
+    suggested_action: 'Fix route.test.ts mocking or migrate to integration tests with real NextRequest'
+  - id: 'TEST-002'
+    severity: low
+    finding: 'No automated E2E tests for keyboard navigation flow (manual testing only)'
+    suggested_action: 'Add Playwright E2E tests for keyboard navigation scenarios (Enter, Esc, Tab, Space)'
+waiver: { active: false }

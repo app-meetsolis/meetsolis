@@ -8,6 +8,7 @@
 import { CreateMeetingButton } from '@/components/dashboard/CreateMeetingButton';
 import { MeetingHistory } from '@/components/dashboard/MeetingHistory';
 import { MetricsPreview } from '@/components/dashboard/MetricsPreview';
+import { OnboardingIncompleteBanner } from '@/components/dashboard/OnboardingIncompleteBanner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile, getDisplayName } from '@/hooks/useUserProfile';
@@ -49,6 +50,9 @@ export default function DashboardPage() {
         </div>
         <CreateMeetingButton />
       </div>
+
+      {/* Onboarding Incomplete Banner (Story 1.9) */}
+      <OnboardingIncompleteBanner />
 
       {/* Metrics Section */}
       <MetricsPreview />
