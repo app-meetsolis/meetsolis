@@ -75,7 +75,22 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(meeting);
+    // Fetch participants for this meeting
+    const { data: participants, error: participantsError } = await supabase
+      .from('participants')
+      .select('*')
+      .eq('meeting_id', params.id)
+      .is('leave_time', null) // Only active participants
+      .order('join_time', { ascending: true });
+
+    if (participantsError) {
+      console.error('Error fetching participants:', participantsError);
+    }
+
+    return NextResponse.json({
+      meeting,
+      participants: participants || [],
+    });
   } catch (error) {
     console.error('API Error:', error);
     return NextResponse.json(

@@ -191,14 +191,60 @@ if (typeof Request === 'undefined') {
       this.method = init?.method || 'GET';
       this.headers = new Headers(init?.headers || {});
       this.body = init?.body;
+      this.cache = init?.cache || 'default';
+      this.credentials = init?.credentials || 'same-origin';
+      this.destination = '';
+      this.integrity = init?.integrity || '';
+      this.mode = init?.mode || 'cors';
+      this.redirect = init?.redirect || 'follow';
+      this.referrer = init?.referrer || 'about:client';
+      this.referrerPolicy = init?.referrerPolicy || '';
     }
 
     async json() {
-      return this.body ? JSON.parse(this.body) : {};
+      if (!this.body) return {};
+      return typeof this.body === 'string' ? JSON.parse(this.body) : this.body;
     }
 
     async text() {
-      return this.body || '';
+      if (!this.body) return '';
+      return typeof this.body === 'string'
+        ? this.body
+        : JSON.stringify(this.body);
+    }
+
+    async arrayBuffer() {
+      const str = await this.text();
+      const buf = new ArrayBuffer(str.length);
+      const bufView = new Uint8Array(buf);
+      for (let i = 0; i < str.length; i++) {
+        bufView[i] = str.charCodeAt(i);
+      }
+      return buf;
+    }
+
+    async blob() {
+      return new Blob([await this.text()]);
+    }
+
+    async formData() {
+      // Simplified FormData mock
+      const fd = new FormData();
+      return fd;
+    }
+
+    clone() {
+      return new Request(this.url, {
+        method: this.method,
+        headers: this.headers,
+        body: this.body,
+        mode: this.mode,
+        credentials: this.credentials,
+        cache: this.cache,
+        redirect: this.redirect,
+        referrer: this.referrer,
+        integrity: this.integrity,
+      });
     }
   };
 }
@@ -210,6 +256,10 @@ if (typeof Response === 'undefined') {
       this.status = init?.status || 200;
       this.statusText = init?.statusText || 'OK';
       this.headers = new Headers(init?.headers || {});
+      this.ok = this.status >= 200 && this.status < 300;
+      this.redirected = false;
+      this.type = 'basic';
+      this.url = '';
     }
 
     async json() {
@@ -220,6 +270,48 @@ if (typeof Response === 'undefined') {
       return typeof this.body === 'string'
         ? this.body
         : JSON.stringify(this.body);
+    }
+
+    async arrayBuffer() {
+      const str = await this.text();
+      const buf = new ArrayBuffer(str.length);
+      const bufView = new Uint8Array(buf);
+      for (let i = 0; i < str.length; i++) {
+        bufView[i] = str.charCodeAt(i);
+      }
+      return buf;
+    }
+
+    async blob() {
+      return new Blob([await this.text()]);
+    }
+
+    clone() {
+      return new Response(this.body, {
+        status: this.status,
+        statusText: this.statusText,
+        headers: this.headers,
+      });
+    }
+
+    // Static method for creating JSON responses (most commonly used in Next.js)
+    static json(data, init) {
+      const body = JSON.stringify(data);
+      const headers = new Headers(init?.headers || {});
+      headers.set('content-type', 'application/json');
+
+      return new Response(body, {
+        ...init,
+        headers: headers,
+      });
+    }
+
+    // Static method for redirects
+    static redirect(url, status = 302) {
+      return new Response(null, {
+        status,
+        headers: { Location: url },
+      });
     }
   };
 }
@@ -248,6 +340,76 @@ if (typeof Headers === 'undefined') {
 
     entries() {
       return this.map.entries();
+    }
+  };
+}
+
+// Mock Next.js specific NextRequest and NextResponse (must come after base classes)
+if (typeof NextRequest === 'undefined') {
+  global.NextRequest = class NextRequest extends global.Request {
+    constructor(input, init) {
+      super(input, init);
+      this.nextUrl = new URL(typeof input === 'string' ? input : input.url);
+      this.cookies = {
+        get: jest.fn(),
+        set: jest.fn(),
+        delete: jest.fn(),
+        has: jest.fn(),
+        clear: jest.fn(),
+        getAll: jest.fn(() => []),
+      };
+      this.geo = {
+        city: 'Test City',
+        country: 'US',
+        region: 'CA',
+        latitude: '37.7749',
+        longitude: '-122.4194',
+      };
+      this.ip = '127.0.0.1';
+    }
+  };
+}
+
+if (typeof NextResponse === 'undefined') {
+  global.NextResponse = class NextResponse extends global.Response {
+    constructor(body, init) {
+      super(body, init);
+      this.cookies = {
+        get: jest.fn(),
+        set: jest.fn(),
+        delete: jest.fn(),
+        has: jest.fn(),
+        clear: jest.fn(),
+        getAll: jest.fn(() => []),
+      };
+    }
+
+    static json(data, init) {
+      const body = JSON.stringify(data);
+      const headers = new global.Headers(init?.headers || {});
+      headers.set('content-type', 'application/json');
+
+      return new NextResponse(body, {
+        ...init,
+        headers: headers,
+      });
+    }
+
+    static redirect(url, status = 307) {
+      return new NextResponse(null, {
+        status,
+        headers: { Location: url },
+      });
+    }
+
+    static rewrite(url) {
+      return new NextResponse(null, {
+        headers: { 'x-middleware-rewrite': url },
+      });
+    }
+
+    static next(init) {
+      return new NextResponse(null, init);
     }
   };
 }
@@ -287,3 +449,170 @@ jest.mock('@vercel/analytics', () => ({
   track: jest.fn(),
   Analytics: jest.fn(() => null),
 }));
+
+// Enhanced Web Audio API Mocks
+// These mocks provide a more complete implementation of Web Audio API for testing
+if (typeof window !== 'undefined') {
+  // Mock AudioContext with all required properties and methods
+  class MockAudioContext {
+    constructor() {
+      this.state = 'running';
+      this.sampleRate = 48000;
+      this.currentTime = 0;
+      this.destination = {
+        channelCount: 2,
+        maxChannelCount: 2,
+      };
+      this._closed = false;
+    }
+
+    createAnalyser() {
+      const analyser = {
+        fftSize: 2048,
+        frequencyBinCount: 1024,
+        minDecibels: -100,
+        maxDecibels: -30,
+        smoothingTimeConstant: 0.8,
+        connect: jest.fn(),
+        disconnect: jest.fn(),
+        getByteFrequencyData: jest.fn(array => {
+          // Fill with mock frequency data (simulate audio)
+          for (let i = 0; i < array.length; i++) {
+            array[i] = Math.floor(Math.random() * 128);
+          }
+        }),
+        getByteTimeDomainData: jest.fn(array => {
+          for (let i = 0; i < array.length; i++) {
+            array[i] = 128 + Math.floor(Math.random() * 20) - 10;
+          }
+        }),
+        getFloatFrequencyData: jest.fn(),
+        getFloatTimeDomainData: jest.fn(),
+      };
+      return analyser;
+    }
+
+    createMediaStreamSource(stream) {
+      return {
+        mediaStream: stream,
+        connect: jest.fn(),
+        disconnect: jest.fn(),
+      };
+    }
+
+    createMediaStreamDestination() {
+      return {
+        stream: new MediaStream(),
+        connect: jest.fn(),
+        disconnect: jest.fn(),
+      };
+    }
+
+    createGain() {
+      return {
+        gain: {
+          value: 1,
+          setValueAtTime: jest.fn(),
+          linearRampToValueAtTime: jest.fn(),
+          exponentialRampToValueAtTime: jest.fn(),
+        },
+        connect: jest.fn(),
+        disconnect: jest.fn(),
+      };
+    }
+
+    createOscillator() {
+      return {
+        type: 'sine',
+        frequency: {
+          value: 440,
+          setValueAtTime: jest.fn(),
+        },
+        start: jest.fn(),
+        stop: jest.fn(),
+        connect: jest.fn(),
+        disconnect: jest.fn(),
+      };
+    }
+
+    createBiquadFilter() {
+      return {
+        type: 'lowpass',
+        frequency: { value: 350 },
+        Q: { value: 1 },
+        gain: { value: 0 },
+        connect: jest.fn(),
+        disconnect: jest.fn(),
+      };
+    }
+
+    async close() {
+      if (this._closed) {
+        throw new Error('AudioContext is already closed');
+      }
+      this._closed = true;
+      this.state = 'closed';
+    }
+
+    async resume() {
+      if (this._closed) {
+        throw new Error('Cannot resume a closed AudioContext');
+      }
+      this.state = 'running';
+    }
+
+    async suspend() {
+      if (this._closed) {
+        throw new Error('Cannot suspend a closed AudioContext');
+      }
+      this.state = 'suspended';
+    }
+
+    decodeAudioData(audioData) {
+      return Promise.resolve({
+        duration: 1,
+        length: 48000,
+        numberOfChannels: 2,
+        sampleRate: 48000,
+        getChannelData: jest.fn(() => new Float32Array(48000)),
+      });
+    }
+  }
+
+  // Set up AudioContext globally
+  global.AudioContext = MockAudioContext;
+  global.webkitAudioContext = MockAudioContext;
+
+  // Mock performance.now() for animation frames
+  if (!global.performance) {
+    global.performance = {};
+  }
+  if (!global.performance.now) {
+    const startTime = Date.now();
+    global.performance.now = () => Date.now() - startTime;
+  }
+
+  // Enhanced requestAnimationFrame / cancelAnimationFrame
+  if (!global.requestAnimationFrame) {
+    let frameId = 0;
+    const frameCallbacks = new Map();
+
+    global.requestAnimationFrame = callback => {
+      const id = ++frameId;
+      frameCallbacks.set(id, callback);
+      // Execute callback asynchronously to simulate browser behavior
+      setTimeout(() => {
+        if (frameCallbacks.has(id)) {
+          const cb = frameCallbacks.get(id);
+          frameCallbacks.delete(id);
+          cb(performance.now());
+        }
+      }, 16); // ~60fps
+      return id;
+    };
+
+    global.cancelAnimationFrame = id => {
+      frameCallbacks.delete(id);
+    };
+  }
+}

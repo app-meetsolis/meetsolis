@@ -16,8 +16,8 @@ import { createUserProfile } from '@/services/auth';
 // Request validation schema
 const CreateMeetingSchema = z.object({
   title: z.string().min(1).max(200),
-  description: z.string().optional(),
-  scheduled_start: z.string().optional(),
+  description: z.string().nullish(), // Allow null, undefined, or string
+  scheduled_start: z.string().nullish(),
   settings: z
     .object({
       allow_screen_share: z.boolean().optional(),
@@ -54,7 +54,7 @@ const defaultMeetingSettings = {
  */
 async function getOrCreateUser(supabase: any, userId: string) {
   // Try to get existing user
-  let user = await getUserByClerkId(supabase, userId);
+  const user = await getUserByClerkId(supabase, userId);
 
   // If user doesn't exist, create them from Clerk data
   if (!user) {
