@@ -1,3 +1,5 @@
+const { withSentryConfig } = require('@sentry/nextjs');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
@@ -30,6 +32,26 @@ const nextConfig = {
       },
     ];
   },
-}
+};
 
-module.exports = nextConfig
+// Sentry configuration options
+const sentryWebpackPluginOptions = {
+  // Suppress source map uploading logs during build
+  silent: true,
+
+  // Organization and project for Sentry
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+
+  // Auth token for uploading source maps
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+
+  // Additional config options
+  widenClientFileUpload: true,
+  tunnelRoute: '/monitoring',
+  hideSourceMaps: true,
+  disableLogger: true,
+};
+
+// Export with Sentry configuration
+module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
