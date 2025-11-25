@@ -243,7 +243,7 @@ export class WebRTCService {
         `[WebRTCService] SimplePeer 'close' event - Connection closed with ${userId}`
       );
       this.updateConnectionState(userId, 'closed');
-      this.cleanup(userId);
+      this.cleanupUser(userId);
     });
 
     // Error event
@@ -428,13 +428,13 @@ export class WebRTCService {
     if (peer) {
       peer.destroy();
     }
-    this.cleanup(userId);
+    this.cleanupUser(userId);
   }
 
   /**
    * Cleanup resources for a user
    */
-  private cleanup(userId: string): void {
+  private cleanupUser(userId: string): void {
     this.peerConnections.delete(userId);
     this.remoteStreams.delete(userId);
     this.connectionStates.delete(userId);
