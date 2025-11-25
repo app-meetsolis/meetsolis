@@ -6,7 +6,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 export interface UseAudioLevelOptions {
-  stream: MediaStream | null;
+  stream: MediaStream | null | undefined;
   smoothingTimeConstant?: number;
   fftSize?: number;
 }
