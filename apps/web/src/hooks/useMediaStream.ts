@@ -71,10 +71,8 @@ function getMediaConstraints(
     }),
   };
 
-  // Low latency configuration
-  if (lowLatency) {
-    videoConstraints.latency = 0;
-  }
+  // Low latency is achieved through frameRate constraints above
+  // No additional constraints needed
 
   return {
     audio: audioConstraints,
