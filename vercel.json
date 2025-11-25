@@ -5,12 +5,12 @@
   "devCommand": "cd apps/web && npm run dev",
   "framework": "nextjs",
   "env": {
-    "USE_MOCK_SERVICES": "true",
+    "USE_MOCK_SERVICES": "false",
     "NODE_ENV": "production"
   },
   "build": {
     "env": {
-      "USE_MOCK_SERVICES": "true"
+      "USE_MOCK_SERVICES": "false"
     }
   },
   "headers": [

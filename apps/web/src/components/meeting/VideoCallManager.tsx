@@ -441,7 +441,9 @@ export function VideoCallManager({
                   signalType: signal.type || 'answer',
                 }
               );
-              await signalingServiceRef.current?.sendAnswer(signal);
+              await signalingServiceRef.current?.sendAnswer(
+                signal as RTCSessionDescriptionInit
+              );
               console.log('[VideoCallManager] Answer sent to:', fromUserId);
             }
           );
@@ -545,7 +547,9 @@ export function VideoCallManager({
                       signalType: signal.type || 'offer',
                     }
                   );
-                  await signalingServiceRef.current?.sendOffer(signal);
+                  await signalingServiceRef.current?.sendOffer(
+                    signal as RTCSessionDescriptionInit
+                  );
                   console.log(
                     '[VideoCallManager] Offer sent to:',
                     participantId
