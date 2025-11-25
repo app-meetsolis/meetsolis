@@ -575,7 +575,7 @@ export class WebRTCService {
   /**
    * Cleanup/destroy (alias for backward compatibility)
    */
-  cleanup(): void {
+  public cleanup(): void {
     this.destroy();
   }
 }
