@@ -18,6 +18,7 @@ export interface Participant {
   isMuted: boolean;
   isVideoOff: boolean;
   connectionQuality: ConnectionQuality;
+  isSpeaking?: boolean;
 }
 
 export interface ParticipantGridProps {
@@ -131,6 +132,7 @@ export function ParticipantGrid({
               isMuted={participant.isMuted}
               isVideoOff={participant.isVideoOff}
               connectionQuality={participant.connectionQuality}
+              isSpeaking={participant.isSpeaking}
               onVideoClick={onParticipantClick}
               className="w-full h-full"
             />

@@ -37,6 +37,7 @@ export interface Meeting {
   actual_start: string | null;
   actual_end: string | null;
   settings: MeetingSettings;
+  meeting_code: string;
   invite_link: string;
   waiting_room_enabled: boolean;
   locked: boolean;

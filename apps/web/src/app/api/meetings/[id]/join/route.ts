@@ -11,7 +11,6 @@ import { config } from '@/lib/config/env';
 import { getUserByClerkId } from '@/lib/helpers/user';
 
 const JoinMeetingSchema = z.object({
-  user_id: z.string().uuid(),
   role: z
     .enum(['host', 'co-host', 'participant'])
     .optional()
@@ -50,7 +49,7 @@ export async function POST(
     }
 
     // Parse and validate request body
-    const body = await request.json();
+    const body = await request.json().catch(() => ({}));
     const validation = JoinMeetingSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
@@ -64,24 +63,11 @@ export async function POST(
       );
     }
 
-    // Verify user_id matches authenticated user
-    if (validation.data.user_id !== user.id) {
-      return NextResponse.json(
-        {
-          error: {
-            code: 'FORBIDDEN',
-            message: 'Cannot join as a different user',
-          },
-        },
-        { status: 403 }
-      );
-    }
-
-    // Check if meeting exists
+    // Check if meeting exists (query by meeting_code, not UUID id)
     const { data: meeting, error: meetingError } = await supabase
       .from('meetings')
       .select('*')
-      .eq('id', params.id)
+      .eq('meeting_code', params.id)
       .single();
 
     if (meetingError || !meeting) {
@@ -107,11 +93,11 @@ export async function POST(
       );
     }
 
-    // Check if participant already exists
+    // Check if participant already exists (use meeting.id UUID, not meeting_code)
     const { data: existingParticipant } = await supabase
       .from('participants')
       .select('*')
-      .eq('meeting_id', params.id)
+      .eq('meeting_id', meeting.id)
       .eq('user_id', user.id)
       .single();
 
@@ -120,11 +106,11 @@ export async function POST(
       return NextResponse.json(existingParticipant);
     }
 
-    // Count current participants
+    // Count current participants (use meeting.id UUID, not meeting_code)
     const { count: participantCount } = await supabase
       .from('participants')
       .select('*', { count: 'exact', head: true })
-      .eq('meeting_id', params.id)
+      .eq('meeting_id', meeting.id)
       .is('leave_time', null);
 
     // Check max participants limit
@@ -159,11 +145,11 @@ export async function POST(
       if (error) throw error;
       participant = data;
     } else {
-      // Create new participant
+      // Create new participant (use meeting.id UUID, not meeting_code)
       const { data, error } = await supabase
         .from('participants')
         .insert({
-          meeting_id: params.id,
+          meeting_id: meeting.id,
           user_id: user.id,
           role: validation.data.role,
           join_time: new Date().toISOString(),
@@ -194,7 +180,7 @@ export async function POST(
           status: 'active',
           actual_start: new Date().toISOString(),
         })
-        .eq('id', params.id);
+        .eq('id', meeting.id);
     }
 
     return NextResponse.json(participant, { status: 201 });

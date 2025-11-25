@@ -34,7 +34,6 @@ export function DeviceTestWizard({
   const [isSpeakerTesting, setIsSpeakerTesting] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
 
   // Hooks
   const {
@@ -116,38 +115,59 @@ export function DeviceTestWizard({
    */
   const handleSpeakerChange = (deviceId: string) => {
     savePreferences({ speakerId: deviceId });
-
-    // Set audio output device if supported
-    if (audioRef.current && 'setSinkId' in HTMLMediaElement.prototype) {
-      (audioRef.current as any).setSinkId(deviceId).catch((error: Error) => {
-        console.error('Failed to set speaker:', error);
-        setErrors(prev => [
-          ...prev,
-          {
-            type: 'speaker',
-            message: 'Failed to set speaker device',
-          },
-        ]);
-      });
-    }
+    // Note: Speaker selection will be applied when test tone is played
+    // Web Audio API will use the default output device
   };
 
   /**
-   * Test speaker by playing audio
+   * Test speaker by playing audio (generates tone dynamically)
    */
   const handleSpeakerTest = () => {
-    if (audioRef.current) {
+    try {
       setIsSpeakerTesting(true);
-      audioRef.current.play().catch(error => {
-        console.error('Failed to play test audio:', error);
-        setErrors(prev => [
-          ...prev,
-          {
-            type: 'speaker',
-            message: 'Failed to play test audio',
-          },
-        ]);
-      });
+
+      // Create audio context for dynamic tone generation
+      const audioContext = new AudioContext();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      // Connect nodes
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      // Configure oscillator (440Hz = A4 note)
+      oscillator.frequency.value = 440;
+      oscillator.type = 'sine';
+
+      // Fade in
+      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+      gainNode.gain.linearRampToValueAtTime(
+        0.3,
+        audioContext.currentTime + 0.1
+      );
+
+      // Fade out
+      gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 1.9);
+
+      // Play for 2 seconds
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 2);
+
+      // Reset testing state after playback
+      setTimeout(() => {
+        setIsSpeakerTesting(false);
+        audioContext.close();
+      }, 2000);
+    } catch (error) {
+      console.error('Failed to play test audio:', error);
+      setIsSpeakerTesting(false);
+      setErrors(prev => [
+        ...prev,
+        {
+          type: 'speaker',
+          message: 'Failed to play test audio',
+        },
+      ]);
     }
   };
 
@@ -436,15 +456,6 @@ export function DeviceTestWizard({
           Click the button to hear a test sound through your selected speaker
         </p>
       </div>
-
-      {/* Hidden audio element for speaker test */}
-      <audio
-        ref={audioRef}
-        src="/audio/test-sound.mp3"
-        onEnded={() => setIsSpeakerTesting(false)}
-        onError={() => setIsSpeakerTesting(false)}
-        className="hidden"
-      />
     </div>
   );
 

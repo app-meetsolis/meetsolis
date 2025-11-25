@@ -10,6 +10,13 @@ import { ParticipantGrid, type Participant } from './ParticipantGrid';
 import { WebRTCService } from '@/services/webrtc/WebRTCService';
 import { SignalingService } from '@/services/webrtc/SignalingService';
 import { useMediaStream } from '@/hooks/useMediaStream';
+import { useParticipantState } from '@/hooks/meeting/useParticipantState';
+import { usePushToTalk } from '@/hooks/meeting/usePushToTalk';
+import { useAudioControls } from '@/hooks/meeting/useAudioControls';
+import {
+  subscribeToParticipants,
+  unsubscribeChannel,
+} from '@/lib/supabase/realtime';
 import { cn } from '@/lib/utils';
 import type {
   ConnectionQuality,
@@ -24,6 +31,8 @@ export interface VideoCallManagerProps {
   onError?: (error: Error) => void;
   onParticipantJoin?: (participantId: string) => void;
   onParticipantLeave?: (participantId: string) => void;
+  onToggleAudio?: () => void;
+  onToggleVideo?: () => void;
   className?: string;
 }
 
@@ -31,6 +40,15 @@ export interface VideoCallState {
   connectionState: ConnectionState;
   participants: Participant[];
   error: Error | null;
+  toggleAudio?: () => void;
+  toggleVideo?: () => void;
+  isAudioMuted?: boolean;
+  isVideoOff?: boolean;
+  localStream?: MediaStream | null;
+  isPushToTalkMode?: boolean;
+  isPushToTalkActive?: boolean;
+  togglePushToTalkMode?: () => void;
+  audioLevel?: number;
 }
 
 /**
@@ -44,6 +62,8 @@ export function VideoCallManager({
   onError,
   onParticipantJoin,
   onParticipantLeave,
+  onToggleAudio,
+  onToggleVideo,
   className = '',
 }: VideoCallManagerProps) {
   const [participants, setParticipants] = useState<Participant[]>([]);
@@ -53,23 +73,122 @@ export function VideoCallManager({
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(
     new Map()
   );
+  // Store meeting UUID (meetingId prop is meeting_code, need UUID for realtime)
+  const [meetingUuid, setMeetingUuid] = useState<string | null>(null);
 
   const webrtcServiceRef = useRef<WebRTCService | null>(null);
   const signalingServiceRef = useRef<SignalingService | null>(null);
   const isInitializedRef = useRef(false);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const participantNamesRef = useRef<Map<string, string>>(new Map());
+  const participantsChannelRef = useRef<any>(null);
+  // Cache for mapping user_id (UUID) to clerk_id for fast realtime lookups
+  const userIdToClerkIdRef = useRef<Map<string, string>>(new Map());
 
   // Get local media stream
   const {
     stream: localStream,
     isAudioEnabled,
     isVideoEnabled,
+    toggleAudio: toggleAudioLocal,
+    toggleVideo: toggleVideoLocal,
     error: streamError,
   } = useMediaStream({
     videoQuality: 'hd',
     audioQuality: 'standard',
+    autoMuteOnJoin: true,
+    noiseSuppression: true,
   });
+
+  // Audio controls for speaking detection and audio level monitoring
+  const { isSpeaking, audioLevel } = useAudioControls({
+    stream: localStream,
+    enableNoiseSupression: true,
+    playAudioFeedback: false, // We don't need beep feedback (handled separately)
+  });
+
+  // Hook for updating participant state in database
+  const { updateMyState } = useParticipantState({ meetingId });
+
+  // Ref to store PTT toggle function (will be set after PTT hook initializes)
+  const togglePushToTalkModeRef = useRef<(() => void) | null>(null);
+  const isPushToTalkModeRef = useRef(false);
+
+  /**
+   * Toggle audio with database sync
+   * Auto-disables PTT mode if enabled
+   */
+  const toggleAudio = useCallback(() => {
+    // If PTT mode is enabled, disable it first (deferred to avoid state conflict)
+    if (isPushToTalkModeRef.current && togglePushToTalkModeRef.current) {
+      // Use setTimeout to defer PTT toggle to next event loop tick
+      // This avoids state conflicts when toggling audio and PTT simultaneously
+      setTimeout(() => {
+        if (togglePushToTalkModeRef.current) {
+          togglePushToTalkModeRef.current();
+        }
+      }, 0);
+    }
+
+    toggleAudioLocal();
+    const newMutedState = isAudioEnabled; // Will be opposite after toggle
+    updateMyState({ is_muted: newMutedState });
+  }, [toggleAudioLocal, isAudioEnabled, updateMyState]);
+
+  // Create stable callback references using useRef to avoid hook re-initialization
+  const isAudioEnabledRef = useRef(isAudioEnabled);
+  const toggleAudioLocalRef = useRef(toggleAudioLocal);
+  const updateMyStateRef = useRef(updateMyState);
+
+  // Update refs when values change
+  isAudioEnabledRef.current = isAudioEnabled;
+  toggleAudioLocalRef.current = toggleAudioLocal;
+  updateMyStateRef.current = updateMyState;
+
+  // Create stable callbacks that won't change reference
+  const stablePushStart = useCallback(() => {
+    // Only unmute if currently muted
+    if (!isAudioEnabledRef.current) {
+      toggleAudioLocalRef.current();
+    }
+  }, []); // Empty deps - never changes
+
+  const stablePushEnd = useCallback(() => {
+    // Re-mute when Space is released (only if audio is on)
+    if (isAudioEnabledRef.current) {
+      toggleAudioLocalRef.current();
+    }
+  }, []); // Empty deps - never changes
+
+  const stableToggleMode = useCallback((enabled: boolean) => {
+    // When enabling PTT mode, ensure user is muted
+    if (enabled && isAudioEnabledRef.current) {
+      toggleAudioLocalRef.current();
+      updateMyStateRef.current({ is_muted: true });
+    }
+  }, []); // Empty deps - never changes
+
+  // Push-to-Talk hook integration (hook manages its own state)
+  const { isPushToTalkMode, isPushToTalkActive, togglePushToTalkMode } =
+    usePushToTalk({
+      enabled: false, // Start disabled
+      onPushStart: stablePushStart,
+      onPushEnd: stablePushEnd,
+      onToggleMode: stableToggleMode,
+    });
+
+  // Update PTT refs so toggleAudio can access them
+  isPushToTalkModeRef.current = isPushToTalkMode;
+  togglePushToTalkModeRef.current = togglePushToTalkMode;
+
+  /**
+   * Toggle video with database sync
+   */
+  const toggleVideo = useCallback(() => {
+    toggleVideoLocal();
+    const newVideoOffState = isVideoEnabled; // Will be opposite after toggle
+    updateMyState({ is_video_off: newVideoOffState });
+  }, [toggleVideoLocal, isVideoEnabled, updateMyState]);
 
   /**
    * Update video call state and notify parent
@@ -80,6 +199,15 @@ export function VideoCallManager({
         connectionState,
         participants,
         error,
+        toggleAudio,
+        toggleVideo,
+        isAudioMuted: !isAudioEnabled,
+        isVideoOff: !isVideoEnabled,
+        localStream,
+        isPushToTalkMode,
+        isPushToTalkActive,
+        togglePushToTalkMode,
+        audioLevel,
         ...newState,
       };
 
@@ -87,8 +215,40 @@ export function VideoCallManager({
         onStateChange(state);
       }
     },
-    [connectionState, participants, error, onStateChange]
+    [
+      connectionState,
+      participants,
+      error,
+      onStateChange,
+      toggleAudio,
+      toggleVideo,
+      isAudioEnabled,
+      isVideoEnabled,
+      localStream,
+      isPushToTalkMode,
+      isPushToTalkActive,
+      togglePushToTalkMode,
+      audioLevel,
+    ]
   );
+
+  // Notify parent when state changes (audio, video, PTT, or audio level)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (connectionState === 'connected' && onStateChange) {
+      updateState({}); // Trigger state update with current values
+    }
+    // Intentionally excluding updateState, toggleAudio, toggleVideo, togglePushToTalkMode
+    // from deps to avoid infinite loop - updateState already has all current values
+  }, [
+    connectionState,
+    isAudioEnabled,
+    isVideoEnabled,
+    isPushToTalkMode,
+    isPushToTalkActive,
+    audioLevel,
+    onStateChange,
+  ]);
 
   /**
    * Handle errors
@@ -133,6 +293,73 @@ export function VideoCallManager({
 
     try {
       setConnectionState('connecting');
+
+      // Join the meeting and create participant record in database
+      try {
+        console.log('[VideoCallManager] Joining meeting:', meetingId);
+        console.log(
+          '[VideoCallManager] Join URL:',
+          `/api/meetings/${meetingId}/join`
+        );
+
+        const joinResponse = await fetch(`/api/meetings/${meetingId}/join`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            role: 'participant', // Default role, host will be set separately
+          }),
+        });
+
+        console.log(
+          '[VideoCallManager] Join response status:',
+          joinResponse.status
+        );
+
+        if (!joinResponse.ok) {
+          const errorText = await joinResponse.text();
+          console.error('[VideoCallManager] Join error response:', errorText);
+
+          let errorMessage = 'Failed to join meeting';
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMessage =
+              errorData.error?.message || errorData.error || errorMessage;
+          } catch (e) {
+            errorMessage = errorText || errorMessage;
+          }
+
+          throw new Error(errorMessage);
+        }
+
+        const joinData = await joinResponse.json();
+        console.log(
+          '[VideoCallManager] Successfully joined meeting:',
+          joinData
+        );
+
+        // Store meeting UUID for realtime subscription (meetingId prop is meeting_code)
+        if (joinData.meeting_id) {
+          setMeetingUuid(joinData.meeting_id);
+        }
+
+        // Cache the user_id → clerk_id mapping for fast realtime lookups
+        if (joinData.user_id) {
+          userIdToClerkIdRef.current.set(joinData.user_id, userId);
+        }
+      } catch (joinError) {
+        console.error('[VideoCallManager] Failed to join meeting:', joinError);
+        console.error('[VideoCallManager] Error details:', {
+          message: (joinError as Error).message,
+          stack: (joinError as Error).stack,
+        });
+        isInitializedRef.current = false; // Reset flag to allow retry
+        handleError(
+          new Error(`Failed to join meeting: ${(joinError as Error).message}`)
+        );
+        return;
+      }
 
       // Initialize WebRTC service
       const webrtcService = new WebRTCService();
@@ -372,6 +599,7 @@ export function VideoCallManager({
           isMuted: !isAudioEnabled,
           isVideoOff: !isVideoEnabled,
           connectionQuality: 'excellent',
+          isSpeaking: false, // Will be updated by useAudioControls
         },
       ]);
 
@@ -421,7 +649,9 @@ export function VideoCallManager({
                     videoTracks: stream.getVideoTracks().length,
                   }
                 );
+
                 // Add new remote participant
+                // Initial state will be updated via Supabase real-time subscription
                 return [
                   ...prev,
                   {
@@ -429,8 +659,8 @@ export function VideoCallManager({
                     name: participantName,
                     stream,
                     isLocal: false,
-                    isMuted: false,
-                    isVideoOff: stream.getVideoTracks().length === 0,
+                    isMuted: false, // Will be updated by real-time subscription
+                    isVideoOff: false, // Will be updated by real-time subscription
                     connectionQuality: 'good',
                   },
                 ];
@@ -465,6 +695,7 @@ export function VideoCallManager({
             isMuted: !isAudioEnabled,
             isVideoOff: !isVideoEnabled,
             connectionQuality: 'excellent',
+            isSpeaking: false, // Will be updated by useAudioControls
           },
         ],
       });
@@ -487,7 +718,7 @@ export function VideoCallManager({
   ]);
 
   /**
-   * Update local participant state when audio/video toggles
+   * Update local participant state when audio/video toggles or speaking status changes
    */
   useEffect(() => {
     setParticipants(prev =>
@@ -497,11 +728,12 @@ export function VideoCallManager({
               ...p,
               isMuted: !isAudioEnabled,
               isVideoOff: !isVideoEnabled,
+              isSpeaking,
             }
           : p
       )
     );
-  }, [isAudioEnabled, isVideoEnabled]);
+  }, [isAudioEnabled, isVideoEnabled, isSpeaking]);
 
   /**
    * Initialize on mount
@@ -520,6 +752,73 @@ export function VideoCallManager({
       handleError(streamError);
     }
   }, [streamError, handleError]);
+
+  /**
+   * Subscribe to participant state changes via Supabase Realtime
+   */
+  useEffect(() => {
+    // Wait for meeting UUID to be available before subscribing
+    if (!meetingUuid) {
+      return;
+    }
+
+    const channel = subscribeToParticipants(meetingUuid, async payload => {
+      const { eventType, new: newRecord } = payload;
+
+      if (eventType === 'UPDATE' && newRecord) {
+        // Try to get clerk_id from cache first (fast lookup)
+        let clerk_id = userIdToClerkIdRef.current.get(newRecord.user_id);
+
+        // If not in cache, fetch from API and cache it (fallback)
+        if (!clerk_id) {
+          try {
+            const response = await fetch(
+              `/api/users/${newRecord.user_id}/clerk-id`
+            );
+            if (!response.ok) {
+              console.error(
+                '[VideoCallManager] Failed to fetch clerk_id for user:',
+                newRecord.user_id
+              );
+              return;
+            }
+
+            const data = await response.json();
+            clerk_id = data.clerk_id;
+
+            // Cache it for future updates
+            userIdToClerkIdRef.current.set(newRecord.user_id, clerk_id);
+          } catch (error) {
+            console.error('[VideoCallManager] Error fetching clerk_id:', error);
+            return;
+          }
+        }
+
+        // Update participant state in local participants array
+        setParticipants(prev =>
+          prev.map(p => {
+            if (p.id === clerk_id) {
+              return {
+                ...p,
+                isMuted: newRecord.is_muted,
+                isVideoOff: newRecord.is_video_off,
+              };
+            }
+            return p;
+          })
+        );
+      }
+    });
+
+    participantsChannelRef.current = channel;
+
+    return () => {
+      if (participantsChannelRef.current) {
+        unsubscribeChannel(participantsChannelRef.current);
+        participantsChannelRef.current = null;
+      }
+    };
+  }, [meetingUuid]); // Re-subscribe when meeting UUID becomes available
 
   /**
    * Cleanup on unmount

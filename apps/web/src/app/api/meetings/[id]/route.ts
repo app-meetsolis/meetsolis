@@ -61,11 +61,11 @@ export async function GET(
       );
     }
 
-    // Fetch meeting (RLS will ensure user has access)
+    // Fetch meeting by meeting_code (params.id is the meeting_code from URL)
     const { data: meeting, error } = await supabase
       .from('meetings')
       .select('*')
-      .eq('id', params.id)
+      .eq('meeting_code', params.id)
       .single();
 
     if (error || !meeting) {
@@ -75,11 +75,11 @@ export async function GET(
       );
     }
 
-    // Fetch participants for this meeting
+    // Fetch participants for this meeting (use meeting.id UUID, not meeting_code)
     const { data: participants, error: participantsError } = await supabase
       .from('participants')
       .select('*')
-      .eq('meeting_id', params.id)
+      .eq('meeting_id', meeting.id)
       .is('leave_time', null) // Only active participants
       .order('join_time', { ascending: true });
 
@@ -145,11 +145,11 @@ export async function PATCH(
       );
     }
 
-    // Fetch existing meeting to verify ownership
+    // Fetch existing meeting to verify ownership (query by meeting_code)
     const { data: existingMeeting } = await supabase
       .from('meetings')
       .select('*')
-      .eq('id', params.id)
+      .eq('meeting_code', params.id)
       .single();
 
     if (!existingMeeting) {
@@ -182,7 +182,7 @@ export async function PATCH(
     const { data: meeting, error } = await supabase
       .from('meetings')
       .update(updateData)
-      .eq('id', params.id)
+      .eq('id', existingMeeting.id)
       .select()
       .single();
 
@@ -229,11 +229,11 @@ export async function DELETE(
       );
     }
 
-    // Verify meeting exists and user is host
+    // Verify meeting exists and user is host (query by meeting_code)
     const { data: meeting } = await supabase
       .from('meetings')
       .select('*')
-      .eq('id', params.id)
+      .eq('meeting_code', params.id)
       .single();
 
     if (!meeting) {
@@ -252,11 +252,11 @@ export async function DELETE(
       );
     }
 
-    // Delete meeting
+    // Delete meeting (use meeting.id UUID)
     const { error } = await supabase
       .from('meetings')
       .delete()
-      .eq('id', params.id);
+      .eq('id', meeting.id);
 
     if (error) throw error;
 
