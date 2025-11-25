@@ -13,11 +13,6 @@
       "USE_MOCK_SERVICES": "true"
     }
   },
-  "functions": {
-    "apps/web/src/app/api/**/*.ts": {
-      "runtime": "nodejs20.x"
-    }
-  },
   "headers": [
     {
       "source": "/(.*)",
@@ -39,12 +34,6 @@
           "value": "max-age=31536000; includeSubDomains"
         }
       ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/apps/web/src/app/api/$1"
     }
   ]
 }
