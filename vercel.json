@@ -15,7 +15,7 @@
   },
   "functions": {
     "apps/web/src/app/api/**/*.ts": {
-      "runtime": "@vercel/node"
+      "runtime": "nodejs20.x"
     }
   },
   "headers": [
