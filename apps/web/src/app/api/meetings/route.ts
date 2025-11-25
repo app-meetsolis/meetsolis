@@ -31,10 +31,13 @@ const CreateMeetingSchema = z.object({
     .optional(),
 });
 
-// Helper function to generate unique invite link
-function generateInviteLink(): string {
-  const meetingId = nanoid(10);
-  return `${config.app.url}/meeting/${meetingId}`;
+// Helper function to generate unique meeting code and invite link
+function generateMeetingCodeAndLink(): { code: string; link: string } {
+  const meetingCode = nanoid(10);
+  return {
+    code: meetingCode,
+    link: `${config.app.url}/meeting/${meetingCode}`,
+  };
 }
 
 // Default meeting settings
@@ -110,7 +113,7 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('meetings')
       .select('*')
-      .or(`host_id.eq.${user.id}`)
+      .eq('host_id', user.id)
       .order('created_at', { ascending: false });
 
     // Apply filters
@@ -186,6 +189,9 @@ export async function POST(request: NextRequest) {
       ...(validation.data.settings || {}),
     };
 
+    // Generate meeting code and invite link
+    const { code, link } = generateMeetingCodeAndLink();
+
     // Insert meeting record
     const { data: meeting, error } = await supabase
       .from('meetings')
@@ -195,7 +201,8 @@ export async function POST(request: NextRequest) {
         description: validation.data.description,
         status: validation.data.scheduled_start ? 'scheduled' : 'active',
         scheduled_start: validation.data.scheduled_start,
-        invite_link: generateInviteLink(),
+        meeting_code: code,
+        invite_link: link,
         settings,
         waiting_room_enabled: false,
         locked: false,

@@ -17,6 +17,7 @@ export interface VideoTileProps {
   isMuted?: boolean;
   isVideoOff?: boolean;
   connectionQuality?: ConnectionQuality;
+  isSpeaking?: boolean;
   className?: string;
   onVideoClick?: (participantId: string) => void;
 }
@@ -32,6 +33,7 @@ export function VideoTile({
   isMuted = false,
   isVideoOff = false,
   connectionQuality = 'good',
+  isSpeaking = false,
   className = '',
   onVideoClick,
 }: VideoTileProps) {
@@ -109,12 +111,13 @@ export function VideoTile({
       className={cn(
         'relative bg-gray-900 rounded-lg overflow-hidden aspect-video group',
         onVideoClick && 'cursor-pointer hover:ring-2 hover:ring-blue-500',
+        isSpeaking && 'ring-2 ring-green-500 animate-pulse',
         className
       )}
       onClick={handleClick}
       role="button"
       tabIndex={onVideoClick ? 0 : -1}
-      aria-label={`Video feed for ${participantName}${isLocal ? ' (You)' : ''}`}
+      aria-label={`Video feed for ${participantName}${isLocal ? ' (You)' : ''}${isSpeaking ? ' - Speaking' : ''}`}
       onKeyDown={e => {
         if (onVideoClick && (e.key === 'Enter' || e.key === ' ')) {
           e.preventDefault();
