@@ -15,6 +15,8 @@ export interface MediaStreamOptions {
   videoQuality?: 'hd' | 'fullhd' | 'custom';
   audioQuality?: 'standard' | 'high';
   lowLatency?: boolean;
+  autoMuteOnJoin?: boolean;
+  noiseSuppression?: boolean;
 }
 
 export interface UseMediaStreamResult {
@@ -40,6 +42,7 @@ function getMediaConstraints(
     videoQuality = 'hd',
     audioQuality = 'standard',
     lowLatency = true,
+    noiseSuppression = true,
   } = options;
 
   // Video constraints
@@ -60,7 +63,7 @@ function getMediaConstraints(
   // Audio constraints
   const audioConstraints: MediaTrackConstraints = {
     echoCancellation: true,
-    noiseSuppression: true,
+    noiseSuppression: noiseSuppression,
     autoGainControl: true,
     ...(audioQuality === 'high' && {
       sampleRate: 48000,
@@ -112,7 +115,13 @@ export function useMediaStream(
       const audioTracks = mediaStream.getAudioTracks();
       const videoTracks = mediaStream.getVideoTracks();
 
-      if (audioTracks.length > 0) {
+      // Apply auto-mute if enabled
+      if (options.autoMuteOnJoin && audioTracks.length > 0) {
+        audioTracks.forEach(track => {
+          track.enabled = false;
+        });
+        setIsAudioEnabled(false);
+      } else if (audioTracks.length > 0) {
         setIsAudioEnabled(audioTracks[0].enabled);
       }
 
@@ -144,7 +153,7 @@ export function useMediaStream(
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [options.autoMuteOnJoin]);
 
   /**
    * Toggle audio mute/unmute
