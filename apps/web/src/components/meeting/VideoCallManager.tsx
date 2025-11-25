@@ -786,8 +786,10 @@ export function VideoCallManager({
             const data = await response.json();
             clerk_id = data.clerk_id;
 
-            // Cache it for future updates
-            userIdToClerkIdRef.current.set(newRecord.user_id, clerk_id);
+            // Cache it for future updates (only if clerk_id is defined)
+            if (clerk_id) {
+              userIdToClerkIdRef.current.set(newRecord.user_id, clerk_id);
+            }
           } catch (error) {
             console.error('[VideoCallManager] Error fetching clerk_id:', error);
             return;
