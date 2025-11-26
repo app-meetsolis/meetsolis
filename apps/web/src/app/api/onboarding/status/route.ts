@@ -2,11 +2,12 @@
 // Story 1.9: Onboarding Completion Enforcement & Optimization
 // API endpoint for updating and retrieving onboarding status with security features
 
-import { auth } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import sanitizeHtml from 'sanitize-html';
+import { config } from '@/lib/config/env';
 
 // =============================================================================
 // ZOD VALIDATION SCHEMA
@@ -25,27 +26,28 @@ const OnboardingStatusSchema = z.object({
 });
 
 // =============================================================================
-// RATE LIMITING (Simple in-memory implementation)
+// RATE LIMITING
 // =============================================================================
 
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
-const RATE_LIMIT = 100; // requests per minute
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute in milliseconds
+// TODO: Implement rate limiting with Upstash Redis for serverless compatibility
+// In-memory rate limiting doesn't work in serverless environments because each
+// function invocation gets its own memory space. For production, use:
+// - Upstash Redis (recommended for Vercel)
+// - Vercel's built-in rate limiting
+// - Or implement at the edge middleware level
+//
+// Example with Upstash:
+// import { Ratelimit } from "@upstash/ratelimit";
+// import { Redis } from "@upstash/redis";
+// const ratelimit = new Ratelimit({
+//   redis: Redis.fromEnv(),
+//   limiter: Ratelimit.slidingWindow(100, "1 m"),
+// });
+
+const RATE_LIMIT = 100; // requests per minute (for headers only, not enforced)
 
 function checkRateLimit(userId: string): boolean {
-  const now = Date.now();
-  const userLimit = rateLimitMap.get(userId);
-
-  if (!userLimit || now > userLimit.resetTime) {
-    rateLimitMap.set(userId, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
-    return true;
-  }
-
-  if (userLimit.count >= RATE_LIMIT) {
-    return false;
-  }
-
-  userLimit.count++;
+  // Rate limiting disabled - implement with Redis for production
   return true;
 }
 
@@ -54,10 +56,7 @@ function checkRateLimit(userId: string): boolean {
 // =============================================================================
 
 function getSupabaseClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  return createClient(config.supabase.url!, config.supabase.serviceRoleKey!);
 }
 
 // =============================================================================

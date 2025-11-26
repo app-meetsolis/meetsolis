@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseClient } from '@/lib/supabase/client';
+import { config } from '@/lib/config/env';
 
 // Validation schema
 const UpdateStateSchema = z.object({
@@ -12,8 +13,8 @@ const UpdateStateSchema = z.object({
 
 // Initialize Supabase client
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  config.supabase.url!,
+  config.supabase.serviceRoleKey!
 );
 
 /**
