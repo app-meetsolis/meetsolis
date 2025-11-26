@@ -51,6 +51,7 @@ const sentryWebpackPluginOptions = {
   tunnelRoute: '/monitoring',
   hideSourceMaps: true,
   disableLogger: true,
+  automaticVercelMonitors: true,
 };
 
 // Export with Sentry configuration
