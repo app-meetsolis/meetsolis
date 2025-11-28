@@ -90,3 +90,9 @@ pids
 # Temporary folders
 tmp/
 temp/
+
+# Playwright MCP
+.playwright-mcp/
+
+# Claude Code local settings
+.claude/settings.local.json
