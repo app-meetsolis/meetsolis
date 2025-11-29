@@ -22,6 +22,7 @@ import type {
   ConnectionQuality,
   ConnectionState,
 } from '../../../../../packages/shared/types/webrtc';
+import type { NormalizedParticipantData } from '../../../../../packages/shared/types/realtime';
 
 export interface VideoCallManagerProps {
   meetingId: string;
@@ -441,7 +442,9 @@ export function VideoCallManager({
                   signalType: signal.type || 'answer',
                 }
               );
-              await signalingServiceRef.current?.sendAnswer(signal);
+              await signalingServiceRef.current?.sendAnswer(
+                signal as RTCSessionDescriptionInit
+              );
               console.log('[VideoCallManager] Answer sent to:', fromUserId);
             }
           );
@@ -545,7 +548,9 @@ export function VideoCallManager({
                       signalType: signal.type || 'offer',
                     }
                   );
-                  await signalingServiceRef.current?.sendOffer(signal);
+                  await signalingServiceRef.current?.sendOffer(
+                    signal as RTCSessionDescriptionInit
+                  );
                   console.log(
                     '[VideoCallManager] Offer sent to:',
                     participantId
@@ -755,6 +760,7 @@ export function VideoCallManager({
 
   /**
    * Subscribe to participant state changes via Supabase Realtime
+   * Handles both broadcast events (API) and postgres_changes events (DB trigger)
    */
   useEffect(() => {
     // Wait for meeting UUID to be available before subscribing
@@ -762,23 +768,37 @@ export function VideoCallManager({
       return;
     }
 
-    const channel = subscribeToParticipants(meetingUuid, async payload => {
-      const { eventType, new: newRecord } = payload;
+    const channel = subscribeToParticipants(
+      meetingUuid,
+      async (normalizedData: NormalizedParticipantData | null) => {
+        // Null check - skip if normalization failed
+        if (!normalizedData) {
+          console.warn(
+            '[VideoCallManager] Received null normalized data, skipping'
+          );
+          return;
+        }
 
-      if (eventType === 'UPDATE' && newRecord) {
+        console.log('[VideoCallManager] Processing participant state update:', {
+          source: normalizedData.eventSource,
+          user_id: normalizedData.user_id.substring(0, 8) + '...',
+          is_muted: normalizedData.is_muted,
+          is_video_off: normalizedData.is_video_off,
+        });
+
         // Try to get clerk_id from cache first (fast lookup)
-        let clerk_id = userIdToClerkIdRef.current.get(newRecord.user_id);
+        let clerk_id = userIdToClerkIdRef.current.get(normalizedData.user_id);
 
         // If not in cache, fetch from API and cache it (fallback)
         if (!clerk_id) {
           try {
             const response = await fetch(
-              `/api/users/${newRecord.user_id}/clerk-id`
+              `/api/users/${normalizedData.user_id}/clerk-id`
             );
             if (!response.ok) {
               console.error(
                 '[VideoCallManager] Failed to fetch clerk_id for user:',
-                newRecord.user_id
+                normalizedData.user_id
               );
               return;
             }
@@ -786,8 +806,10 @@ export function VideoCallManager({
             const data = await response.json();
             clerk_id = data.clerk_id;
 
-            // Cache it for future updates
-            userIdToClerkIdRef.current.set(newRecord.user_id, clerk_id);
+            // Cache it for future updates (only if clerk_id is defined)
+            if (clerk_id) {
+              userIdToClerkIdRef.current.set(normalizedData.user_id, clerk_id);
+            }
           } catch (error) {
             console.error('[VideoCallManager] Error fetching clerk_id:', error);
             return;
@@ -798,17 +820,25 @@ export function VideoCallManager({
         setParticipants(prev =>
           prev.map(p => {
             if (p.id === clerk_id) {
+              console.log('[VideoCallManager] Applying state update:', {
+                clerk_id: clerk_id.substring(0, 8) + '...',
+                old_muted: p.isMuted,
+                new_muted: normalizedData.is_muted,
+                old_video_off: p.isVideoOff,
+                new_video_off: normalizedData.is_video_off,
+              });
+
               return {
                 ...p,
-                isMuted: newRecord.is_muted,
-                isVideoOff: newRecord.is_video_off,
+                isMuted: normalizedData.is_muted,
+                isVideoOff: normalizedData.is_video_off,
               };
             }
             return p;
           })
         );
       }
-    });
+    );
 
     participantsChannelRef.current = channel;
 

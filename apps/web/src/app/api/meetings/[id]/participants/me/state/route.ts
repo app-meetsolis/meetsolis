@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseClient } from '@/lib/supabase/client';
+import { config } from '@/lib/config/env';
 
 // Validation schema
 const UpdateStateSchema = z.object({
@@ -12,8 +13,8 @@ const UpdateStateSchema = z.object({
 
 // Initialize Supabase client
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  config.supabase.url!,
+  config.supabase.serviceRoleKey!
 );
 
 /**
@@ -109,7 +110,15 @@ export async function PUT(
       const clientSupabase = getSupabaseClient();
       const channelName = `meeting:${meeting.id}:participants`;
 
-      await clientSupabase.channel(channelName).send({
+      console.log('[API] Broadcasting participant state update:', {
+        channel: channelName,
+        user_id: updated.user_id.substring(0, 8) + '...',
+        is_muted: updated.is_muted,
+        is_video_off: updated.is_video_off,
+        timestamp: new Date().toISOString(),
+      });
+
+      const broadcastResult = await clientSupabase.channel(channelName).send({
         type: 'broadcast',
         event: 'participant_update',
         payload: {
@@ -121,11 +130,17 @@ export async function PUT(
           updated_at: updated.updated_at,
         },
       });
+
+      console.log('[API] Broadcast result:', {
+        status: broadcastResult ? 'success' : 'unknown',
+        channel: channelName,
+      });
     } catch (broadcastError) {
-      console.error(
-        '[API] Failed to broadcast participant update:',
-        broadcastError
-      );
+      console.error('[API] Failed to broadcast participant update:', {
+        error: broadcastError,
+        channel: `meeting:${meeting.id}:participants`,
+        user_id: updated.user_id,
+      });
       // Don't fail the request if broadcast fails - participants will sync on next poll
     }
 
