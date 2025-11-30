@@ -16,7 +16,7 @@
     "db:migrate": "echo 'Supabase migrations will be handled via Supabase CLI'",
     "db:seed": "echo 'Supabase seeding will be handled via Supabase CLI'",
     "db:reset": "echo 'Supabase reset will be handled via Supabase CLI'",
-    "prepare": "husky",
+    "prepare": "husky || exit 0",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
