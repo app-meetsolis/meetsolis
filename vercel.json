@@ -1,9 +1,8 @@
 {
   "buildCommand": "cd apps/web && npm run build",
   "outputDirectory": "apps/web/.next",
-  "installCommand": "npm ci",
+  "installCommand": "npm install",
   "devCommand": "cd apps/web && npm run dev",
-  "_comment_installCommand": "IMPORTANT: Use 'npm ci' (clean install) instead of 'npm install' to avoid husky prepare script errors in Vercel deployments",
   "framework": "nextjs",
   "env": {
     "USE_MOCK_SERVICES": "false",
