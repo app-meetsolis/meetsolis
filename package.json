@@ -20,7 +20,7 @@
     "db:migrate": "cd apps/web && npm run db:migrate",
     "db:seed": "cd apps/web && npm run db:seed",
     "db:reset": "cd apps/web && npm run db:reset",
-    "prepare": "husky"
+    "prepare": "husky || exit 0"
   },
   "devDependencies": {
     "@modelcontextprotocol/server-sequential-thinking": "^2025.7.1",
