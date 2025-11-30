@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 import { DataDeletionService } from '@/lib/security/gdpr';
 import {
   createSanitizationMiddleware,
@@ -20,22 +21,31 @@ const sanitizeInput = createSanitizationMiddleware(deleteRequestSchema);
 
 export async function DELETE(request: NextRequest) {
   try {
+    // Authenticate user
+    const { userId: clerkUserId } = await auth();
+    if (!clerkUserId) {
+      return NextResponse.json(
+        { error: 'Unauthorized', message: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { userId, confirmationToken } = sanitizeInput(body);
 
-    // TODO: Add authentication and confirmation token validation
-    // const currentUser = await getCurrentUser(request);
-    // if (currentUser.id !== userId) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    // }
+    // Ensure user can only delete their own data
+    if (clerkUserId !== userId) {
+      return NextResponse.json(
+        {
+          error: 'Forbidden',
+          message: 'You can only delete your own data',
+        },
+        { status: 403 }
+      );
+    }
 
-    // TODO: Validate confirmation token
-    // const isValidToken = await validateDeletionToken(userId, confirmationToken);
-    // if (!isValidToken) {
-    //   return NextResponse.json({ error: 'Invalid confirmation token' }, { status: 400 });
-    // }
-
-    // Log confirmation token for future implementation
+    // TODO: Implement confirmation token validation in future
+    // For now, just log it
     console.log(
       'Confirmation token provided:',
       confirmationToken ? 'Yes' : 'No'

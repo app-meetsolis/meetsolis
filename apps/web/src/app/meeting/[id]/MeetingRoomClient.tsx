@@ -5,14 +5,16 @@
 
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { useHotkeys } from 'react-hotkeys-hook';
+import { toast } from 'sonner';
 import { VideoCallManager } from '@/components/meeting';
 import { ControlBar } from '@/components/meeting/ControlBar';
 import { DeviceSettingsPanel } from '@/components/meeting/DeviceSettingsPanel';
 import { KeyboardShortcutsHelp } from '@/components/meeting/KeyboardShortcutsHelp';
+import { LeaveMeetingDialog } from '@/components/meeting/LeaveMeetingDialog';
 import type { VideoCallState } from '@/components/meeting';
 
 interface MeetingRoomClientProps {
@@ -29,8 +31,43 @@ export function MeetingRoomClient({
   const [callState, setCallState] = useState<VideoCallState | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
+  const [isOrganizer, setIsOrganizer] = useState(false);
+  const [participantCount, setParticipantCount] = useState(0);
 
   const userName = user?.fullName || user?.username || 'Unknown User';
+
+  /**
+   * Fetch meeting data to determine if user is organizer
+   */
+  useEffect(() => {
+    async function fetchMeetingData() {
+      try {
+        const res = await fetch(`/api/meetings/${meetingId}`);
+        if (!res.ok) {
+          console.error('Failed to fetch meeting data:', res.status);
+          return;
+        }
+
+        const data = await res.json();
+
+        // Check if current user is the organizer
+        setIsOrganizer(data.meeting?.host_id === userId);
+
+        // Get active participant count (leave_time IS NULL)
+        const activeParticipants =
+          data.participants?.filter((p: any) => p.leave_time === null) || [];
+        setParticipantCount(activeParticipants.length);
+      } catch (error) {
+        console.error('Error fetching meeting data:', error);
+      }
+    }
+
+    if (meetingId && userId) {
+      fetchMeetingData();
+    }
+  }, [meetingId, userId]);
 
   /**
    * Handle video call state changes
@@ -61,11 +98,85 @@ export function MeetingRoomClient({
   }, []);
 
   /**
-   * Leave meeting
+   * Handle meeting ended
+   * Called when organizer leaves or last participant leaves
+   */
+  const handleMeetingEnded = useCallback(
+    (data: { endedByHost: boolean; endedAt: string }) => {
+      console.log('[MeetingRoomClient] Meeting ended:', data);
+
+      // Show toast notification
+      toast.info('Meeting ended', {
+        description: data.endedByHost
+          ? 'The meeting organizer has left and ended the meeting.'
+          : 'The meeting has ended.',
+        duration: 5000,
+      });
+
+      // Redirect after 2 second delay
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 2000);
+    },
+    [router]
+  );
+
+  /**
+   * Open leave confirmation dialog
    */
   const handleLeaveMeeting = useCallback(() => {
-    router.push('/dashboard');
-  }, [router]);
+    setIsLeaveDialogOpen(true);
+  }, []);
+
+  /**
+   * Confirm leave meeting - calls API and redirects
+   */
+  const handleConfirmLeave = useCallback(async () => {
+    setIsLeaving(true);
+
+    try {
+      const res = await fetch(`/api/meetings/${meetingId}/leave`, {
+        method: 'POST',
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        console.log('[MeetingRoomClient] Successfully left meeting:', data);
+
+        // Show success toast
+        toast.success('Left meeting', {
+          description: data.meeting_ended
+            ? 'Meeting has been ended'
+            : 'You have left the meeting',
+          duration: 3000,
+        });
+
+        // Redirect to dashboard
+        router.push('/dashboard');
+      } else {
+        console.error('[MeetingRoomClient] Failed to leave meeting:', data);
+
+        toast.error('Failed to leave meeting', {
+          description: data.error || 'Please try again',
+          duration: 5000,
+        });
+
+        setIsLeaving(false);
+        setIsLeaveDialogOpen(false);
+      }
+    } catch (error) {
+      console.error('[MeetingRoomClient] Error leaving meeting:', error);
+
+      toast.error('Failed to leave meeting', {
+        description: 'An error occurred. Please try again.',
+        duration: 5000,
+      });
+
+      setIsLeaving(false);
+      setIsLeaveDialogOpen(false);
+    }
+  }, [meetingId, router]);
 
   // Register keyboard shortcut for help modal (? or Shift+/)
   useHotkeys(
@@ -121,6 +232,7 @@ export function MeetingRoomClient({
           onError={handleError}
           onParticipantJoin={handleParticipantJoin}
           onParticipantLeave={handleParticipantLeave}
+          onMeetingEnded={handleMeetingEnded}
         />
       </div>
 
@@ -170,6 +282,16 @@ export function MeetingRoomClient({
       <KeyboardShortcutsHelp
         open={isShortcutsOpen}
         onOpenChange={setIsShortcutsOpen}
+      />
+
+      {/* Leave Meeting Confirmation Dialog */}
+      <LeaveMeetingDialog
+        open={isLeaveDialogOpen}
+        onOpenChange={setIsLeaveDialogOpen}
+        onConfirm={handleConfirmLeave}
+        isOrganizer={isOrganizer}
+        participantCount={participantCount}
+        isLoading={isLeaving}
       />
     </div>
   );

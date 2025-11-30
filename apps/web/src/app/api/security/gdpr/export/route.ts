@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 import { DataExporter } from '@/lib/security/gdpr';
 import {
   createSanitizationMiddleware,
@@ -19,14 +20,28 @@ const sanitizeInput = createSanitizationMiddleware(exportRequestSchema);
 
 export async function POST(request: NextRequest) {
   try {
+    // Authenticate user
+    const { userId: clerkUserId } = await auth();
+    if (!clerkUserId) {
+      return NextResponse.json(
+        { error: 'Unauthorized', message: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { userId } = sanitizeInput(body);
 
-    // TODO: Add authentication check to ensure user can only export their own data
-    // const currentUser = await getCurrentUser(request);
-    // if (currentUser.id !== userId) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    // }
+    // Ensure user can only export their own data
+    if (clerkUserId !== userId) {
+      return NextResponse.json(
+        {
+          error: 'Forbidden',
+          message: 'You can only export your own data',
+        },
+        { status: 403 }
+      );
+    }
 
     const exportData = await DataExporter.exportUserData(userId);
 

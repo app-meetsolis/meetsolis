@@ -5,17 +5,12 @@
   "devCommand": "cd apps/web && npm run dev",
   "framework": "nextjs",
   "env": {
-    "USE_MOCK_SERVICES": "true",
+    "USE_MOCK_SERVICES": "false",
     "NODE_ENV": "production"
   },
   "build": {
     "env": {
-      "USE_MOCK_SERVICES": "true"
-    }
-  },
-  "functions": {
-    "apps/web/src/app/api/**/*.ts": {
-      "runtime": "@vercel/node"
+      "USE_MOCK_SERVICES": "false"
     }
   },
   "headers": [
@@ -39,12 +34,6 @@
           "value": "max-age=31536000; includeSubDomains"
         }
       ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/apps/web/src/app/api/$1"
     }
   ]
 }

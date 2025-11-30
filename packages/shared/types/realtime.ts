@@ -188,3 +188,90 @@ export function formatParticipantLogData(data: NormalizedParticipantData) {
     connection_quality: data.connection_quality,
   };
 }
+
+/**
+ * Meeting ended event payload (broadcast only)
+ *
+ * Sent when a meeting ends (organizer leaves or last participant leaves)
+ * via broadcast event: 'meeting_ended'
+ */
+export interface MeetingEndedPayload {
+  meeting_id: string;
+  ended_by_host: boolean;
+  ended_at: string;
+  participant_count_before_leave: number;
+}
+
+/**
+ * Type guard: Check if payload is a meeting ended event
+ */
+export function isMeetingEndedPayload(
+  payload: any
+): payload is MeetingEndedPayload {
+  return (
+    payload &&
+    typeof payload === 'object' &&
+    typeof payload.meeting_id === 'string' &&
+    typeof payload.ended_by_host === 'boolean' &&
+    typeof payload.ended_at === 'string' &&
+    typeof payload.participant_count_before_leave === 'number'
+  );
+}
+
+/**
+ * Normalize meeting ended payload from broadcast event
+ *
+ * Validates and normalizes meeting_ended broadcast events.
+ * Returns null if payload is invalid.
+ *
+ * @param payload - Raw payload from Supabase Realtime broadcast
+ * @returns Normalized meeting ended data or null
+ *
+ * @example
+ * ```typescript
+ * subscribeToMeetingEnded(meetingId, (payload) => {
+ *   const normalized = normalizeMeetingEndedPayload(payload);
+ *   if (normalized) {
+ *     console.log('Meeting ended:', normalized);
+ *     redirectToDashboard();
+ *   }
+ * });
+ * ```
+ */
+export function normalizeMeetingEndedPayload(
+  payload: any
+): MeetingEndedPayload | null {
+  try {
+    // Validate required fields
+    if (!payload || typeof payload !== 'object') {
+      return null;
+    }
+
+    if (!payload.meeting_id || !payload.ended_at) {
+      console.warn('[Realtime] Invalid meeting_ended payload:', payload);
+      return null;
+    }
+
+    return {
+      meeting_id: payload.meeting_id,
+      ended_by_host: payload.ended_by_host ?? false,
+      ended_at: payload.ended_at,
+      participant_count_before_leave: payload.participant_count_before_leave ?? 0,
+    };
+  } catch (error) {
+    console.error('[Realtime] Error normalizing meeting_ended payload:', error);
+    return null;
+  }
+}
+
+/**
+ * Format meeting ended data for logging
+ */
+export function formatMeetingEndedLogData(data: MeetingEndedPayload) {
+  return {
+    meeting_id: data.meeting_id.substring(0, 8) + '...', // Redact for privacy
+    ended_by_host: data.ended_by_host,
+    ended_at: data.ended_at,
+    participant_count: data.participant_count_before_leave,
+  };
+}

@@ -9,8 +9,6 @@ import { createClient } from '@supabase/supabase-js';
 import { config } from '@/lib/config/env';
 import type { AnalyticsDashboardMetrics } from '@meetsolis/shared';
 
-export const runtime = 'edge';
-
 /**
  * GET /api/analytics/metrics
  * Fetch analytics dashboard metrics

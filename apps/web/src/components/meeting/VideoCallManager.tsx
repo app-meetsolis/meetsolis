@@ -7,6 +7,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ParticipantGrid, type Participant } from './ParticipantGrid';
+import { MeetingLoadingSkeleton } from './MeetingLoadingSkeleton';
 import { WebRTCService } from '@/services/webrtc/WebRTCService';
 import { SignalingService } from '@/services/webrtc/SignalingService';
 import { useMediaStream } from '@/hooks/useMediaStream';
@@ -14,7 +15,7 @@ import { useParticipantState } from '@/hooks/meeting/useParticipantState';
 import { usePushToTalk } from '@/hooks/meeting/usePushToTalk';
 import { useAudioControls } from '@/hooks/meeting/useAudioControls';
 import {
-  subscribeToParticipants,
+  subscribeToMeetingEvents,
   unsubscribeChannel,
 } from '@/lib/supabase/realtime';
 import { cn } from '@/lib/utils';
@@ -34,6 +35,7 @@ export interface VideoCallManagerProps {
   onParticipantLeave?: (participantId: string) => void;
   onToggleAudio?: () => void;
   onToggleVideo?: () => void;
+  onMeetingEnded?: (data: { endedByHost: boolean; endedAt: string }) => void;
   className?: string;
 }
 
@@ -65,6 +67,7 @@ export function VideoCallManager({
   onParticipantLeave,
   onToggleAudio,
   onToggleVideo,
+  onMeetingEnded,
   className = '',
 }: VideoCallManagerProps) {
   const [participants, setParticipants] = useState<Participant[]>([]);
@@ -85,6 +88,13 @@ export function VideoCallManager({
   const participantsChannelRef = useRef<any>(null);
   // Cache for mapping user_id (UUID) to clerk_id for fast realtime lookups
   const userIdToClerkIdRef = useRef<Map<string, string>>(new Map());
+  // Sequential join queue to prevent race conditions
+  const participantJoinQueueRef = useRef<Array<{ id: string; name: string }>>(
+    []
+  );
+  const isProcessingJoinRef = useRef(false);
+  // Track processed participants to prevent duplicate presence events
+  const processedParticipantsRef = useRef<Set<string>>(new Set());
 
   // Get local media stream
   const {
@@ -382,6 +392,22 @@ export function VideoCallManager({
         streamId: verifyStream?.id,
       });
 
+      // Register stream callback BEFORE accepting any offers
+      webrtcService.onStream((userId, stream) => {
+        console.log(`[VideoCallManager] Remote stream received from ${userId}`);
+
+        setRemoteStreams(prev => {
+          const newStreams = new Map(prev);
+          newStreams.set(userId, stream);
+          console.log(
+            `[VideoCallManager] Updated remote streams. Total: ${newStreams.size}`
+          );
+          return newStreams;
+        });
+      });
+
+      console.log('[VideoCallManager] onStream callback registered');
+
       // Initialize signaling service
       const signalingService = new SignalingService();
       signalingServiceRef.current = signalingService;
@@ -484,96 +510,133 @@ export function VideoCallManager({
         },
         onParticipantJoined: async (participantId, participantName) => {
           console.log(
-            '[VideoCallManager] Participant joined:',
-            participantId,
-            'Name:',
-            participantName
+            '[VideoCallManager] Participant joined event received:',
+            participantId
           );
 
-          // Store participant name
-          participantNamesRef.current.set(participantId, participantName);
+          // Check if we've already processed this participant
+          if (processedParticipantsRef.current.has(participantId)) {
+            console.log(
+              '[VideoCallManager] Participant already processed, ignoring duplicate event:',
+              participantId
+            );
+            return;
+          }
 
-          if (participantId !== userId) {
-            // Deterministic initiator selection: only lower userId initiates
-            // This prevents both users from trying to create offers simultaneously
-            const shouldInitiate = userId < participantId;
+          // Mark as processed immediately to prevent duplicates
+          processedParticipantsRef.current.add(participantId);
 
-            if (shouldInitiate) {
-              console.log(
-                '[VideoCallManager] Initiating connection to:',
-                participantId
-              );
+          // Queue the join event
+          participantJoinQueueRef.current.push({
+            id: participantId,
+            name: participantName,
+          });
 
-              // Use ref to avoid stale closure
-              if (!webrtcServiceRef.current || !signalingServiceRef.current) {
-                console.warn(
-                  '[VideoCallManager] Services not initialized, cannot create peer connection'
+          // If already processing, let that process handle it
+          if (isProcessingJoinRef.current) {
+            console.log(
+              '[VideoCallManager] Join already in progress, queued:',
+              participantId
+            );
+            return;
+          }
+
+          // Process queue sequentially
+          isProcessingJoinRef.current = true;
+
+          while (participantJoinQueueRef.current.length > 0) {
+            const participant = participantJoinQueueRef.current.shift()!;
+            const { id, name } = participant;
+
+            console.log('[VideoCallManager] Processing join from queue:', {
+              id: id.substring(0, 12),
+              name,
+              queueLength: participantJoinQueueRef.current.length,
+            });
+
+            // Store participant name
+            participantNamesRef.current.set(id, name);
+
+            if (id !== userId) {
+              // Check if peer already exists (from earlier in queue)
+              const existingConnection =
+                webrtcServiceRef.current?.getConnectionState(id);
+              if (existingConnection) {
+                console.log(
+                  '[VideoCallManager] Skipping - peer already exists:',
+                  id.substring(0, 12),
+                  'State:',
+                  existingConnection
                 );
-                return;
+                continue;
               }
 
-              // CRITICAL: Verify local stream exists before creating peer connection
-              const currentStream = webrtcServiceRef.current.getLocalStream();
-              console.log(
-                '[VideoCallManager] Local stream state before peer connection:',
-                {
-                  hasStream: !!currentStream,
-                  streamId: currentStream?.id,
-                  audioTracks: currentStream?.getAudioTracks().length ?? 0,
-                  videoTracks: currentStream?.getVideoTracks().length ?? 0,
-                }
-              );
+              // Deterministic initiator selection
+              const shouldInitiate = userId < id;
 
-              if (!currentStream) {
-                console.error(
-                  '[VideoCallManager] Cannot create peer connection: local stream is null!'
+              console.log('[VideoCallManager] Processing join decision:', {
+                participantId: id.substring(0, 12),
+                shouldInitiate,
+              });
+
+              if (shouldInitiate) {
+                // Use ref to avoid stale closure
+                if (!webrtcServiceRef.current || !signalingServiceRef.current) {
+                  console.warn('[VideoCallManager] Services not initialized');
+                  continue;
+                }
+
+                // Verify local stream exists
+                const currentStream = webrtcServiceRef.current.getLocalStream();
+                if (!currentStream) {
+                  console.error(
+                    '[VideoCallManager] Cannot create peer - no local stream'
+                  );
+                  continue;
+                }
+
+                console.log(
+                  '[VideoCallManager] Creating peer connection (initiator) to:',
+                  id.substring(0, 12)
                 );
-                console.error(
-                  '[VideoCallManager] This should not happen - stream was set during initialization'
+
+                // Create peer connection
+                await webrtcServiceRef.current.createPeerConnection(
+                  id,
+                  async signal => {
+                    console.log(
+                      '[VideoCallManager] Sending offer to:',
+                      id.substring(0, 12)
+                    );
+                    await signalingServiceRef.current?.sendOffer(
+                      signal as RTCSessionDescriptionInit
+                    );
+                  }
                 );
-                console.error(
-                  '[VideoCallManager] Possible causes: stream was cleared, initialization failed, or timing issue'
+              } else {
+                console.log(
+                  '[VideoCallManager] Waiting for offer from:',
+                  id.substring(0, 12)
                 );
-                return;
               }
 
-              // Create peer connection for new participant
-              await webrtcServiceRef.current.createPeerConnection(
-                participantId,
-                async signal => {
-                  console.log(
-                    '[VideoCallManager] SimplePeer emitted signal (offer):',
-                    {
-                      to: participantId,
-                      signalType: signal.type || 'offer',
-                    }
-                  );
-                  await signalingServiceRef.current?.sendOffer(
-                    signal as RTCSessionDescriptionInit
-                  );
-                  console.log(
-                    '[VideoCallManager] Offer sent to:',
-                    participantId
-                  );
-                }
-              );
-            } else {
-              console.log(
-                '[VideoCallManager] Waiting for offer from:',
-                participantId
-              );
-            }
-
-            if (onParticipantJoin) {
-              onParticipantJoin(participantId);
+              if (onParticipantJoin) {
+                onParticipantJoin(id);
+              }
             }
           }
+
+          isProcessingJoinRef.current = false;
+          console.log('[VideoCallManager] Join queue processing complete');
         },
         onParticipantLeft: participantId => {
           console.log('[VideoCallManager] Participant left:', participantId);
 
           // Remove participant name from ref
           participantNamesRef.current.delete(participantId);
+
+          // Remove from processed set so they can rejoin
+          processedParticipantsRef.current.delete(participantId);
 
           // Remove participant
           setParticipants(prev => prev.filter(p => p.id !== participantId));
@@ -674,12 +737,16 @@ export function VideoCallManager({
             });
           });
 
-          // Update connection quality
+          // Update connection quality (per-participant)
           setParticipants(prev =>
-            prev.map(p => ({
-              ...p,
-              connectionQuality: state.connectionQuality,
-            }))
+            prev.map(p => {
+              if (p.isLocal) {
+                return { ...p, connectionQuality: 'excellent' };
+              }
+              const quality =
+                webrtcServiceRef.current?.getConnectionQuality(p.id) || 'good';
+              return { ...p, connectionQuality: quality };
+            })
           );
         }
       }, 1000); // Check every second
@@ -759,8 +826,14 @@ export function VideoCallManager({
   }, [streamError, handleError]);
 
   /**
-   * Subscribe to participant state changes via Supabase Realtime
-   * Handles both broadcast events (API) and postgres_changes events (DB trigger)
+   * UNIFIED SUBSCRIPTION: Subscribe to all meeting realtime events
+   *
+   * This single subscription handles:
+   * 1. Participant state changes (mic/video toggle) - dual-event pattern (broadcast + postgres_changes)
+   * 2. Meeting ended events (organizer leaves or last participant leaves)
+   *
+   * CRITICAL FIX: Using a single channel prevents duplicate subscriptions that cause race conditions
+   * and interference with WebRTC signaling.
    */
   useEffect(() => {
     // Wait for meeting UUID to be available before subscribing
@@ -768,9 +841,13 @@ export function VideoCallManager({
       return;
     }
 
-    const channel = subscribeToParticipants(
-      meetingUuid,
-      async (normalizedData: NormalizedParticipantData | null) => {
+    console.log('[VideoCallManager] Setting up unified meeting subscription');
+
+    const channel = subscribeToMeetingEvents(meetingUuid, {
+      // Callback for participant state updates
+      onParticipantUpdate: async (
+        normalizedData: NormalizedParticipantData | null
+      ) => {
         // Null check - skip if normalization failed
         if (!normalizedData) {
           console.warn(
@@ -837,8 +914,47 @@ export function VideoCallManager({
             return p;
           })
         );
-      }
-    );
+      },
+
+      // Callback for meeting ended events
+      onMeetingEnded: onMeetingEnded
+        ? async data => {
+            if (!data) {
+              return;
+            }
+
+            console.log('[VideoCallManager] Meeting ended, cleaning up...', {
+              endedByHost: data.ended_by_host,
+              endedAt: data.ended_at,
+            });
+
+            // Cleanup WebRTC connections
+            if (webrtcServiceRef.current) {
+              console.log('[VideoCallManager] Cleaning up WebRTC service');
+              webrtcServiceRef.current.cleanup();
+            }
+
+            // Cleanup signaling service
+            if (signalingServiceRef.current) {
+              console.log('[VideoCallManager] Disconnecting signaling service');
+              signalingServiceRef.current.disconnect();
+            }
+
+            // Clear polling interval
+            if (pollingIntervalRef.current) {
+              console.log('[VideoCallManager] Clearing polling interval');
+              clearInterval(pollingIntervalRef.current);
+              pollingIntervalRef.current = null;
+            }
+
+            // Notify parent component
+            onMeetingEnded({
+              endedByHost: data.ended_by_host,
+              endedAt: data.ended_at,
+            });
+          }
+        : undefined,
+    });
 
     participantsChannelRef.current = channel;
 
@@ -848,7 +964,7 @@ export function VideoCallManager({
         participantsChannelRef.current = null;
       }
     };
-  }, [meetingUuid]); // Re-subscribe when meeting UUID becomes available
+  }, [meetingUuid, onMeetingEnded]); // Re-subscribe when meeting UUID or callback changes
 
   /**
    * Cleanup on unmount
@@ -927,26 +1043,9 @@ export function VideoCallManager({
     );
   }
 
-  // Show connecting state
+  // Show connecting state with skeleton UI
   if (connectionState === 'connecting') {
-    return (
-      <div
-        className={cn(
-          'flex items-center justify-center h-full bg-gray-900 rounded-lg',
-          className
-        )}
-        role="status"
-        aria-live="polite"
-      >
-        <div className="text-center text-white">
-          <div
-            className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto mb-4"
-            aria-hidden="true"
-          />
-          <h3 className="text-xl font-semibold">Connecting to meeting...</h3>
-        </div>
-      </div>
-    );
+    return <MeetingLoadingSkeleton className={className} />;
   }
 
   return (

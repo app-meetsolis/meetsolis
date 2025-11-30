@@ -26,6 +26,7 @@ export class WebRTCService {
   private connectionStates: Map<string, ConnectionState> = new Map();
   private connectionQualities: Map<string, ConnectionQuality> = new Map();
   private statsIntervals: Map<string, NodeJS.Timeout> = new Map();
+  private signalBuffers: Map<string, SimplePeer.SignalData[]> = new Map();
 
   // Event handlers
   private onStreamCallback?: (userId: string, stream: MediaStream) => void;
@@ -117,6 +118,29 @@ export class WebRTCService {
 
       this.setupPeerHandlers(peer, userId, signalCallback);
       this.peerConnections.set(userId, peer);
+
+      // Drain only ICE candidate signals (not offers/answers)
+      const buffered = this.signalBuffers.get(userId) || [];
+      if (buffered.length > 0) {
+        const iceCandidates = buffered.filter(sig => sig.candidate);
+        if (iceCandidates.length > 0) {
+          console.log(
+            `[WebRTCService] Draining ${iceCandidates.length} ICE candidates for ${userId}`
+          );
+          iceCandidates.forEach(signal => {
+            try {
+              peer.signal(signal);
+            } catch (error) {
+              console.error(
+                `[WebRTCService] Error processing buffered ICE candidate:`,
+                error
+              );
+            }
+          });
+        }
+        this.signalBuffers.delete(userId);
+      }
+
       this.updateConnectionState(userId, 'connecting');
     } catch (error) {
       throw this.createError(
@@ -152,9 +176,33 @@ export class WebRTCService {
 
       this.setupPeerHandlers(peer, userId, signalCallback);
       this.peerConnections.set(userId, peer);
-      this.updateConnectionState(userId, 'connecting');
 
+      // Process the initial offer first
       peer.signal(signal);
+
+      // Then drain only ICE candidate signals (not offers/answers)
+      const buffered = this.signalBuffers.get(userId) || [];
+      if (buffered.length > 0) {
+        const iceCandidates = buffered.filter(sig => sig.candidate);
+        if (iceCandidates.length > 0) {
+          console.log(
+            `[WebRTCService] Draining ${iceCandidates.length} ICE candidates for ${userId}`
+          );
+          iceCandidates.forEach(sig => {
+            try {
+              peer.signal(sig);
+            } catch (error) {
+              console.error(
+                `[WebRTCService] Error processing buffered ICE candidate:`,
+                error
+              );
+            }
+          });
+        }
+        this.signalBuffers.delete(userId);
+      }
+
+      this.updateConnectionState(userId, 'connecting');
     } catch (error) {
       throw this.createError(
         `Failed to accept peer connection from user ${userId}`,
@@ -169,8 +217,44 @@ export class WebRTCService {
    */
   handleSignal(userId: string, signal: SimplePeer.SignalData): void {
     const peer = this.peerConnections.get(userId);
+
     if (!peer) {
-      console.warn(`No peer connection found for user ${userId}`);
+      console.log(
+        `[WebRTCService] Peer not ready for ${userId}, buffering signal`
+      );
+
+      // Buffer the signal
+      if (!this.signalBuffers.has(userId)) {
+        this.signalBuffers.set(userId, []);
+      }
+      this.signalBuffers.get(userId)!.push(signal);
+
+      // Set timeout to drain buffer (in case peer is being created)
+      setTimeout(() => {
+        const laterPeer = this.peerConnections.get(userId);
+        if (laterPeer) {
+          const buffered = this.signalBuffers.get(userId) || [];
+          // Only drain ICE candidates, not offers/answers
+          const iceCandidates = buffered.filter(sig => sig.candidate);
+          if (iceCandidates.length > 0) {
+            console.log(
+              `[WebRTCService] Draining ${iceCandidates.length} buffered ICE candidates for ${userId}`
+            );
+            iceCandidates.forEach(sig => {
+              try {
+                laterPeer.signal(sig);
+              } catch (error) {
+                console.error(
+                  `[WebRTCService] Error processing buffered ICE candidate:`,
+                  error
+                );
+              }
+            });
+          }
+          this.signalBuffers.delete(userId);
+        }
+      }, 100); // 100ms delay
+
       return;
     }
 
@@ -243,7 +327,7 @@ export class WebRTCService {
         `[WebRTCService] SimplePeer 'close' event - Connection closed with ${userId}`
       );
       this.updateConnectionState(userId, 'closed');
-      this.cleanup(userId);
+      this.cleanupUser(userId);
     });
 
     // Error event
@@ -386,6 +470,49 @@ export class WebRTCService {
     userId: string,
     signalCallback: (signal: SimplePeer.SignalData) => void
   ): Promise<void> {
+    const existingPeer = this.peerConnections.get(userId);
+
+    if (existingPeer) {
+      const state = this.connectionStates.get(userId);
+
+      // If already connected, this is a duplicate - ignore it completely
+      if (state === 'connected') {
+        console.log(
+          `[WebRTCService] Peer ${userId} already connected, ignoring duplicate offer`
+        );
+        return;
+      }
+
+      // @ts-ignore - accessing internal _pc property
+      const pc = existingPeer._pc as RTCPeerConnection;
+      const signalingState = pc.signalingState;
+
+      // If in stable or have-local-offer, we're already negotiating - ignore duplicate
+      if (
+        signalingState === 'stable' ||
+        signalingState === 'have-local-offer'
+      ) {
+        console.log(
+          `[WebRTCService] Peer ${userId} in ${signalingState} state, ignoring duplicate offer`
+        );
+        return;
+      }
+
+      // If in have-remote-offer, we might be cross-connecting - let it continue
+      if (signalingState === 'have-remote-offer') {
+        console.log(
+          `[WebRTCService] Peer ${userId} in have-remote-offer, continuing with offer`
+        );
+        // Fall through to acceptPeerConnection
+      } else {
+        console.log(
+          `[WebRTCService] Unexpected signaling state ${signalingState} for ${userId}, ignoring offer`
+        );
+        return;
+      }
+    }
+
+    // No existing peer OR peer in have-remote-offer state - create/continue connection
     await this.acceptPeerConnection(
       userId,
       sdp as SimplePeer.SignalData,
@@ -400,7 +527,40 @@ export class WebRTCService {
     sdp: RTCSessionDescriptionInit,
     userId: string
   ): Promise<void> {
-    this.handleSignal(userId, sdp as SimplePeer.SignalData);
+    const peer = this.peerConnections.get(userId);
+
+    if (!peer) {
+      console.warn(
+        `[WebRTCService] No peer connection for ${userId}, buffering answer`
+      );
+      this.handleSignal(userId, sdp as SimplePeer.SignalData);
+      return;
+    }
+
+    // Check connection state - ignore duplicate answers
+    const state = this.connectionStates.get(userId);
+    if (state === 'connected') {
+      console.log(
+        `[WebRTCService] Peer ${userId} already connected, ignoring duplicate answer`
+      );
+      return;
+    }
+
+    // @ts-ignore - accessing internal _pc property
+    const pc = peer._pc as RTCPeerConnection;
+    const signalingState = pc.signalingState;
+
+    // Only process answer if in correct state
+    if (signalingState === 'have-local-offer') {
+      console.log(
+        `[WebRTCService] Processing answer from ${userId} (state: ${signalingState})`
+      );
+      this.handleSignal(userId, sdp as SimplePeer.SignalData);
+    } else {
+      console.log(
+        `[WebRTCService] Ignoring answer from ${userId} - wrong state: ${signalingState} (expected: have-local-offer)`
+      );
+    }
   }
 
   /**
@@ -428,17 +588,18 @@ export class WebRTCService {
     if (peer) {
       peer.destroy();
     }
-    this.cleanup(userId);
+    this.cleanupUser(userId);
   }
 
   /**
    * Cleanup resources for a user
    */
-  private cleanup(userId: string): void {
+  private cleanupUser(userId: string): void {
     this.peerConnections.delete(userId);
     this.remoteStreams.delete(userId);
     this.connectionStates.delete(userId);
     this.connectionQualities.delete(userId);
+    this.signalBuffers.delete(userId);
 
     const interval = this.statsIntervals.get(userId);
     if (interval) {
@@ -575,7 +736,7 @@ export class WebRTCService {
   /**
    * Cleanup/destroy (alias for backward compatibility)
    */
-  cleanup(): void {
+  public cleanup(): void {
     this.destroy();
   }
 }

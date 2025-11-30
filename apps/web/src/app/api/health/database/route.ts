@@ -1,23 +1,51 @@
 import { NextResponse } from 'next/server';
-import { ServiceFactory } from '@/lib/service-factory';
+import { createClient } from '@supabase/supabase-js';
+import { config } from '@/lib/config/env';
 
+/**
+ * GET /api/health/database
+ * Health check endpoint for database service (Supabase)
+ */
 export async function GET() {
   try {
-    const dbService = ServiceFactory.createDatabaseService();
-    const healthCheck = await dbService.healthCheck();
-    const serviceInfo = dbService.getServiceInfo();
+    if (!config.supabase.url || !config.supabase.serviceRoleKey) {
+      return NextResponse.json(
+        {
+          service: 'database',
+          health: {
+            status: 'unavailable',
+            error: 'Supabase not configured',
+          },
+        },
+        { status: 503 }
+      );
+    }
 
-    const response = {
+    // Create Supabase client and test connection
+    const supabase = createClient(
+      config.supabase.url,
+      config.supabase.serviceRoleKey
+    );
+
+    // Simple query to verify database connectivity
+    const { error } = await supabase.from('users').select('count').limit(1);
+
+    if (error) {
+      return NextResponse.json(
+        {
+          service: 'database',
+          health: { status: 'degraded', error: error.message },
+        },
+        { status: 503 }
+      );
+    }
+
+    return NextResponse.json({
       service: 'database',
-      ...serviceInfo,
-      health: healthCheck,
-      fallbackMode: dbService.fallbackMode(),
-      circuitBreakerState: dbService.getCircuitBreakerState(),
+      health: { status: 'healthy' },
+      provider: 'Supabase',
       timestamp: new Date().toISOString(),
-    };
-
-    const status = healthCheck.status === 'healthy' ? 200 : 503;
-    return NextResponse.json(response, { status });
+    });
   } catch (error) {
     console.error('Database service health check error:', error);
 
@@ -27,7 +55,6 @@ export async function GET() {
         health: {
           status: 'unavailable',
           error: error instanceof Error ? error.message : 'Unknown error',
-          lastCheck: new Date(),
         },
         timestamp: new Date().toISOString(),
       },

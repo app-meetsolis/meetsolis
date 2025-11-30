@@ -1,0 +1,36 @@
+================================================================================
+CRITICAL: SERVER RESTART REQUIRED
+================================================================================
+
+The API route GET /api/meetings is returning 404 because the server hasn't
+been restarted after critical changes.
+
+STEPS TO FIX:
+-------------
+
+1. In your terminal where "npm run dev" is running:
+   Press Ctrl+C to STOP the server
+
+2. Wait for the process to fully stop (prompt returns)
+
+3. Run this command:
+   npm run dev
+
+4. Wait for this message:
+   ✓ Ready in X seconds
+   ✓ Compiled successfully
+
+5. Refresh your browser (Ctrl+Shift+R for hard refresh)
+
+6. Check DevTools Console - the 404 error should be GONE
+
+WHAT THIS FIXES:
+-----------------
+✓ Picks up new environment variable: NEXT_PUBLIC_APP_URL
+✓ Rebuilds routing table with API routes
+✓ Clears corrupted cache
+✓ Re-compiles all pages and API endpoints
+
+TIME TO FIX: ~2 minutes (rebuild time)
+
+================================================================================

@@ -20,6 +20,9 @@ import {
   normalizeParticipantPayload,
   formatParticipantLogData,
   type NormalizedParticipantData,
+  normalizeMeetingEndedPayload,
+  formatMeetingEndedLogData,
+  type MeetingEndedPayload,
 } from '../../../../../packages/shared/types/realtime';
 
 /**
@@ -33,54 +36,58 @@ export const RealtimeChannels = {
 } as const;
 
 /**
- * Subscribe to meeting participants (presence tracking + state updates)
+ * Subscribe to all meeting events (participants + meeting lifecycle)
  *
- * This subscription handles TWO event types:
- * 1. BROADCAST events - Sent by API endpoints for immediate state sync (PRIMARY)
- * 2. POSTGRES_CHANGES events - Sent by database triggers as fallback (SECONDARY)
+ * UNIFIED SUBSCRIPTION: This function creates a SINGLE Realtime channel that handles:
+ * 1. Participant state updates (broadcast + postgres_changes)
+ * 2. Meeting ended events (broadcast)
  *
- * Both event types are normalized to a unified format before being passed to the callback.
+ * This prevents creating duplicate channels which can cause race conditions and interference.
  *
  * @param meetingId - UUID of the meeting
- * @param callback - Called with normalized participant data on any state change
+ * @param callbacks - Object containing callbacks for different event types
  * @returns RealtimeChannel instance for cleanup
  */
-export function subscribeToParticipants(
+export function subscribeToMeetingEvents(
   meetingId: string,
-  // eslint-disable-next-line no-unused-vars
-  callback: (_payload: NormalizedParticipantData | null) => void
+  callbacks: {
+    onParticipantUpdate?: (_payload: NormalizedParticipantData | null) => void;
+    onMeetingEnded?: (_payload: MeetingEndedPayload | null) => void;
+  }
 ): RealtimeChannel {
   const supabase = getSupabaseClient();
   const channelName = RealtimeChannels.participants(meetingId);
 
-  const channel = supabase
-    .channel(channelName)
+  let channel = supabase.channel(channelName);
 
-    // PRIMARY: Listen for broadcast events (API updates)
-    // These are sent immediately by API endpoints when participant state changes
-    // Bypasses RLS and provides instant synchronization
-    .on('broadcast', { event: 'participant_update' }, payload => {
-      console.log('[Realtime] Received broadcast event:', {
-        channel: channelName,
-        payload: payload.payload,
-      });
+  // Participant update: BROADCAST events (PRIMARY)
+  if (callbacks.onParticipantUpdate) {
+    channel = channel.on(
+      'broadcast',
+      { event: 'participant_update' },
+      payload => {
+        console.log('[Realtime] Received broadcast event:', {
+          channel: channelName,
+          payload: payload.payload,
+        });
 
-      const normalized = normalizeParticipantPayload(payload.payload);
-      if (normalized) {
-        console.log(
-          '[Realtime] Normalized broadcast data:',
-          formatParticipantLogData(normalized)
-        );
-        callback(normalized);
-      } else {
-        console.warn('[Realtime] Failed to normalize broadcast payload');
+        const normalized = normalizeParticipantPayload(payload.payload);
+        if (normalized) {
+          console.log(
+            '[Realtime] Normalized broadcast data:',
+            formatParticipantLogData(normalized)
+          );
+          callbacks.onParticipantUpdate!(normalized);
+        } else {
+          console.warn('[Realtime] Failed to normalize broadcast payload');
+        }
       }
-    })
+    );
+  }
 
-    // FALLBACK: Listen for postgres_changes (DB trigger)
-    // These are sent automatically when the participants table is updated
-    // Provides backup sync if broadcast fails
-    .on(
+  // Participant update: POSTGRES_CHANGES events (FALLBACK)
+  if (callbacks.onParticipantUpdate) {
+    channel = channel.on(
       'postgres_changes',
       {
         event: '*',
@@ -100,23 +107,109 @@ export function subscribeToParticipants(
             '[Realtime] Normalized postgres_changes data:',
             formatParticipantLogData(normalized)
           );
-          callback(normalized);
+          callbacks.onParticipantUpdate!(normalized);
         } else {
           console.warn(
             '[Realtime] Failed to normalize postgres_changes payload'
           );
         }
       }
-    )
+    );
+  }
 
-    .subscribe(status => {
-      console.log('[Realtime] Subscription status:', {
+  // Meeting ended: BROADCAST events
+  if (callbacks.onMeetingEnded) {
+    channel = channel.on('broadcast', { event: 'meeting_ended' }, payload => {
+      console.log('[Realtime] Received meeting_ended event:', {
         channel: channelName,
-        status,
+        payload: payload.payload,
       });
+
+      const normalized = normalizeMeetingEndedPayload(payload.payload);
+      if (normalized) {
+        console.log(
+          '[Realtime] Normalized meeting_ended data:',
+          formatMeetingEndedLogData(normalized)
+        );
+        callbacks.onMeetingEnded!(normalized);
+      } else {
+        console.warn('[Realtime] Failed to normalize meeting_ended payload');
+      }
     });
+  }
+
+  // Subscribe to the channel
+  channel = channel.subscribe(status => {
+    console.log('[Realtime] Meeting events subscription status:', {
+      channel: channelName,
+      status,
+    });
+  });
 
   return channel;
+}
+
+/**
+ * @deprecated Use subscribeToMeetingEvents instead to avoid duplicate channels
+ *
+ * Subscribe to meeting participants (presence tracking + state updates)
+ *
+ * This subscription handles TWO event types:
+ * 1. BROADCAST events - Sent by API endpoints for immediate state sync (PRIMARY)
+ * 2. POSTGRES_CHANGES events - Sent by database triggers as fallback (SECONDARY)
+ *
+ * Both event types are normalized to a unified format before being passed to the callback.
+ *
+ * @param meetingId - UUID of the meeting
+ * @param callback - Called with normalized participant data on any state change
+ * @returns RealtimeChannel instance for cleanup
+ */
+export function subscribeToParticipants(
+  meetingId: string,
+  // eslint-disable-next-line no-unused-vars
+  callback: (_payload: NormalizedParticipantData | null) => void
+): RealtimeChannel {
+  return subscribeToMeetingEvents(meetingId, {
+    onParticipantUpdate: callback,
+  });
+}
+
+/**
+ * @deprecated Use subscribeToMeetingEvents instead to avoid duplicate channels
+ *
+ * Subscribe to meeting ended events
+ *
+ * Listens for broadcast events when a meeting ends (organizer leaves or last participant leaves).
+ * Reuses the SAME channel as participants to avoid creating duplicate connections.
+ *
+ * IMPORTANT: This function is additive and does NOT interfere with participant state sync.
+ * It only adds a new event listener to the existing channel pattern.
+ *
+ * @param meetingId - UUID of the meeting
+ * @param callback - Called with normalized meeting ended data when meeting ends
+ * @returns RealtimeChannel instance for cleanup
+ *
+ * @example
+ * ```typescript
+ * const channel = subscribeToMeetingEnded(meetingId, (data) => {
+ *   if (data) {
+ *     toast.info('Meeting ended');
+ *     router.push('/dashboard');
+ *   }
+ * });
+ *
+ * // Cleanup on unmount
+ * return () => unsubscribeChannel(channel);
+ * ```
+ */
+export function subscribeToMeetingEnded(
+  meetingId: string,
+  // eslint-disable-next-line no-unused-vars
+  callback: (_payload: MeetingEndedPayload | null) => void
+): RealtimeChannel {
+  return subscribeToMeetingEvents(meetingId, {
+    onMeetingEnded: callback,
+  });
 }
 
 /**

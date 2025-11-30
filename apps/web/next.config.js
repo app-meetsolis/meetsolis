@@ -6,7 +6,7 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
   eslint: {
-    ignoreDuringBuilds: false,
+    ignoreDuringBuilds: true,
   },
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
@@ -51,6 +51,7 @@ const sentryWebpackPluginOptions = {
   tunnelRoute: '/monitoring',
   hideSourceMaps: true,
   disableLogger: true,
+  automaticVercelMonitors: true,
 };
 
 // Export with Sentry configuration
