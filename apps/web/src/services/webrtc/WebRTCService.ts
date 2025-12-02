@@ -122,7 +122,7 @@ export class WebRTCService {
       // Drain only ICE candidate signals (not offers/answers)
       const buffered = this.signalBuffers.get(userId) || [];
       if (buffered.length > 0) {
-        const iceCandidates = buffered.filter(sig => sig.candidate);
+        const iceCandidates = buffered.filter(sig => 'candidate' in sig);
         if (iceCandidates.length > 0) {
           console.log(
             `[WebRTCService] Draining ${iceCandidates.length} ICE candidates for ${userId}`
@@ -183,7 +183,7 @@ export class WebRTCService {
       // Then drain only ICE candidate signals (not offers/answers)
       const buffered = this.signalBuffers.get(userId) || [];
       if (buffered.length > 0) {
-        const iceCandidates = buffered.filter(sig => sig.candidate);
+        const iceCandidates = buffered.filter(sig => 'candidate' in sig);
         if (iceCandidates.length > 0) {
           console.log(
             `[WebRTCService] Draining ${iceCandidates.length} ICE candidates for ${userId}`
@@ -235,7 +235,7 @@ export class WebRTCService {
         if (laterPeer) {
           const buffered = this.signalBuffers.get(userId) || [];
           // Only drain ICE candidates, not offers/answers
-          const iceCandidates = buffered.filter(sig => sig.candidate);
+          const iceCandidates = buffered.filter(sig => 'candidate' in sig);
           if (iceCandidates.length > 0) {
             console.log(
               `[WebRTCService] Draining ${iceCandidates.length} buffered ICE candidates for ${userId}`
