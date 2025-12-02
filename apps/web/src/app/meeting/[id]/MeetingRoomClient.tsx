@@ -36,7 +36,11 @@ export function MeetingRoomClient({
   const [isOrganizer, setIsOrganizer] = useState(false);
   const [participantCount, setParticipantCount] = useState(0);
 
-  const userName = user?.fullName || user?.username || 'Unknown User';
+  // Construct full name from Clerk user object
+  const userName =
+    user?.firstName && user?.lastName
+      ? `${user.firstName} ${user.lastName}`
+      : user?.firstName || user?.username || 'Unknown User';
 
   /**
    * Fetch meeting data to determine if user is organizer
