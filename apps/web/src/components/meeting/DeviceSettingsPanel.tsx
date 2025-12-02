@@ -55,7 +55,7 @@ export const DeviceSettingsPanel: React.FC<DeviceSettingsPanelProps> = ({
   const audioContextRef = useRef<AudioContext | null>(null);
 
   // Get audio level for microphone test
-  const { audioLevel } = useAudioLevel({ stream });
+  const { audioLevel } = useAudioLevel({ stream: stream ?? null });
 
   // Initialize selections from preferences
   useEffect(() => {

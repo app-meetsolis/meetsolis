@@ -110,7 +110,15 @@ export async function PUT(
       const clientSupabase = getSupabaseClient();
       const channelName = `meeting:${meeting.id}:participants`;
 
-      await clientSupabase.channel(channelName).send({
+      console.log('[API] Broadcasting participant state update:', {
+        channel: channelName,
+        user_id: updated.user_id.substring(0, 8) + '...',
+        is_muted: updated.is_muted,
+        is_video_off: updated.is_video_off,
+        timestamp: new Date().toISOString(),
+      });
+
+      const broadcastResult = await clientSupabase.channel(channelName).send({
         type: 'broadcast',
         event: 'participant_update',
         payload: {
@@ -122,11 +130,17 @@ export async function PUT(
           updated_at: updated.updated_at,
         },
       });
+
+      console.log('[API] Broadcast result:', {
+        status: broadcastResult ? 'success' : 'unknown',
+        channel: channelName,
+      });
     } catch (broadcastError) {
-      console.error(
-        '[API] Failed to broadcast participant update:',
-        broadcastError
-      );
+      console.error('[API] Failed to broadcast participant update:', {
+        error: broadcastError,
+        channel: `meeting:${meeting.id}:participants`,
+        user_id: updated.user_id,
+      });
       // Don't fail the request if broadcast fails - participants will sync on next poll
     }
 
