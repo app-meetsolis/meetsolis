@@ -394,8 +394,16 @@ export function VideoCallManager({
 
       // Register stream callback BEFORE accepting any offers
       webrtcService.onStream((userId, stream) => {
-        console.log(`[VideoCallManager] Remote stream received from ${userId}`);
+        console.log(
+          `[VideoCallManager] Remote stream received from ${userId}`,
+          {
+            streamId: stream.id,
+            audioTracks: stream.getAudioTracks().length,
+            videoTracks: stream.getVideoTracks().length,
+          }
+        );
 
+        // Update remoteStreams Map (for cleanup tracking)
         setRemoteStreams(prev => {
           const newStreams = new Map(prev);
           newStreams.set(userId, stream);
@@ -403,6 +411,26 @@ export function VideoCallManager({
             `[VideoCallManager] Updated remote streams. Total: ${newStreams.size}`
           );
           return newStreams;
+        });
+
+        // ✅ CRITICAL FIX: Update participant's stream in participants array
+        setParticipants(prev => {
+          const updated = prev.map(p =>
+            p.id === userId ? { ...p, stream } : p
+          );
+
+          const participant = prev.find(p => p.id === userId);
+          if (participant) {
+            console.log(
+              `[VideoCallManager] Updated stream for participant: ${userId}`
+            );
+          } else {
+            console.warn(
+              `[VideoCallManager] Participant ${userId} not found in array - will be added by polling`
+            );
+          }
+
+          return updated;
         });
       });
 
@@ -683,10 +711,9 @@ export function VideoCallManager({
             remoteStreamIds: Array.from(state.remoteStreams.keys()),
           });
 
-          // Update remote streams
-          setRemoteStreams(new Map(state.remoteStreams));
+          // ✅ REMOVED: setRemoteStreams() - onStream callback handles this synchronously
 
-          // Update participants with remote streams
+          // Update participants with remote streams (backup mechanism)
           state.remoteStreams.forEach((stream, participantId) => {
             console.log(
               '[VideoCallManager] Processing remote stream for participant:',
@@ -732,8 +759,14 @@ export function VideoCallManager({
                     connectionQuality: 'good',
                   },
                 ];
+              } else {
+                // ✅ BACKUP FIX: Update existing participant if stream changed
+                return prev.map(p =>
+                  p.id === participantId && p.stream !== stream
+                    ? { ...p, stream }
+                    : p
+                );
               }
-              return prev;
             });
           });
 
