@@ -9,14 +9,36 @@ export interface RTCConfig {
 }
 
 /**
- * Free STUN servers for development (Google's public STUN servers)
- * Production: Use Twilio TURN or self-hosted coturn for NAT traversal
+ * STUN/TURN servers for NAT traversal
+ * - STUN: Discovers public IP (works for simple NAT)
+ * - TURN: Relays traffic when direct connection fails (required for restrictive NAT/firewalls)
+ *
+ * Using free public TURN servers from Open Relay Project
+ * Production: Replace with Twilio TURN, Metered.ca, or self-hosted coturn
  */
 export const DEFAULT_RTC_CONFIG: RTCConfig = {
   iceServers: [
+    // STUN servers - for IP discovery
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
+
+    // TURN servers - for traffic relay when direct connection fails
+    // Open Relay Project (free public TURN servers)
+    {
+      urls: 'turn:openrelay.metered.ca:80',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
   ],
   iceCandidatePoolSize: 10,
 };
