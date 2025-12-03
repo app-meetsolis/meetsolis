@@ -376,6 +376,9 @@ export function VideoCallManager({
       const webrtcService = new WebRTCService();
       webrtcServiceRef.current = webrtcService;
 
+      // Set local user ID for Perfect Negotiation
+      webrtcService.setLocalUserId(userId);
+
       // Set the local stream from useMediaStream hook
       console.log('[VideoCallManager] Setting local stream:', {
         hasStream: !!localStream,

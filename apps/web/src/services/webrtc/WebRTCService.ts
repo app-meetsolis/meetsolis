@@ -27,6 +27,7 @@ export class WebRTCService {
   private connectionQualities: Map<string, ConnectionQuality> = new Map();
   private statsIntervals: Map<string, NodeJS.Timeout> = new Map();
   private signalBuffers: Map<string, SimplePeer.SignalData[]> = new Map();
+  private localUserId: string | null = null; // Store local user ID for Perfect Negotiation
 
   // Event handlers
   private onStreamCallback?: (userId: string, stream: MediaStream) => void;
@@ -45,6 +46,13 @@ export class WebRTCService {
    */
   setLocalStream(stream: MediaStream): void {
     this.localStream = stream;
+  }
+
+  /**
+   * Set local user ID for Perfect Negotiation
+   */
+  setLocalUserId(userId: string): void {
+    this.localUserId = userId;
   }
 
   /**
@@ -487,15 +495,48 @@ export class WebRTCService {
       const pc = existingPeer._pc as RTCPeerConnection;
       const signalingState = pc.signalingState;
 
-      // If in stable or have-local-offer, we're already negotiating - ignore duplicate
-      if (
-        signalingState === 'stable' ||
-        signalingState === 'have-local-offer'
-      ) {
+      // If already in stable, this is a duplicate offer - ignore
+      if (signalingState === 'stable') {
         console.log(
-          `[WebRTCService] Peer ${userId} in ${signalingState} state, ignoring duplicate offer`
+          `[WebRTCService] Peer ${userId} already in stable state, ignoring duplicate offer`
         );
         return;
+      }
+
+      // ✅ PERFECT NEGOTIATION: Handle offer collision
+      if (signalingState === 'have-local-offer') {
+        console.log(
+          `[WebRTCService] ⚠️ Offer collision detected with ${userId}!`
+        );
+
+        // Determine who is "polite" using deterministic comparison
+        // The side with the lexicographically smaller ID is "polite"
+        const isPolite = this.localUserId!.localeCompare(userId) < 0;
+
+        console.log(
+          `[WebRTCService] Collision resolution: ${isPolite ? 'POLITE (rollback)' : 'IMPOLITE (ignore)'}`
+        );
+
+        if (isPolite) {
+          // Polite side: ROLLBACK our offer, accept theirs
+          console.log(
+            `[WebRTCService] Rolling back our offer for ${userId} (polite side)`
+          );
+
+          // Destroy the existing peer connection that sent the offer
+          existingPeer.destroy();
+          this.peerConnections.delete(userId);
+          this.connectionStates.delete(userId);
+
+          // Now fall through to acceptPeerConnection below
+          // This will create a new non-initiator peer and accept their offer
+        } else {
+          // Impolite side: Ignore their offer, continue with ours
+          console.log(
+            `[WebRTCService] Ignoring their offer for ${userId} (impolite side) - continuing with our offer`
+          );
+          return;
+        }
       }
 
       // If in have-remote-offer, we might be cross-connecting - let it continue
@@ -504,11 +545,6 @@ export class WebRTCService {
           `[WebRTCService] Peer ${userId} in have-remote-offer, continuing with offer`
         );
         // Fall through to acceptPeerConnection
-      } else {
-        console.log(
-          `[WebRTCService] Unexpected signaling state ${signalingState} for ${userId}, ignoring offer`
-        );
-        return;
       }
     }
 
