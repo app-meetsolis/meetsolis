@@ -5,6 +5,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Providers } from './providers';
 import { CookieConsent } from '@/components/common/CookieConsent';
 import { AnalyticsProvider } from '@/components/analytics/AnalyticsProvider';
+import { DebugLoggerInit } from '@/components/debug/DebugLoggerInit';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -26,6 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        <DebugLoggerInit />
         <AnalyticsProvider>
           <Providers>{children}</Providers>
           <CookieConsent />
