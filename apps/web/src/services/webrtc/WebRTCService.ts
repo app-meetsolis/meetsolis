@@ -18,6 +18,7 @@ import {
   CONNECTION_QUALITY_THRESHOLDS,
   PERFORMANCE_CONFIG,
 } from './config';
+import debugLogger from '@/lib/debug-logger';
 
 export class WebRTCService {
   private peerConnections: Map<string, SimplePeer.Instance> = new Map();
@@ -109,6 +110,14 @@ export class WebRTCService {
     userId: string,
     signalCallback: (signal: SimplePeer.SignalData) => void
   ): Promise<void> {
+    const msg = `🔵 INITIATING connection to ${userId}`;
+    console.log(`[WebRTCService] ${msg}`);
+    debugLogger.log('WebRTCService', msg, {
+      userId,
+      role: 'initiator',
+      localUserId: this.localUserId,
+    });
+
     if (!this.localStream) {
       throw this.createError(
         'Local stream not initialized',
@@ -167,6 +176,14 @@ export class WebRTCService {
     signal: SimplePeer.SignalData,
     signalCallback: (signal: SimplePeer.SignalData) => void
   ): Promise<void> {
+    const msg = `🟢 ACCEPTING connection from ${userId}`;
+    console.log(`[WebRTCService] ${msg}`);
+    debugLogger.log('WebRTCService', msg, {
+      userId,
+      role: 'non-initiator',
+      localUserId: this.localUserId,
+    });
+
     if (!this.localStream) {
       throw this.createError(
         'Local stream not initialized',
@@ -340,9 +357,19 @@ export class WebRTCService {
 
     // Error event
     peer.on('error', err => {
-      console.error(
-        `[WebRTCService] SimplePeer 'error' event for ${userId}:`,
-        err
+      const msg = `🔴 SimplePeer ERROR for ${userId}: ${err.message || err}`;
+      console.error(`[WebRTCService] ${msg}`, err);
+      debugLogger.log(
+        'WebRTCService',
+        msg,
+        {
+          userId,
+          errorMessage: err.message,
+          errorCode: (err as any).code,
+          errorName: err.name,
+          stack: err.stack,
+        },
+        'error'
       );
       this.updateConnectionState(userId, 'failed');
       this.handleError(
@@ -485,9 +512,9 @@ export class WebRTCService {
 
       // If already connected, this is a duplicate - ignore it completely
       if (state === 'connected') {
-        console.log(
-          `[WebRTCService] Peer ${userId} already connected, ignoring duplicate offer`
-        );
+        const msg = `Peer ${userId} already connected, ignoring duplicate offer`;
+        console.log(`[WebRTCService] ${msg}`);
+        debugLogger.log('WebRTCService', msg, { userId, state });
         return;
       }
 
@@ -497,31 +524,45 @@ export class WebRTCService {
 
       // If already in stable, this is a duplicate offer - ignore
       if (signalingState === 'stable') {
-        console.log(
-          `[WebRTCService] Peer ${userId} already in stable state, ignoring duplicate offer`
+        const msg = `Peer ${userId} already in stable state, ignoring duplicate offer`;
+        console.log(`[WebRTCService] ${msg}`);
+        debugLogger.log(
+          'WebRTCService',
+          msg,
+          { userId, signalingState },
+          'warn'
         );
         return;
       }
 
       // ✅ PERFECT NEGOTIATION: Handle offer collision
       if (signalingState === 'have-local-offer') {
-        console.log(
-          `[WebRTCService] ⚠️ Offer collision detected with ${userId}!`
+        const msg = `⚠️ OFFER COLLISION detected with ${userId}!`;
+        console.log(`[WebRTCService] ${msg}`);
+        debugLogger.log(
+          'WebRTCService',
+          msg,
+          { userId, signalingState },
+          'warn'
         );
 
         // Determine who is "polite" using deterministic comparison
         // The side with the lexicographically smaller ID is "polite"
         const isPolite = this.localUserId!.localeCompare(userId) < 0;
 
-        console.log(
-          `[WebRTCService] Collision resolution: ${isPolite ? 'POLITE (rollback)' : 'IMPOLITE (ignore)'}`
-        );
+        const resolutionMsg = `Collision resolution: ${isPolite ? 'POLITE (rollback)' : 'IMPOLITE (ignore)'}`;
+        console.log(`[WebRTCService] ${resolutionMsg}`);
+        debugLogger.log('WebRTCService', resolutionMsg, {
+          userId,
+          isPolite,
+          localUserId: this.localUserId,
+        });
 
         if (isPolite) {
           // Polite side: ROLLBACK our offer, accept theirs
-          console.log(
-            `[WebRTCService] Rolling back our offer for ${userId} (polite side)`
-          );
+          const rollbackMsg = `Rolling back our offer for ${userId} (polite side)`;
+          console.log(`[WebRTCService] ${rollbackMsg}`);
+          debugLogger.log('WebRTCService', rollbackMsg, { userId });
 
           // Destroy the existing peer connection that sent the offer
           existingPeer.destroy();
@@ -532,9 +573,9 @@ export class WebRTCService {
           // This will create a new non-initiator peer and accept their offer
         } else {
           // Impolite side: Ignore their offer, continue with ours
-          console.log(
-            `[WebRTCService] Ignoring their offer for ${userId} (impolite side) - continuing with our offer`
-          );
+          const ignoreMsg = `Ignoring their offer for ${userId} (impolite side) - continuing with our offer`;
+          console.log(`[WebRTCService] ${ignoreMsg}`);
+          debugLogger.log('WebRTCService', ignoreMsg, { userId });
           return;
         }
       }
@@ -566,9 +607,9 @@ export class WebRTCService {
     const peer = this.peerConnections.get(userId);
 
     if (!peer) {
-      console.warn(
-        `[WebRTCService] No peer connection for ${userId}, buffering answer`
-      );
+      const msg = `No peer connection for ${userId}, buffering answer`;
+      console.warn(`[WebRTCService] ${msg}`);
+      debugLogger.log('WebRTCService', msg, { userId }, 'warn');
       this.handleSignal(userId, sdp as SimplePeer.SignalData);
       return;
     }
@@ -576,9 +617,9 @@ export class WebRTCService {
     // Check connection state - ignore duplicate answers
     const state = this.connectionStates.get(userId);
     if (state === 'connected') {
-      console.log(
-        `[WebRTCService] Peer ${userId} already connected, ignoring duplicate answer`
-      );
+      const msg = `Peer ${userId} already connected, ignoring duplicate answer`;
+      console.log(`[WebRTCService] ${msg}`);
+      debugLogger.log('WebRTCService', msg, { userId, state }, 'warn');
       return;
     }
 
@@ -588,13 +629,18 @@ export class WebRTCService {
 
     // Only process answer if in correct state
     if (signalingState === 'have-local-offer') {
-      console.log(
-        `[WebRTCService] Processing answer from ${userId} (state: ${signalingState})`
-      );
+      const msg = `✅ Processing answer from ${userId}`;
+      console.log(`[WebRTCService] ${msg} (state: ${signalingState})`);
+      debugLogger.log('WebRTCService', msg, { userId, signalingState });
       this.handleSignal(userId, sdp as SimplePeer.SignalData);
     } else {
-      console.log(
-        `[WebRTCService] Ignoring answer from ${userId} - wrong state: ${signalingState} (expected: have-local-offer)`
+      const msg = `❌ Ignoring answer from ${userId} - WRONG STATE: ${signalingState}`;
+      console.log(`[WebRTCService] ${msg} (expected: have-local-offer)`);
+      debugLogger.log(
+        'WebRTCService',
+        msg,
+        { userId, signalingState, expected: 'have-local-offer' },
+        'error'
       );
     }
   }
