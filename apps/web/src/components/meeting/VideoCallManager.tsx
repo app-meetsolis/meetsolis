@@ -572,21 +572,30 @@ export function VideoCallManager({
           // Process queue sequentially
           isProcessingJoinRef.current = true;
 
-          while (participantJoinQueueRef.current.length > 0) {
-            const participant = participantJoinQueueRef.current.shift()!;
+          // ✅ FIX: Process all queued participants in parallel (not sequentially)
+          // This allows the 3rd participant to create 2 peer connections simultaneously
+          const connectionsToCreate = [...participantJoinQueueRef.current];
+          participantJoinQueueRef.current = []; // Clear queue immediately
+
+          console.log(
+            `[VideoCallManager] Creating ${connectionsToCreate.length} peer connections in parallel`
+          );
+
+          // Create all peer connections in parallel (no await!)
+          connectionsToCreate.forEach(participant => {
             const { id, name } = participant;
 
             console.log('[VideoCallManager] Processing join from queue:', {
               id: id.substring(0, 12),
               name,
-              queueLength: participantJoinQueueRef.current.length,
+              totalConnections: connectionsToCreate.length,
             });
 
             // Store participant name
             participantNamesRef.current.set(id, name);
 
             if (id !== userId) {
-              // Check if peer already exists (from earlier in queue)
+              // Check if peer already exists
               const existingConnection =
                 webrtcServiceRef.current?.getConnectionState(id);
               if (existingConnection) {
@@ -596,7 +605,7 @@ export function VideoCallManager({
                   'State:',
                   existingConnection
                 );
-                continue;
+                return; // Skip this participant (use return in forEach, not continue)
               }
 
               // Deterministic initiator selection (use localeCompare for consistent string comparison)
@@ -611,7 +620,7 @@ export function VideoCallManager({
                 // Use ref to avoid stale closure
                 if (!webrtcServiceRef.current || !signalingServiceRef.current) {
                   console.warn('[VideoCallManager] Services not initialized');
-                  continue;
+                  return;
                 }
 
                 // Verify local stream exists
@@ -620,27 +629,47 @@ export function VideoCallManager({
                   console.error(
                     '[VideoCallManager] Cannot create peer - no local stream'
                   );
-                  continue;
+                  return;
                 }
 
                 console.log(
-                  '[VideoCallManager] Creating peer connection (initiator) to:',
+                  '[VideoCallManager] Initiating connection for:',
                   id.substring(0, 12)
                 );
 
-                // Create peer connection
-                await webrtcServiceRef.current.createPeerConnection(
-                  id,
-                  async signal => {
+                // ✅ Don't await - let all connections start simultaneously
+                webrtcServiceRef.current
+                  .createPeerConnection(id, async signal => {
                     console.log(
                       '[VideoCallManager] Sending offer to:',
                       id.substring(0, 12)
                     );
-                    await signalingServiceRef.current?.sendOffer(
-                      signal as RTCSessionDescriptionInit
+                    try {
+                      await signalingServiceRef.current?.sendOffer(
+                        signal as RTCSessionDescriptionInit
+                      );
+                      console.log(
+                        '[VideoCallManager] Offer sent to:',
+                        id.substring(0, 12)
+                      );
+                    } catch (error) {
+                      console.error(
+                        `[VideoCallManager] Failed to send offer to ${id.substring(0, 12)}:`,
+                        error
+                      );
+                    }
+                  })
+                  .then(() => {
+                    console.log(
+                      `[VideoCallManager] Peer connection established for ${id.substring(0, 12)}`
                     );
-                  }
-                );
+                  })
+                  .catch(error => {
+                    console.error(
+                      `[VideoCallManager] Failed to create peer for ${id.substring(0, 12)}:`,
+                      error
+                    );
+                  });
               } else {
                 console.log(
                   '[VideoCallManager] Waiting for offer from:',
@@ -652,7 +681,7 @@ export function VideoCallManager({
                 onParticipantJoin(id);
               }
             }
-          }
+          });
 
           isProcessingJoinRef.current = false;
           console.log('[VideoCallManager] Join queue processing complete');
