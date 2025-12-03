@@ -599,8 +599,8 @@ export function VideoCallManager({
                 continue;
               }
 
-              // Deterministic initiator selection
-              const shouldInitiate = userId < id;
+              // Deterministic initiator selection (use localeCompare for consistent string comparison)
+              const shouldInitiate = userId.localeCompare(id) < 0;
 
               console.log('[VideoCallManager] Processing join decision:', {
                 participantId: id.substring(0, 12),
