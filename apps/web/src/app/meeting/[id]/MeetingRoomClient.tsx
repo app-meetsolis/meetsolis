@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
-import { VideoCallManager } from '@/components/meeting';
+import { StreamVideoCallManager } from '@/components/meeting';
 import { ControlBar } from '@/components/meeting/ControlBar';
 import { DeviceSettingsPanel } from '@/components/meeting/DeviceSettingsPanel';
 import { KeyboardShortcutsHelp } from '@/components/meeting/KeyboardShortcutsHelp';
@@ -228,7 +228,7 @@ export function MeetingRoomClient({
 
       {/* Video call area - with bottom padding for control bar */}
       <div className="flex-1 overflow-hidden pb-20">
-        <VideoCallManager
+        <StreamVideoCallManager
           meetingId={meetingId}
           userId={userId}
           userName={userName}
