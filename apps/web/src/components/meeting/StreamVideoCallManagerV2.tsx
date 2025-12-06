@@ -120,33 +120,46 @@ export function StreamVideoCallManagerV2({
       );
     }
 
-    // Determine grid layout based on participant count (Google Meet/Zoom style)
+    // Determine grid layout based on participant count (Responsive Adaptive Grid)
     const getGridClass = () => {
       const count = participants.length;
 
-      // 1 participant: Full screen
+      // 1 participant: Full screen (1 column on all devices)
       if (count === 1) return 'grid-cols-1';
 
-      // 2 participants: Side by side (2 columns)
-      if (count === 2) return 'grid-cols-2';
+      // 2 participants: Responsive
+      // Mobile: 1 column (stacked), Tablet+: 2 columns (side by side)
+      if (count === 2) return 'grid-cols-1 md:grid-cols-2';
 
-      // 3-4 participants: 2x2 grid
-      if (count <= 4) return 'grid-cols-2';
+      // 3-4 participants: Responsive 2x2 grid
+      // Mobile: 1 column, Tablet: 2 columns, Desktop: 2 columns
+      if (count <= 4) return 'grid-cols-1 md:grid-cols-2';
 
-      // 5-9 participants: 3x3 grid
-      if (count <= 9) return 'grid-cols-3';
+      // 5-9 participants: Responsive 3x3 grid
+      // Mobile: 1 column, Tablet: 2 columns, Desktop: 3 columns
+      if (count <= 9) return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3';
 
-      // 10-25 participants: 5x5 grid (smaller tiles)
-      if (count <= 25) return 'grid-cols-5';
+      // 10-16 participants: Responsive 4x4 grid
+      // Mobile: 2 columns, Tablet: 3 columns, Desktop: 4 columns
+      if (count <= 16) return 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4';
 
-      // 26+ participants: 6 columns (very small tiles)
-      return 'grid-cols-6';
+      // 17-25 participants: Responsive 5x5 grid
+      // Mobile: 2 columns, Tablet: 3 columns, Desktop: 5 columns
+      if (count <= 25) return 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5';
+
+      // 26+ participants: Responsive 6 columns max
+      // Mobile: 2 columns, Tablet: 4 columns, Desktop: 6 columns
+      return 'grid-cols-2 md:grid-cols-4 lg:grid-cols-6';
     };
 
     return (
       <div
         className={cn(
-          'grid gap-3 h-full w-full p-4 overflow-y-auto place-items-center',
+          // Responsive padding: more on desktop, less on mobile
+          'grid gap-4 lg:gap-6 h-full w-full overflow-y-auto',
+          'px-3 py-3 md:px-6 md:py-4 lg:px-8 lg:py-6',
+          // Center content with max width on large screens
+          'mx-auto max-w-[1600px]',
           getGridClass()
         )}
         style={{
