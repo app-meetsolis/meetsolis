@@ -65,16 +65,8 @@ export function StreamVideoProvider({
       const callId = generateCallId(meetingId);
       const videoCall = videoClient.call('default', callId);
 
-      // Join the call with camera and microphone enabled
-      await videoCall.join({
-        create: true,
-        data: {
-          settings_override: {
-            audio: { mic_default_on: true },
-            video: { camera_default_on: true },
-          },
-        },
-      });
+      // Join the call (create if doesn't exist)
+      await videoCall.join({ create: true });
 
       // Explicitly enable camera and microphone after joining
       await videoCall.camera.enable();
