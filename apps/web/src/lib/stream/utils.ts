@@ -11,9 +11,9 @@
  * @returns Standardized quality: 'excellent' | 'good' | 'poor'
  */
 export const mapConnectionQuality = (
-  quality: string | undefined
+  quality: string | undefined | unknown
 ): 'excellent' | 'good' | 'poor' => {
-  if (!quality) return 'good';
+  if (!quality || typeof quality !== 'string') return 'good';
 
   const normalizedQuality = quality.toLowerCase();
 

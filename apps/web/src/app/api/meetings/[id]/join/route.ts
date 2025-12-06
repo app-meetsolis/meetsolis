@@ -185,9 +185,24 @@ export async function POST(
 
     return NextResponse.json(participant, { status: 201 });
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('[join/route] API Error:', error);
+    console.error(
+      '[join/route] Error stack:',
+      error instanceof Error ? error.stack : 'No stack trace'
+    );
+    console.error(
+      '[join/route] Error message:',
+      error instanceof Error ? error.message : String(error)
+    );
+
     return NextResponse.json(
-      { error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } },
+      {
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Internal server error',
+          details: error instanceof Error ? error.message : String(error),
+        },
+      },
       { status: 500 }
     );
   }
