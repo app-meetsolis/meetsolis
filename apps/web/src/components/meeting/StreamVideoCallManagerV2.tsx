@@ -155,10 +155,12 @@ export function StreamVideoCallManagerV2({
     return (
       <div
         className={cn(
-          // Responsive padding: more on desktop, less on mobile
-          'grid gap-4 lg:gap-6 h-full w-full overflow-y-auto',
-          'px-3 py-3 md:px-6 md:py-4 lg:px-8 lg:py-6',
-          // Center content with max width on large screens
+          // Grid with equal padding all around (minimal to small)
+          'grid gap-3 md:gap-4 h-full w-full overflow-y-auto',
+          'p-2 md:p-3 lg:p-4',
+          // Center grid both vertically and horizontally
+          'place-content-center place-items-center',
+          // Max width for large screens
           'mx-auto max-w-[1600px]',
           getGridClass()
         )}

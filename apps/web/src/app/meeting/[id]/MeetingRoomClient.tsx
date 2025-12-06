@@ -183,30 +183,23 @@ export function MeetingRoomClient({
   }
 
   return (
-    <div className="h-screen w-full bg-gray-950 flex flex-col">
-      {/* Meeting header */}
-      <div className="bg-gray-900 border-b border-gray-800 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-white text-lg font-semibold">Meeting Room</h1>
-            <p className="text-gray-400 text-sm">
-              Meeting ID: {meetingId.slice(0, 8)}
-            </p>
-          </div>
-        </div>
+    <div className="h-screen w-full bg-gray-950 relative">
+      {/* Floating Meeting ID chip - top left */}
+      <div className="absolute top-4 left-4 z-30 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-gray-700/50">
+        <p className="text-white text-xs font-medium">
+          ID: {meetingId.slice(0, 8)}
+        </p>
       </div>
 
-      {/* Video call area - with bottom padding for control bar */}
-      <div className="flex-1 overflow-hidden">
-        <div className="h-full pb-20">
-          <StreamVideoWrapper
-            meetingId={meetingId}
-            userId={userId}
-            userName={userName}
-            onError={handleError}
-            onLeaveMeeting={handleLeaveMeeting}
-          />
-        </div>
+      {/* Video call area - full height with bottom padding for control bar */}
+      <div className="h-full pb-20">
+        <StreamVideoWrapper
+          meetingId={meetingId}
+          userId={userId}
+          userName={userName}
+          onError={handleError}
+          onLeaveMeeting={handleLeaveMeeting}
+        />
       </div>
 
       {/* Keyboard Shortcuts Help */}

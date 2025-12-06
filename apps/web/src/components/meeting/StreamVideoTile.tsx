@@ -143,10 +143,10 @@ export function StreamVideoTile({
       </div>
 
       {/* Participant info overlay - bottom */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 md:p-4 z-20">
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-1.5 md:px-3 md:py-2 z-20">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-white font-medium text-sm md:text-base truncate max-w-[150px] md:max-w-[200px]">
+          <div className="flex items-center gap-1.5 md:gap-2">
+            <span className="text-white font-medium text-xs md:text-sm truncate max-w-[120px] md:max-w-[150px]">
               {participant.name || participant.userId}
               {isLocal && ' (You)'}
             </span>
@@ -224,7 +224,7 @@ export function StreamVideoTile({
 
       {/* Local video indicator - top left */}
       {isLocal && (
-        <div className="absolute top-3 left-3 px-2 py-1 bg-blue-600 rounded text-white text-xs font-medium z-20">
+        <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-blue-600 rounded text-white text-xs font-medium z-20">
           You
         </div>
       )}
