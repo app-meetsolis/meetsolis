@@ -193,14 +193,6 @@ export function MeetingRoomClient({
               Meeting ID: {meetingId.slice(0, 8)}
             </p>
           </div>
-
-          <button
-            onClick={handleLeaveMeeting}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-            aria-label="Leave meeting"
-          >
-            Leave Meeting
-          </button>
         </div>
       </div>
 
