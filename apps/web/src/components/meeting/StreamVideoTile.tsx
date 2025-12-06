@@ -104,9 +104,10 @@ export function StreamVideoTile({
   return (
     <div
       className={cn(
-        'relative bg-gray-900 rounded-lg overflow-hidden aspect-video group',
+        'relative bg-gray-900 rounded-lg overflow-hidden group',
+        'w-full h-full min-h-0', // Ensure tile fits container
         onVideoClick && 'cursor-pointer hover:ring-2 hover:ring-blue-500',
-        isSpeaking && 'ring-2 ring-green-500 animate-pulse',
+        isSpeaking && 'ring-4 ring-green-500',
         className
       )}
       onClick={handleClick}

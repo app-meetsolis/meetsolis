@@ -120,21 +120,36 @@ export function StreamVideoCallManagerV2({
       );
     }
 
-    // Determine grid layout based on participant count
+    // Determine grid layout based on participant count (Google Meet/Zoom style)
     const getGridClass = () => {
-      if (participants.length === 1) return 'grid-cols-1';
-      if (participants.length === 2) return 'grid-cols-2';
-      if (participants.length <= 4) return 'grid-cols-2 grid-rows-2';
-      if (participants.length <= 6) return 'grid-cols-3 grid-rows-2';
-      if (participants.length <= 9) return 'grid-cols-3 grid-rows-3';
-      return 'grid-cols-4 grid-rows-3'; // 10+ participants
+      const count = participants.length;
+
+      // 1 participant: Full screen
+      if (count === 1) return 'grid-cols-1';
+
+      // 2 participants: Side by side (2 columns)
+      if (count === 2) return 'grid-cols-2';
+
+      // 3-4 participants: 2x2 grid
+      if (count <= 4) return 'grid-cols-2';
+
+      // 5-9 participants: 3x3 grid
+      if (count <= 9) return 'grid-cols-3';
+
+      // 10-25 participants: 5x5 grid (smaller tiles)
+      if (count <= 25) return 'grid-cols-5';
+
+      // 26+ participants: 6 columns (very small tiles)
+      return 'grid-cols-6';
     };
 
     return (
       <div
         className={cn(
-          'grid gap-2 md:gap-4 h-full w-full p-2 md:p-4',
-          getGridClass()
+          'grid gap-2 h-full w-full p-3 overflow-y-auto',
+          getGridClass(),
+          // Auto-fit rows to content
+          'auto-rows-fr'
         )}
       >
         {participants.map(participant => (

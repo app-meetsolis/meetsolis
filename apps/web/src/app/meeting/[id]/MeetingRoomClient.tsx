@@ -197,14 +197,16 @@ export function MeetingRoomClient({
       </div>
 
       {/* Video call area - with bottom padding for control bar */}
-      <div className="flex-1 overflow-hidden pb-20">
-        <StreamVideoWrapper
-          meetingId={meetingId}
-          userId={userId}
-          userName={userName}
-          onError={handleError}
-          onLeaveMeeting={handleLeaveMeeting}
-        />
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full pb-28">
+          <StreamVideoWrapper
+            meetingId={meetingId}
+            userId={userId}
+            userName={userName}
+            onError={handleError}
+            onLeaveMeeting={handleLeaveMeeting}
+          />
+        </div>
       </div>
 
       {/* Keyboard Shortcuts Help */}
