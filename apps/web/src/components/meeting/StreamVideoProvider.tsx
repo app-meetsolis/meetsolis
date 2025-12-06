@@ -51,8 +51,8 @@ export function StreamVideoProvider({
 
       console.log('[StreamVideoProvider] Initializing Stream client...');
 
-      // Create Stream Video client
-      const videoClient = new StreamVideoClient({
+      // Get or create Stream Video client (prevents duplicate instances)
+      const videoClient = StreamVideoClient.getOrCreateInstance({
         apiKey,
         user: {
           id: userId,
@@ -95,16 +95,21 @@ export function StreamVideoProvider({
   }, [isInitialized, initializeClient]);
 
   /**
-   * Cleanup on unmount
+   * Cleanup on unmount only
    */
   useEffect(() => {
     return () => {
       console.log('[StreamVideoProvider] Cleaning up...');
+      // Leave call and disconnect client on unmount
       if (call) {
         call.leave().catch(console.error);
       }
+      if (client) {
+        client.disconnectUser().catch(console.error);
+      }
     };
-  }, [call]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - only run on unmount
 
   // Show loading state while initializing
   if (!client || !call || !isInitialized) {
