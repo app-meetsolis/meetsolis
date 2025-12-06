@@ -36,6 +36,18 @@ export function StreamVideoTile({
   const isVideoOff = !participant.publishedTracks?.includes('video');
   const isSpeaking = participant.isSpeaking || false;
 
+  // Debug logging
+  console.log('[StreamVideoTile] Rendering participant:', {
+    userId: participant.userId,
+    name: participant.name,
+    isLocal,
+    publishedTracks: participant.publishedTracks,
+    isMuted,
+    isVideoOff,
+    videoStream: participant.videoStream,
+    audioStream: participant.audioStream,
+  });
+
   /**
    * Get connection quality color
    */
@@ -91,27 +103,20 @@ export function StreamVideoTile({
         }
       }}
     >
-      {/* Stream SDK's native ParticipantView */}
+      {/* Stream SDK's native ParticipantView - handles video and avatar */}
       <div className="w-full h-full">
         <ParticipantView
           participant={participant}
           muteAudio={isLocal} // Mute local audio to prevent echo
-          className="w-full h-full"
+          VideoPlaceholder={() => (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-900">
+              <div className="w-20 h-20 md:w-32 md:h-32 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl md:text-4xl font-bold">
+                {getInitials(participant.name || participant.userId)}
+              </div>
+            </div>
+          )}
         />
       </div>
-
-      {/* Avatar fallback when video is off - Stream SDK handles this internally */}
-      {isVideoOff && (
-        <div
-          className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-900 z-10"
-          role="img"
-          aria-label={`Avatar for ${participant.name || participant.userId}`}
-        >
-          <div className="w-20 h-20 md:w-32 md:h-32 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl md:text-4xl font-bold">
-            {getInitials(participant.name || participant.userId)}
-          </div>
-        </div>
-      )}
 
       {/* Participant info overlay - bottom */}
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 md:p-4 z-20">
