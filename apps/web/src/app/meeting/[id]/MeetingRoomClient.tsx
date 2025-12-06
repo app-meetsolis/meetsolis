@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
-import { StreamVideoCallManager } from '@/components/meeting';
+import { StreamVideoWrapper } from '@/components/meeting';
 import { ControlBar } from '@/components/meeting/ControlBar';
 import { DeviceSettingsPanel } from '@/components/meeting/DeviceSettingsPanel';
 import { KeyboardShortcutsHelp } from '@/components/meeting/KeyboardShortcutsHelp';
@@ -228,19 +228,15 @@ export function MeetingRoomClient({
 
       {/* Video call area - with bottom padding for control bar */}
       <div className="flex-1 overflow-hidden pb-20">
-        <StreamVideoCallManager
+        <StreamVideoWrapper
           meetingId={meetingId}
           userId={userId}
           userName={userName}
-          onStateChange={handleStateChange}
           onError={handleError}
-          onParticipantJoin={handleParticipantJoin}
-          onParticipantLeave={handleParticipantLeave}
-          onMeetingEnded={handleMeetingEnded}
         />
       </div>
 
-      {/* Connection status indicator */}
+      {/* TODO: Re-implement ControlBar with Stream SDK hooks
       {callState && (
         <div className="absolute top-20 right-6 z-50">
           {callState.connectionState === 'reconnecting' && (
@@ -257,8 +253,9 @@ export function MeetingRoomClient({
           )}
         </div>
       )}
+      */}
 
-      {/* Control Bar */}
+      {/* TODO: Re-implement ControlBar with Stream SDK hooks
       {callState && callState.toggleAudio && callState.toggleVideo && (
         <ControlBar
           isAudioMuted={callState.isAudioMuted ?? true}
@@ -272,8 +269,9 @@ export function MeetingRoomClient({
           onOpenSettings={() => setIsSettingsOpen(true)}
         />
       )}
+      */}
 
-      {/* Device Settings Panel */}
+      {/* TODO: Re-implement Device Settings Panel with Stream SDK
       {callState?.localStream && (
         <DeviceSettingsPanel
           open={isSettingsOpen}
@@ -281,6 +279,7 @@ export function MeetingRoomClient({
           stream={callState.localStream}
         />
       )}
+      */}
 
       {/* Keyboard Shortcuts Help */}
       <KeyboardShortcutsHelp
