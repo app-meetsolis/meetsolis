@@ -19,6 +19,8 @@ export interface StreamVideoTileProps {
   connectionQuality?: ConnectionQuality;
   className?: string;
   onVideoClick?: (participantId: string) => void;
+  overrideAudioMuted?: boolean;
+  overrideVideoOff?: boolean;
 }
 
 /**
@@ -30,10 +32,22 @@ export function StreamVideoTile({
   connectionQuality = 'good',
   className = '',
   onVideoClick,
+  overrideAudioMuted,
+  overrideVideoOff,
 }: StreamVideoTileProps) {
   const isLocal = participant.isLocalParticipant;
-  const isMuted = !participant.publishedTracks?.includes('audio');
-  const isVideoOff = !participant.publishedTracks?.includes('video');
+
+  // Use override state for local participant (from hooks), otherwise use publishedTracks
+  const isMuted =
+    overrideAudioMuted !== undefined
+      ? overrideAudioMuted
+      : !participant.publishedTracks?.includes('audio');
+
+  const isVideoOff =
+    overrideVideoOff !== undefined
+      ? overrideVideoOff
+      : !participant.publishedTracks?.includes('video');
+
   const isSpeaking = participant.isSpeaking || false;
 
   // Debug logging
@@ -42,10 +56,10 @@ export function StreamVideoTile({
     name: participant.name,
     isLocal,
     publishedTracks: participant.publishedTracks,
+    overrideAudioMuted,
+    overrideVideoOff,
     isMuted,
     isVideoOff,
-    videoStream: participant.videoStream,
-    audioStream: participant.audioStream,
   });
 
   /**

@@ -33,13 +33,22 @@ export function StreamVideoCallManagerV2({
   onOpenSettings,
 }: StreamVideoCallManagerV2Props) {
   const call = useCall();
-  const { useParticipants, useLocalParticipant, useCallCallingState } =
-    useCallStateHooks();
+  const {
+    useParticipants,
+    useLocalParticipant,
+    useCallCallingState,
+    useMicrophoneState,
+    useCameraState,
+  } = useCallStateHooks();
 
   // Get participants from Stream hooks
   const participants = useParticipants();
   const localParticipant = useLocalParticipant();
   const callingState = useCallCallingState();
+
+  // Get local audio/video state for accurate icon display
+  const { isMute: isLocalAudioMuted } = useMicrophoneState();
+  const { isMute: isLocalVideoOff } = useCameraState();
 
   /**
    * Log participant updates
@@ -129,6 +138,13 @@ export function StreamVideoCallManagerV2({
               participant.connectionQuality
             )}
             onVideoClick={handleParticipantClick}
+            // Pass actual state for local participant
+            overrideAudioMuted={
+              participant.isLocalParticipant ? isLocalAudioMuted : undefined
+            }
+            overrideVideoOff={
+              participant.isLocalParticipant ? isLocalVideoOff : undefined
+            }
           />
         ))}
       </div>
