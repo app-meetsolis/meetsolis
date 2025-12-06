@@ -54,8 +54,8 @@ export function StreamVideoProvider({
 
         console.log('[StreamVideoProvider] Initializing Stream client...');
 
-        // Get or create Stream Video client (prevents duplicate instances)
-        videoClient = StreamVideoClient.getOrCreateInstance({
+        // Create a fresh Stream Video client
+        videoClient = new StreamVideoClient({
           apiKey,
           user: {
             id: userId,
@@ -68,12 +68,35 @@ export function StreamVideoProvider({
         const callId = generateCallId(meetingId);
         videoCall = videoClient.call('default', callId);
 
-        // Join the call (create if doesn't exist)
-        await videoCall.join({ create: true });
+        // Join the call and request media permissions
+        await videoCall.join({
+          create: true,
+          data: {
+            members: [{ user_id: userId }],
+          },
+        });
 
-        // Explicitly enable camera and microphone after joining
-        await videoCall.camera.enable();
-        await videoCall.microphone.enable();
+        console.log(
+          '[StreamVideoProvider] Call joined, enabling camera and mic...'
+        );
+
+        // Enable camera and microphone after join completes
+        try {
+          await videoCall.camera.enable();
+          console.log('[StreamVideoProvider] Camera enabled');
+        } catch (error) {
+          console.warn('[StreamVideoProvider] Camera enable failed:', error);
+        }
+
+        try {
+          await videoCall.microphone.enable();
+          console.log('[StreamVideoProvider] Microphone enabled');
+        } catch (error) {
+          console.warn(
+            '[StreamVideoProvider] Microphone enable failed:',
+            error
+          );
+        }
 
         console.log('[StreamVideoProvider] Client initialized successfully');
 
