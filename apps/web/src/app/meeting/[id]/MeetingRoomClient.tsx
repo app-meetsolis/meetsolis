@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
-import { StreamVideoWrapper, StreamControlBar } from '@/components/meeting';
+import { StreamVideoWrapper } from '@/components/meeting';
 import { KeyboardShortcutsHelp } from '@/components/meeting/KeyboardShortcutsHelp';
 import { LeaveMeetingDialog } from '@/components/meeting/LeaveMeetingDialog';
 
@@ -211,11 +211,9 @@ export function MeetingRoomClient({
           userId={userId}
           userName={userName}
           onError={handleError}
+          onLeaveMeeting={handleLeaveMeeting}
         />
       </div>
-
-      {/* Stream Control Bar */}
-      <StreamControlBar onLeaveMeeting={handleLeaveMeeting} />
 
       {/* Keyboard Shortcuts Help */}
       <KeyboardShortcutsHelp

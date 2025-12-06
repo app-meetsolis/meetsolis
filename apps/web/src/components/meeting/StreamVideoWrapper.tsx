@@ -15,6 +15,8 @@ export interface StreamVideoWrapperProps {
   userName: string;
   onParticipantClick?: (participantId: string) => void;
   onError?: (error: Error) => void;
+  onLeaveMeeting?: () => void;
+  onOpenSettings?: () => void;
   className?: string;
 }
 
@@ -28,6 +30,8 @@ export function StreamVideoWrapper({
   userName,
   onParticipantClick,
   onError,
+  onLeaveMeeting,
+  onOpenSettings,
   className = '',
 }: StreamVideoWrapperProps) {
   const [token, setToken] = useState<string | null>(null);
@@ -153,6 +157,8 @@ export function StreamVideoWrapper({
       <StreamVideoCallManagerV2
         className={className}
         onParticipantClick={onParticipantClick}
+        onLeaveMeeting={onLeaveMeeting}
+        onOpenSettings={onOpenSettings}
       />
     </StreamVideoProvider>
   );

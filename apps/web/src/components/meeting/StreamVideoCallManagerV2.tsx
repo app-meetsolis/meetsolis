@@ -11,12 +11,15 @@ import React, { useEffect, useCallback } from 'react';
 import { useCallStateHooks, useCall } from '@stream-io/video-react-sdk';
 import type { StreamVideoParticipant } from '@stream-io/video-react-sdk';
 import { StreamVideoTile } from './StreamVideoTile';
+import { StreamControlBar } from './StreamControlBar';
 import { cn } from '@/lib/utils';
 import { mapConnectionQuality } from '@/lib/stream/utils';
 
 export interface StreamVideoCallManagerV2Props {
   className?: string;
   onParticipantClick?: (participantId: string) => void;
+  onLeaveMeeting?: () => void;
+  onOpenSettings?: () => void;
 }
 
 /**
@@ -26,6 +29,8 @@ export interface StreamVideoCallManagerV2Props {
 export function StreamVideoCallManagerV2({
   className = '',
   onParticipantClick,
+  onLeaveMeeting,
+  onOpenSettings,
 }: StreamVideoCallManagerV2Props) {
   const call = useCall();
   const { useParticipants, useLocalParticipant, useCallCallingState } =
@@ -131,24 +136,32 @@ export function StreamVideoCallManagerV2({
   };
 
   return (
-    <div
-      className={cn('w-full h-full bg-gray-950', className)}
-      role="main"
-      aria-label="Video call"
-    >
-      {renderParticipantGrid()}
-
-      {/* Connection state indicator */}
+    <>
       <div
-        className="sr-only"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
+        className={cn('w-full h-full bg-gray-950', className)}
+        role="main"
+        aria-label="Video call"
       >
-        {callingState === 'joined' && 'Connected to video call'}
-        {callingState === 'joining' && 'Joining video call...'}
-        {callingState === 'left' && 'Left video call'}
+        {renderParticipantGrid()}
+
+        {/* Connection state indicator */}
+        <div
+          className="sr-only"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {callingState === 'joined' && 'Connected to video call'}
+          {callingState === 'joining' && 'Joining video call...'}
+          {callingState === 'left' && 'Left video call'}
+        </div>
       </div>
-    </div>
+
+      {/* Control Bar - inside Stream context */}
+      <StreamControlBar
+        onLeaveMeeting={onLeaveMeeting}
+        onOpenSettings={onOpenSettings}
+      />
+    </>
   );
 }
