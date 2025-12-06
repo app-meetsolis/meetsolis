@@ -10,12 +10,9 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
-import { StreamVideoWrapper } from '@/components/meeting';
-import { ControlBar } from '@/components/meeting/ControlBar';
-import { DeviceSettingsPanel } from '@/components/meeting/DeviceSettingsPanel';
+import { StreamVideoWrapper, StreamControlBar } from '@/components/meeting';
 import { KeyboardShortcutsHelp } from '@/components/meeting/KeyboardShortcutsHelp';
 import { LeaveMeetingDialog } from '@/components/meeting/LeaveMeetingDialog';
-import type { VideoCallState } from '@/components/meeting';
 
 interface MeetingRoomClientProps {
   meetingId: string;
@@ -28,8 +25,6 @@ export function MeetingRoomClient({
 }: MeetingRoomClientProps) {
   const router = useRouter();
   const { user, isLoaded } = useUser();
-  const [callState, setCallState] = useState<VideoCallState | null>(null);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
@@ -74,31 +69,14 @@ export function MeetingRoomClient({
   }, [meetingId, userId]);
 
   /**
-   * Handle video call state changes
-   */
-  const handleStateChange = useCallback((state: VideoCallState) => {
-    setCallState(state);
-  }, []);
-
-  /**
    * Handle errors
    */
   const handleError = useCallback((error: Error) => {
     console.error('Meeting error:', error);
-  }, []);
-
-  /**
-   * Handle participant join
-   */
-  const handleParticipantJoin = useCallback((participantId: string) => {
-    console.log('Participant joined:', participantId);
-  }, []);
-
-  /**
-   * Handle participant leave
-   */
-  const handleParticipantLeave = useCallback((participantId: string) => {
-    console.log('Participant left:', participantId);
+    toast.error('Connection Error', {
+      description: error.message,
+      duration: 5000,
+    });
   }, []);
 
   /**
@@ -236,50 +214,8 @@ export function MeetingRoomClient({
         />
       </div>
 
-      {/* TODO: Re-implement ControlBar with Stream SDK hooks
-      {callState && (
-        <div className="absolute top-20 right-6 z-50">
-          {callState.connectionState === 'reconnecting' && (
-            <div className="bg-yellow-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-              <span className="text-sm font-medium">Reconnecting...</span>
-            </div>
-          )}
-
-          {callState.connectionState === 'failed' && (
-            <div className="bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg">
-              <span className="text-sm font-medium">Connection Failed</span>
-            </div>
-          )}
-        </div>
-      )}
-      */}
-
-      {/* TODO: Re-implement ControlBar with Stream SDK hooks
-      {callState && callState.toggleAudio && callState.toggleVideo && (
-        <ControlBar
-          isAudioMuted={callState.isAudioMuted ?? true}
-          isVideoOff={callState.isVideoOff ?? true}
-          onToggleAudio={callState.toggleAudio}
-          onToggleVideo={callState.toggleVideo}
-          isPushToTalkMode={callState.isPushToTalkMode ?? false}
-          isPushToTalkActive={callState.isPushToTalkActive ?? false}
-          onTogglePushToTalkMode={callState.togglePushToTalkMode || (() => {})}
-          audioLevel={callState.audioLevel ?? 0}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-        />
-      )}
-      */}
-
-      {/* TODO: Re-implement Device Settings Panel with Stream SDK
-      {callState?.localStream && (
-        <DeviceSettingsPanel
-          open={isSettingsOpen}
-          onOpenChange={setIsSettingsOpen}
-          stream={callState.localStream}
-        />
-      )}
-      */}
+      {/* Stream Control Bar */}
+      <StreamControlBar onLeaveMeeting={handleLeaveMeeting} />
 
       {/* Keyboard Shortcuts Help */}
       <KeyboardShortcutsHelp
