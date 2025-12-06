@@ -502,11 +502,54 @@ export class StreamVideoService extends VideoServiceInterface {
   ): VideoParticipant {
     const publishedTracks = streamParticipant.publishedTracks || [];
 
+    // Get the media stream - Stream SDK provides combined stream
+    let mediaStream: MediaStream | null = null;
+
+    // Try to get video stream first (includes both video and audio)
+    if (streamParticipant.videoStream) {
+      mediaStream = streamParticipant.videoStream;
+    }
+    // Fallback to audio stream if only audio is available
+    else if (streamParticipant.audioStream) {
+      mediaStream = streamParticipant.audioStream;
+    }
+    // For local participant, get stream from call state
+    else if (streamParticipant.isLocalParticipant && this.call) {
+      // Get local stream from camera/microphone
+      const cameraStream = this.call.camera.state.mediaStream;
+      const micStream = this.call.microphone.state.mediaStream;
+
+      if (cameraStream || micStream) {
+        // Combine tracks if we have separate streams
+        mediaStream = new MediaStream();
+        if (cameraStream) {
+          cameraStream
+            .getTracks()
+            .forEach(track => mediaStream!.addTrack(track));
+        }
+        if (micStream && micStream !== cameraStream) {
+          micStream.getTracks().forEach(track => mediaStream!.addTrack(track));
+        }
+      }
+    }
+
+    console.log(
+      `[StreamVideoService] Mapping participant ${streamParticipant.userId}:`,
+      {
+        hasVideoStream: !!streamParticipant.videoStream,
+        hasAudioStream: !!streamParticipant.audioStream,
+        hasCombinedStream: !!mediaStream,
+        videoTracks: mediaStream?.getVideoTracks().length ?? 0,
+        audioTracks: mediaStream?.getAudioTracks().length ?? 0,
+        isLocal: streamParticipant.isLocalParticipant,
+        publishedTracks,
+      }
+    );
+
     return {
       id: streamParticipant.userId,
       name: streamParticipant.name || streamParticipant.userId,
-      stream:
-        streamParticipant.videoStream || streamParticipant.audioStream || null,
+      stream: mediaStream,
       isLocal: streamParticipant.isLocalParticipant,
       isMuted: !publishedTracks.includes('audio'),
       isVideoOff: !publishedTracks.includes('video'),
