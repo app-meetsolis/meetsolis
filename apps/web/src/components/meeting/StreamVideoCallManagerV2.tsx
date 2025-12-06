@@ -87,6 +87,13 @@ export function StreamVideoCallManagerV2({
     [onParticipantClick]
   );
 
+  /**
+   * Create participant click handler with participant ID
+   */
+  const createClickHandler = (participantId: string) => () => {
+    handleParticipantClick(participantId);
+  };
+
   // Show loading state
   if (!call || callingState !== 'joined') {
     return (
@@ -137,7 +144,11 @@ export function StreamVideoCallManagerV2({
             connectionQuality={mapConnectionQuality(
               participant.connectionQuality
             )}
-            onVideoClick={handleParticipantClick}
+            onVideoClick={
+              onParticipantClick
+                ? createClickHandler(participant.userId)
+                : undefined
+            }
             // Pass actual state for local participant
             overrideAudioMuted={
               participant.isLocalParticipant ? isLocalAudioMuted : undefined

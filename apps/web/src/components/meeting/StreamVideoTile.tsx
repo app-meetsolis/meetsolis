@@ -6,10 +6,7 @@
 'use client';
 
 import React from 'react';
-import {
-  ParticipantView,
-  useParticipantViewContext,
-} from '@stream-io/video-react-sdk';
+import { ParticipantView } from '@stream-io/video-react-sdk';
 import type { StreamVideoParticipant } from '@stream-io/video-react-sdk';
 import { cn } from '@/lib/utils';
 import type { ConnectionQuality } from '../../../../../packages/shared/types/webrtc';
@@ -18,10 +15,41 @@ export interface StreamVideoTileProps {
   participant: StreamVideoParticipant;
   connectionQuality?: ConnectionQuality;
   className?: string;
-  onVideoClick?: (participantId: string) => void;
+  onVideoClick?: () => void;
   overrideAudioMuted?: boolean;
   overrideVideoOff?: boolean;
 }
+
+/**
+ * Get participant initials for avatar
+ */
+const getInitials = (name: string): string => {
+  const parts = name.trim().split(' ');
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+};
+
+/**
+ * Avatar Placeholder Component
+ * Used when video is off - wrapped with forwardRef for ParticipantView
+ */
+const AvatarPlaceholder = React.forwardRef<
+  HTMLDivElement,
+  { name: string; userId: string }
+>(({ name, userId }, ref) => (
+  <div
+    ref={ref}
+    className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-900"
+  >
+    <div className="w-20 h-20 md:w-32 md:h-32 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl md:text-4xl font-bold">
+      {getInitials(name || userId)}
+    </div>
+  </div>
+));
+
+AvatarPlaceholder.displayName = 'AvatarPlaceholder';
 
 /**
  * StreamVideoTile Component
@@ -79,23 +107,10 @@ export function StreamVideoTile({
   };
 
   /**
-   * Get participant initials for avatar
-   */
-  const getInitials = (name: string): string => {
-    const parts = name.trim().split(' ');
-    if (parts.length >= 2) {
-      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-    }
-    return name.slice(0, 2).toUpperCase();
-  };
-
-  /**
    * Handle tile click
    */
   const handleClick = () => {
-    if (onVideoClick) {
-      onVideoClick(participant.userId);
-    }
+    onVideoClick?.();
   };
 
   return (
@@ -122,13 +137,19 @@ export function StreamVideoTile({
         <ParticipantView
           participant={participant}
           muteAudio={isLocal} // Mute local audio to prevent echo
-          VideoPlaceholder={() => (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-900">
-              <div className="w-20 h-20 md:w-32 md:h-32 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl md:text-4xl font-bold">
-                {getInitials(participant.name || participant.userId)}
-              </div>
-            </div>
-          )}
+          VideoPlaceholder={React.useMemo(() => {
+            const Placeholder = React.forwardRef<HTMLDivElement>(
+              (props, ref) => (
+                <AvatarPlaceholder
+                  ref={ref}
+                  name={participant.name || participant.userId}
+                  userId={participant.userId}
+                />
+              )
+            );
+            Placeholder.displayName = 'VideoPlaceholder';
+            return Placeholder;
+          }, [participant.name, participant.userId])}
         />
       </div>
 
