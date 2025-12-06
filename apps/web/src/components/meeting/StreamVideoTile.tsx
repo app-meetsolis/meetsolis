@@ -78,18 +78,6 @@ export function StreamVideoTile({
 
   const isSpeaking = participant.isSpeaking || false;
 
-  // Debug logging
-  console.log('[StreamVideoTile] Rendering participant:', {
-    userId: participant.userId,
-    name: participant.name,
-    isLocal,
-    publishedTracks: participant.publishedTracks,
-    overrideAudioMuted,
-    overrideVideoOff,
-    isMuted,
-    isVideoOff,
-  });
-
   /**
    * Get connection quality color
    */
