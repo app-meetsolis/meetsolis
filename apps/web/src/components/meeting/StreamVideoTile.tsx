@@ -105,11 +105,17 @@ export function StreamVideoTile({
     <div
       className={cn(
         'relative bg-gray-900 rounded-lg overflow-hidden group',
-        'w-full aspect-video max-h-full', // 16:9 aspect ratio, don't exceed container
+        // Full width and height to fill grid cell, maintain 16:9 when possible
+        'w-full h-full',
         onVideoClick && 'cursor-pointer hover:ring-2 hover:ring-blue-500',
         isSpeaking && 'ring-4 ring-green-500',
         className
       )}
+      style={{
+        aspectRatio: '16 / 9',
+        maxHeight: '100%',
+        maxWidth: '100%',
+      }}
       onClick={handleClick}
       role="button"
       tabIndex={onVideoClick ? 0 : -1}

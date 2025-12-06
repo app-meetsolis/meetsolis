@@ -158,8 +158,10 @@ export function StreamVideoCallManagerV2({
           // Grid with equal padding all around (minimal to small)
           'grid gap-3 md:gap-4 h-full w-full overflow-y-auto',
           'p-2 md:p-3 lg:p-4',
-          // Center grid both vertically and horizontally
-          'place-content-center place-items-center',
+          // Center grid vertically, but for 1 participant stretch horizontally
+          participants.length === 1
+            ? 'place-content-center'
+            : 'place-content-center place-items-center',
           // Max width for large screens
           'mx-auto max-w-[1600px]',
           getGridClass()
