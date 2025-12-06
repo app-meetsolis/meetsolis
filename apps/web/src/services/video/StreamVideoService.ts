@@ -404,6 +404,20 @@ export class StreamVideoService extends VideoServiceInterface {
       this.handleParticipantsUpdate(participants);
     });
 
+    // Subscribe to remote participant media streams
+    this.call.state.remoteParticipants$.subscribe(remoteParticipants => {
+      console.log('[StreamVideoService] Remote participants updated:', {
+        count: remoteParticipants.length,
+        participants: remoteParticipants.map(p => ({
+          userId: p.userId,
+          name: p.name,
+          publishedTracks: p.publishedTracks,
+          hasVideoStream: !!p.videoStream,
+          hasAudioStream: !!p.audioStream,
+        })),
+      });
+    });
+
     // Subscribe to connection state changes
     this.call.state.callingState$.subscribe(state => {
       const mappedState = this.mapCallingState(state);
@@ -502,49 +516,65 @@ export class StreamVideoService extends VideoServiceInterface {
   ): VideoParticipant {
     const publishedTracks = streamParticipant.publishedTracks || [];
 
-    // Get the media stream - Stream SDK provides combined stream
+    // Get the media stream using Stream SDK's proper API
     let mediaStream: MediaStream | null = null;
 
-    // Try to get video stream first (includes both video and audio)
-    if (streamParticipant.videoStream) {
-      mediaStream = streamParticipant.videoStream;
-    }
-    // Fallback to audio stream if only audio is available
-    else if (streamParticipant.audioStream) {
-      mediaStream = streamParticipant.audioStream;
-    }
     // For local participant, get stream from call state
-    else if (streamParticipant.isLocalParticipant && this.call) {
-      // Get local stream from camera/microphone
+    if (streamParticipant.isLocalParticipant && this.call) {
+      // Get local camera stream (includes video track)
       const cameraStream = this.call.camera.state.mediaStream;
-      const micStream = this.call.microphone.state.mediaStream;
-
-      if (cameraStream || micStream) {
-        // Combine tracks if we have separate streams
-        mediaStream = new MediaStream();
-        if (cameraStream) {
-          cameraStream
-            .getTracks()
-            .forEach(track => mediaStream!.addTrack(track));
-        }
-        if (micStream && micStream !== cameraStream) {
-          micStream.getTracks().forEach(track => mediaStream!.addTrack(track));
-        }
+      if (cameraStream) {
+        mediaStream = cameraStream;
+        console.log(
+          `[StreamVideoService] Local participant using camera stream`,
+          {
+            videoTracks: cameraStream.getVideoTracks().length,
+            audioTracks: cameraStream.getAudioTracks().length,
+          }
+        );
       }
     }
+    // For remote participants, get stream from their video/audio tracks
+    else if (!streamParticipant.isLocalParticipant) {
+      // Stream SDK stores tracks in the participant's track publications
+      const tracks: MediaStreamTrack[] = [];
 
-    console.log(
-      `[StreamVideoService] Mapping participant ${streamParticipant.userId}:`,
-      {
-        hasVideoStream: !!streamParticipant.videoStream,
-        hasAudioStream: !!streamParticipant.audioStream,
-        hasCombinedStream: !!mediaStream,
-        videoTracks: mediaStream?.getVideoTracks().length ?? 0,
-        audioTracks: mediaStream?.getAudioTracks().length ?? 0,
-        isLocal: streamParticipant.isLocalParticipant,
-        publishedTracks,
+      // Get video track if published
+      if (publishedTracks.includes('video') && streamParticipant.videoStream) {
+        const videoTracks = streamParticipant.videoStream.getVideoTracks();
+        tracks.push(...videoTracks);
       }
-    );
+
+      // Get audio track if published
+      if (publishedTracks.includes('audio') && streamParticipant.audioStream) {
+        const audioTracks = streamParticipant.audioStream.getAudioTracks();
+        tracks.push(...audioTracks);
+      }
+
+      // Create combined MediaStream from tracks
+      if (tracks.length > 0) {
+        mediaStream = new MediaStream(tracks);
+        console.log(
+          `[StreamVideoService] Remote participant ${streamParticipant.userId} stream created`,
+          {
+            videoTracks: mediaStream.getVideoTracks().length,
+            audioTracks: mediaStream.getAudioTracks().length,
+            fromVideoStream: !!streamParticipant.videoStream,
+            fromAudioStream: !!streamParticipant.audioStream,
+          }
+        );
+      } else {
+        console.warn(
+          `[StreamVideoService] Remote participant ${streamParticipant.userId} has no tracks`,
+          {
+            publishedTracks,
+            hasVideoStream: !!streamParticipant.videoStream,
+            hasAudioStream: !!streamParticipant.audioStream,
+            participantKeys: Object.keys(streamParticipant),
+          }
+        );
+      }
+    }
 
     return {
       id: streamParticipant.userId,
