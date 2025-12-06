@@ -155,15 +155,17 @@ export function StreamVideoCallManagerV2({
     return (
       <div
         className={cn(
-          // Grid with equal padding all around (minimal to small)
-          'grid gap-3 md:gap-4 h-full w-full overflow-y-auto',
-          'p-2 md:p-3 lg:p-4',
-          // Center grid vertically, but for 1 participant stretch horizontally
+          // Grid with responsive gap and padding
+          'grid h-full w-full overflow-y-auto',
+          // For single participant: no padding (edge-to-edge), no gap
+          // For multiple: padding and gap
           participants.length === 1
-            ? 'place-content-center'
-            : 'place-content-center place-items-center',
-          // Max width for large screens
-          'mx-auto max-w-[1600px]',
+            ? 'p-0 gap-0'
+            : 'p-2 md:p-3 lg:p-4 gap-3 md:gap-4',
+          // Center grid content vertically only (allows horizontal stretch)
+          'place-content-center',
+          // Single participant: full viewport width, Multiple: max-width centered
+          participants.length === 1 ? 'w-screen' : 'mx-auto max-w-[1600px]',
           getGridClass()
         )}
         style={{
@@ -189,6 +191,8 @@ export function StreamVideoCallManagerV2({
             overrideVideoOff={
               participant.isLocalParticipant ? isLocalVideoOff : undefined
             }
+            // Flag for single participant mode (no aspect ratio constraint)
+            isSingleParticipant={participants.length === 1}
           />
         ))}
       </div>

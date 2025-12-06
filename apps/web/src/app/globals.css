@@ -57,3 +57,17 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Override Stream SDK constraints for single participant full-screen mode */
+.single-participant-fullscreen .str-video__participant-view {
+  max-width: 100% !important;
+  width: 100% !important;
+  height: 100% !important;
+  aspect-ratio: unset !important;
+}
+
+.single-participant-fullscreen .str-video__video {
+  object-fit: cover !important;
+  width: 100% !important;
+  height: 100% !important;
+}

@@ -18,6 +18,7 @@ export interface StreamVideoTileProps {
   onVideoClick?: () => void;
   overrideAudioMuted?: boolean;
   overrideVideoOff?: boolean;
+  isSingleParticipant?: boolean;
 }
 
 /**
@@ -62,6 +63,7 @@ export function StreamVideoTile({
   onVideoClick,
   overrideAudioMuted,
   overrideVideoOff,
+  isSingleParticipant = false,
 }: StreamVideoTileProps) {
   const isLocal = participant.isLocalParticipant;
 
@@ -104,18 +106,32 @@ export function StreamVideoTile({
   return (
     <div
       className={cn(
-        'relative bg-gray-900 rounded-lg overflow-hidden group',
-        // Full width and height to fill grid cell, maintain 16:9 when possible
+        'relative bg-gray-900 overflow-hidden group',
+        // Single participant: no rounding, full edge-to-edge with CSS override class
+        // Multiple: rounded corners
+        isSingleParticipant
+          ? 'rounded-none single-participant-fullscreen'
+          : 'rounded-lg',
+        // Full width and height to fill grid cell
         'w-full h-full',
         onVideoClick && 'cursor-pointer hover:ring-2 hover:ring-blue-500',
         isSpeaking && 'ring-4 ring-green-500',
         className
       )}
-      style={{
-        aspectRatio: '16 / 9',
-        maxHeight: '100%',
-        maxWidth: '100%',
-      }}
+      style={
+        isSingleParticipant
+          ? {
+              // Single participant: no aspect ratio, fill completely
+              maxHeight: '100%',
+              maxWidth: '100%',
+            }
+          : {
+              // Multiple participants: maintain 16:9 aspect ratio
+              aspectRatio: '16 / 9',
+              maxHeight: '100%',
+              maxWidth: '100%',
+            }
+      }
       onClick={handleClick}
       role="button"
       tabIndex={onVideoClick ? 0 : -1}
