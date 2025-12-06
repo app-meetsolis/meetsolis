@@ -105,7 +105,7 @@ export function StreamVideoTile({
     <div
       className={cn(
         'relative bg-gray-900 rounded-lg overflow-hidden group',
-        'w-full h-full min-h-0', // Ensure tile fits container
+        'w-full aspect-video max-h-full', // 16:9 aspect ratio, don't exceed container
         onVideoClick && 'cursor-pointer hover:ring-2 hover:ring-blue-500',
         isSpeaking && 'ring-4 ring-green-500',
         className

@@ -146,11 +146,12 @@ export function StreamVideoCallManagerV2({
     return (
       <div
         className={cn(
-          'grid gap-2 h-full w-full p-3 overflow-y-auto',
-          getGridClass(),
-          // Auto-fit rows to content
-          'auto-rows-fr'
+          'grid gap-3 h-full w-full p-4 overflow-y-auto place-items-center',
+          getGridClass()
         )}
+        style={{
+          gridAutoRows: 'minmax(0, 1fr)',
+        }}
       >
         {participants.map(participant => (
           <StreamVideoTile

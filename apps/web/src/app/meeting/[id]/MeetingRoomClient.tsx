@@ -198,7 +198,7 @@ export function MeetingRoomClient({
 
       {/* Video call area - with bottom padding for control bar */}
       <div className="flex-1 overflow-hidden">
-        <div className="h-full pb-28">
+        <div className="h-full pb-20">
           <StreamVideoWrapper
             meetingId={meetingId}
             userId={userId}

@@ -145,14 +145,6 @@ export function StreamControlBar({
             <span className="text-white font-medium">Leave</span>
           </button>
         </div>
-
-        {/* Audio/Video Status Text */}
-        <div className="mt-3 text-center">
-          <p className="text-xs text-gray-400">
-            {isAudioMuted ? 'Microphone off' : 'Microphone on'} •{' '}
-            {isVideoOff ? 'Camera off' : 'Camera on'}
-          </p>
-        </div>
       </div>
     </div>
   );
