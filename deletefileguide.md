@@ -187,6 +187,226 @@ export type ConnectionState = ...;  // ❓ VERIFY
 
 ---
 
+## TypeScript Errors - Pre-Existing Issues
+
+**Status:** 13 TypeScript errors exist (as of 2025-12-07)
+**Impact:** Do NOT affect functionality - these are type definition mismatches with Stream SDK
+**Action Required:** Fix in separate PR after Story 2.2 deployment
+
+### Error Summary
+
+All 13 errors are related to **Stream SDK type definitions** and existed **before** the cleanup. These are not introduced by Story 2.2 changes.
+
+---
+
+### Error Category 1: Stream SDK TrackType Issues (6 errors)
+
+**Files Affected:**
+- `src/components/meeting/StreamVideoTile.tsx` (lines 74, 79)
+- `src/services/video/StreamVideoService.ts` (lines 543, 549, 584, 585)
+
+**Error Type:**
+```typescript
+error TS2345: Argument of type '"audio"' is not assignable to parameter of type 'TrackType'.
+error TS2345: Argument of type '"video"' is not assignable to parameter of type 'TrackType'.
+```
+
+**Root Cause:**
+Stream SDK's `TrackType` enum expects specific enum values, but code is passing string literals `"audio"` and `"video"`.
+
+**Investigation Required:**
+- [ ] Check Stream SDK version - newer versions may have changed TrackType definition
+- [ ] Review Stream SDK documentation for correct TrackType usage
+- [ ] Check if TrackType is an enum or string union type
+- [ ] Verify if `participant.publishedTracks.includes('audio')` needs type casting
+
+**Recommended Fix:**
+```typescript
+// Option 1: Import and use enum
+import { TrackType } from '@stream-io/video-react-sdk';
+participant.publishedTracks?.includes(TrackType.AUDIO);
+
+// Option 2: Type assertion
+participant.publishedTracks?.includes('audio' as TrackType);
+
+// Option 3: Check SDK docs for correct usage
+```
+
+**Risk Level:** 🟡 LOW - Type error only, functionality works in runtime
+
+---
+
+### Error Category 2: CallingState Enum Mismatch (2 errors)
+
+**Files Affected:**
+- `src/components/meeting/StreamVideoCallManagerV2.tsx` (lines 231, 232)
+
+**Error Type:**
+```typescript
+error TS2367: This comparison appears to be unintentional because the types 'CallingState.JOINED' and '"joining"' have no overlap.
+error TS2367: This comparison appears to be unintentional because the types 'CallingState.JOINED' and '"left"' have no overlap.
+```
+
+**Root Cause:**
+Code is comparing `CallingState.JOINED` enum with string literals `"joining"` and `"left"`.
+
+**Current Code (line 218-221):**
+```typescript
+{callingState === 'joined' && 'Connected to video call'}
+{callingState === 'joining' && 'Joining video call...'}
+{callingState === 'left' && 'Left video call'}
+```
+
+**Investigation Required:**
+- [ ] Check if `callingState` returns enum or string
+- [ ] Review `useCallCallingState()` return type
+- [ ] Verify correct CallingState enum usage
+
+**Recommended Fix:**
+```typescript
+import { CallingState } from '@stream-io/video-react-sdk';
+
+{callingState === CallingState.JOINED && 'Connected to video call'}
+{callingState === CallingState.JOINING && 'Joining video call...'}
+{callingState === CallingState.LEFT && 'Left video call'}
+```
+
+**Risk Level:** 🟡 LOW - Comparison may never match, but doesn't break functionality
+
+---
+
+### Error Category 3: API Route Type Issues (2 errors)
+
+**Files Affected:**
+- `src/app/api/meetings/[id]/stream-token/route.ts` (lines 103, 133)
+
+**Error Type:**
+```typescript
+error TS2339: Property 'name' does not exist on type '{ id: string; }'.
+```
+
+**Root Cause:**
+Database query returns minimal user object with only `id` field, but code tries to access `name` property.
+
+**Current Code:**
+```typescript
+const { data: user } = await supabase
+  .from('users')
+  .select('id')  // Only selecting 'id'
+  .eq('clerk_id', userId)
+  .single();
+
+// Later trying to access:
+user.name  // Error: 'name' doesn't exist
+```
+
+**Investigation Required:**
+- [ ] Update SELECT query to include 'name' field
+- [ ] Verify if 'name' is needed or can be removed
+- [ ] Check if name is used in Stream SDK user creation
+
+**Recommended Fix:**
+```typescript
+// Option 1: Add 'name' to SELECT
+const { data: user } = await supabase
+  .from('users')
+  .select('id, name')  // Add name
+  .eq('clerk_id', userId)
+  .single();
+
+// Option 2: Remove usage of user.name if not needed
+```
+
+**Risk Level:** 🟡 MEDIUM - May cause runtime error if name is accessed
+
+---
+
+### Error Category 4: Stream SDK UserRequest Type (1 error)
+
+**Files Affected:**
+- `src/lib/stream/client.ts` (line 105)
+
+**Error Type:**
+```typescript
+error TS2353: Object literal may only specify known properties, and 'users' does not exist in type 'UserRequest[]'.
+```
+
+**Root Cause:**
+Passing incorrect property name to Stream SDK user creation API.
+
+**Investigation Required:**
+- [ ] Check Stream SDK documentation for UserRequest interface
+- [ ] Verify correct property name for batch user creation
+- [ ] Review Stream SDK version compatibility
+
+**Recommended Fix:**
+```typescript
+// Check Stream SDK docs for correct property name
+// May need to be 'user_id' or different format
+```
+
+**Risk Level:** 🔴 HIGH - May prevent user creation in Stream SDK
+
+---
+
+### Error Category 5: Type Assignment Issues (2 errors)
+
+**Files Affected:**
+- `src/services/video/StreamVideoService.ts` (lines 167, 583)
+
+**Error Type:**
+```typescript
+error TS2367: This comparison appears to be unintentional because the types 'boolean' and 'string' have no overlap.
+error TS2322: Type 'boolean | undefined' is not assignable to type 'boolean'.
+```
+
+**Root Cause:**
+Type mismatches in conditional logic and undefined handling.
+
+**Investigation Required:**
+- [ ] Review logic at line 167 - comparing boolean to string
+- [ ] Add proper undefined checks or default values
+- [ ] Review if optional chaining (?.) is needed
+
+**Recommended Fix:**
+```typescript
+// Line 583: Handle undefined
+const value: boolean = someValue ?? false;
+
+// Line 167: Fix comparison logic
+if (typeof value === 'string' && value === 'expected') {
+  // ...
+}
+```
+
+**Risk Level:** 🟡 MEDIUM - May cause unexpected behavior
+
+---
+
+## TypeScript Error Fix Plan
+
+### Phase 1: Immediate (Post-Deployment)
+1. **Verify errors don't affect production** - Monitor Sentry for runtime errors
+2. **Create tracking issue** in GitHub for TypeScript error fixes
+3. **Prioritize by risk level**:
+   - 🔴 HIGH: Stream SDK UserRequest (line 105)
+   - 🟡 MEDIUM: API route type issues, Type assignments
+   - 🟡 LOW: TrackType, CallingState, comparison issues
+
+### Phase 2: Fix Implementation (Separate PR)
+1. **Branch:** `fix/typescript-errors-stream-sdk`
+2. **Fix in order of priority** (HIGH → MEDIUM → LOW)
+3. **Test each fix** with `npm run type-check`
+4. **Verify no runtime regressions** with `npm run build`
+5. **Test in preview deployment** before merging
+
+### Phase 3: Documentation
+1. **Update this document** with fix results
+2. **Document any Stream SDK version upgrades** if needed
+3. **Add type safety guidelines** to prevent future issues
+
+---
+
 ## Next Steps
 
 1. **Deploy Story 2.2 to production**
