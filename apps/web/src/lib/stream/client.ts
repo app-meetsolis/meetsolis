@@ -24,6 +24,9 @@ export const getStreamServerClient = (): StreamClient => {
   const apiKey = process.env.STREAM_API_KEY;
   const apiSecret = process.env.STREAM_API_SECRET;
 
+  console.log('[getStreamServerClient] API Key present:', !!apiKey);
+  console.log('[getStreamServerClient] API Secret present:', !!apiSecret);
+
   if (!apiKey || !apiSecret) {
     throw new Error(
       'Stream API credentials not configured. Please set STREAM_API_KEY and STREAM_API_SECRET in .env.local'
@@ -78,12 +81,25 @@ export const generateStreamUserToken = (
   userId: string,
   validityInSeconds: number = 3600
 ): string => {
-  const client = getStreamServerClient();
+  try {
+    const client = getStreamServerClient();
 
-  return client.generateUserToken({
-    user_id: userId,
-    validity_in_seconds: validityInSeconds,
-  });
+    const token = client.generateUserToken({
+      user_id: userId,
+      validity_in_seconds: validityInSeconds,
+    });
+
+    console.log('[generateStreamUserToken] Token generated for user:', userId);
+    return token;
+  } catch (error) {
+    console.error('[generateStreamUserToken] Error:', error);
+    console.error('[generateStreamUserToken] userId:', userId);
+    console.error(
+      '[generateStreamUserToken] validityInSeconds:',
+      validityInSeconds
+    );
+    throw error;
+  }
 };
 
 /**
