@@ -8,15 +8,22 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { StreamVideoProvider } from './StreamVideoProvider';
 import { StreamVideoCallManagerV2 } from './StreamVideoCallManagerV2';
+import type { LayoutConfig } from '@/types/layout';
 
 export interface StreamVideoWrapperProps {
   meetingId: string;
   userId: string;
   userName: string;
+  layoutConfig: LayoutConfig;
+  meetingOrganizerId?: string;
   onParticipantClick?: (participantId: string) => void;
   onError?: (error: Error) => void;
   onLeaveMeeting?: () => void;
   onOpenSettings?: () => void;
+  onOpenLayoutSettings?: () => void;
+  onSpotlightParticipantChange?: (
+    participantId: string | null | undefined
+  ) => void;
   className?: string;
 }
 

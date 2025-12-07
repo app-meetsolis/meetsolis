@@ -7,12 +7,21 @@
 
 import React, { useCallback } from 'react';
 import { useCall, useCallStateHooks } from '@stream-io/video-react-sdk';
-import { Mic, MicOff, Video, VideoOff, PhoneOff, Settings } from 'lucide-react';
+import {
+  Mic,
+  MicOff,
+  Video,
+  VideoOff,
+  PhoneOff,
+  Settings,
+  LayoutGrid,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface StreamControlBarProps {
   onLeaveMeeting?: () => void;
   onOpenSettings?: () => void;
+  onOpenLayoutSettings?: () => void;
   className?: string;
 }
 

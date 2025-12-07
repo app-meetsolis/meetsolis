@@ -124,16 +124,16 @@ export function StreamVideoCallManagerV2({
     const getGridClass = () => {
       const count = participants.length;
 
-      // 1 participant: Full screen (1 column on all devices)
+      // 1 participant: Single column
       if (count === 1) return 'grid-cols-1';
 
       // 2 participants: Responsive
-      // Mobile: 1 column (stacked), Tablet+: 2 columns (side by side)
-      if (count === 2) return 'grid-cols-1 md:grid-cols-2';
+      // Mobile: 1 column (stacked), Desktop: 2 columns (side by side)
+      if (count === 2) return 'grid-cols-1 lg:grid-cols-2';
 
       // 3-4 participants: Responsive 2x2 grid
-      // Mobile: 1 column, Tablet: 2 columns, Desktop: 2 columns
-      if (count <= 4) return 'grid-cols-1 md:grid-cols-2';
+      // Mobile: 1 column, Desktop: 2 columns
+      if (count <= 4) return 'grid-cols-1 lg:grid-cols-2';
 
       // 5-9 participants: Responsive 3x3 grid
       // Mobile: 1 column, Tablet: 2 columns, Desktop: 3 columns
@@ -152,49 +152,61 @@ export function StreamVideoCallManagerV2({
       return 'grid-cols-2 md:grid-cols-4 lg:grid-cols-6';
     };
 
+    // Get container max-width based on participant count
+    const getMaxWidth = () => {
+      const count = participants.length;
+      if (count === 1) return 'max-w-4xl'; // Single: larger container
+      if (count === 2) return 'max-w-6xl'; // Two: wider container
+      return 'max-w-7xl'; // Multiple: full width
+    };
+
     return (
       <div
         className={cn(
-          // Grid with responsive gap and padding
-          'grid h-full w-full overflow-y-auto',
-          // For single participant: no padding (edge-to-edge), no gap
-          // For multiple: padding and gap
-          participants.length === 1
-            ? 'p-0 gap-0'
-            : 'p-2 md:p-3 lg:p-4 gap-3 md:gap-4',
-          // Center grid content vertically only (allows horizontal stretch)
-          'place-content-center',
-          // Single participant: full viewport width, Multiple: max-width centered
-          participants.length === 1 ? 'w-screen' : 'mx-auto max-w-[1600px]',
-          getGridClass()
+          // Centered container with responsive padding
+          'flex items-center justify-center h-full w-full',
+          'px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-10'
         )}
-        style={{
-          gridAutoRows: 'minmax(0, 1fr)',
-        }}
       >
-        {participants.map(participant => (
-          <StreamVideoTile
-            key={participant.sessionId}
-            participant={participant}
-            connectionQuality={mapConnectionQuality(
-              participant.connectionQuality
-            )}
-            onVideoClick={
-              onParticipantClick
-                ? createClickHandler(participant.userId)
-                : undefined
-            }
-            // Pass actual state for local participant
-            overrideAudioMuted={
-              participant.isLocalParticipant ? isLocalAudioMuted : undefined
-            }
-            overrideVideoOff={
-              participant.isLocalParticipant ? isLocalVideoOff : undefined
-            }
-            // Flag for single participant mode (no aspect ratio constraint)
-            isSingleParticipant={participants.length === 1}
-          />
-        ))}
+        <div
+          className={cn(
+            // Grid with responsive gap and max-width
+            'grid w-full overflow-y-auto',
+            'gap-3 md:gap-4 lg:gap-6',
+            // Center content
+            'place-content-center place-items-center',
+            // Max width based on participant count
+            getMaxWidth(),
+            getGridClass()
+          )}
+          style={{
+            gridAutoRows: 'minmax(0, 1fr)',
+          }}
+        >
+          {participants.map(participant => (
+            <StreamVideoTile
+              key={participant.sessionId}
+              participant={participant}
+              connectionQuality={mapConnectionQuality(
+                participant.connectionQuality
+              )}
+              onVideoClick={
+                onParticipantClick
+                  ? createClickHandler(participant.userId)
+                  : undefined
+              }
+              // Pass actual state for local participant
+              overrideAudioMuted={
+                participant.isLocalParticipant ? isLocalAudioMuted : undefined
+              }
+              overrideVideoOff={
+                participant.isLocalParticipant ? isLocalVideoOff : undefined
+              }
+              // No longer need single participant flag - use proper container sizing instead
+              isSingleParticipant={false}
+            />
+          ))}
+        </div>
       </div>
     );
   };

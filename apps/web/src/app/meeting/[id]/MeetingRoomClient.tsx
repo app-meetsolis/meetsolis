@@ -13,6 +13,12 @@ import { toast } from 'sonner';
 import { StreamVideoWrapper } from '@/components/meeting';
 import { KeyboardShortcutsHelp } from '@/components/meeting/KeyboardShortcutsHelp';
 import { LeaveMeetingDialog } from '@/components/meeting/LeaveMeetingDialog';
+import {
+  subscribeToMeetingEvents,
+  unsubscribeChannel,
+} from '@/lib/supabase/realtime';
+import type { MeetingEndedPayload } from '@meetsolis/shared/types/realtime';
+import { useLayoutConfig } from '@/hooks/useLayoutConfig';
 
 interface MeetingRoomClientProps {
   meetingId: string;
@@ -30,6 +36,10 @@ export function MeetingRoomClient({
   const [isLeaving, setIsLeaving] = useState(false);
   const [isOrganizer, setIsOrganizer] = useState(false);
   const [participantCount, setParticipantCount] = useState(0);
+  const [meetingUUID, setMeetingUUID] = useState<string | null>(null);
+
+  // Layout configuration for video grid
+  const { layoutConfig } = useLayoutConfig();
 
   // Construct full name from Clerk user object
   const userName =
@@ -50,6 +60,11 @@ export function MeetingRoomClient({
         }
 
         const data = await res.json();
+
+        // Store meeting UUID for real-time subscription
+        if (data.meeting?.id) {
+          setMeetingUUID(data.meeting.id);
+        }
 
         // Check if current user is the organizer
         setIsOrganizer(data.meeting?.host_id === userId);
@@ -81,15 +96,20 @@ export function MeetingRoomClient({
 
   /**
    * Handle meeting ended
-   * Called when organizer leaves or last participant leaves
+   * Called when organizer leaves or last participant leaves via real-time subscription
    */
   const handleMeetingEnded = useCallback(
-    (data: { endedByHost: boolean; endedAt: string }) => {
-      console.log('[MeetingRoomClient] Meeting ended:', data);
+    (payload: MeetingEndedPayload | null) => {
+      if (!payload) {
+        console.warn('[MeetingRoomClient] Invalid meeting ended payload');
+        return;
+      }
+
+      console.log('[MeetingRoomClient] Meeting ended:', payload);
 
       // Show toast notification
       toast.info('Meeting ended', {
-        description: data.endedByHost
+        description: payload.ended_by_host
           ? 'The meeting organizer has left and ended the meeting.'
           : 'The meeting has ended.',
         duration: 5000,
@@ -160,6 +180,32 @@ export function MeetingRoomClient({
     }
   }, [meetingId, router]);
 
+  /**
+   * Subscribe to meeting ended events
+   * Listens for real-time broadcast when organizer or last participant leaves
+   */
+  useEffect(() => {
+    // Only subscribe if we have the meeting UUID
+    if (!meetingUUID) {
+      return;
+    }
+
+    console.log('[MeetingRoomClient] Subscribing to meeting events:', {
+      meetingUUID,
+    });
+
+    // Subscribe to meeting events (meeting ended broadcast)
+    const channel = subscribeToMeetingEvents(meetingUUID, {
+      onMeetingEnded: handleMeetingEnded,
+    });
+
+    // Cleanup subscription on unmount
+    return () => {
+      console.log('[MeetingRoomClient] Unsubscribing from meeting events');
+      unsubscribeChannel(channel);
+    };
+  }, [meetingUUID, handleMeetingEnded]);
+
   // Register keyboard shortcut for help modal (? or Shift+/)
   useHotkeys(
     'shift+/',
@@ -183,7 +229,7 @@ export function MeetingRoomClient({
   }
 
   return (
-    <div className="h-screen w-full bg-gray-950 relative">
+    <div className="h-screen w-full bg-gray-950 relative overflow-hidden">
       {/* Floating Meeting ID chip - top left */}
       <div className="absolute top-4 left-4 z-30 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-gray-700/50">
         <p className="text-white text-xs font-medium">
@@ -192,11 +238,12 @@ export function MeetingRoomClient({
       </div>
 
       {/* Video call area - full height with bottom padding for control bar */}
-      <div className="h-full pb-20">
+      <div className="h-full pb-24">
         <StreamVideoWrapper
           meetingId={meetingId}
           userId={userId}
           userName={userName}
+          layoutConfig={layoutConfig}
           onError={handleError}
           onLeaveMeeting={handleLeaveMeeting}
         />
