@@ -10,7 +10,7 @@
 
 import { StreamVideoClient, Call } from '@stream-io/video-react-sdk';
 import type { StreamVideoParticipant } from '@stream-io/video-react-sdk';
-import { TrackType } from '@stream-io/video-client/dist/src/gen/video/sfu/models/models';
+import { hasAudio, hasVideo } from '@stream-io/video-client';
 import {
   VideoServiceInterface,
   VideoParticipant,
@@ -541,19 +541,13 @@ export class StreamVideoService extends VideoServiceInterface {
       const tracks: MediaStreamTrack[] = [];
 
       // Get video track if published
-      if (
-        publishedTracks.includes(TrackType.VIDEO) &&
-        streamParticipant.videoStream
-      ) {
+      if (hasVideo(streamParticipant) && streamParticipant.videoStream) {
         const videoTracks = streamParticipant.videoStream.getVideoTracks();
         tracks.push(...videoTracks);
       }
 
       // Get audio track if published
-      if (
-        publishedTracks.includes(TrackType.AUDIO) &&
-        streamParticipant.audioStream
-      ) {
+      if (hasAudio(streamParticipant) && streamParticipant.audioStream) {
         const audioTracks = streamParticipant.audioStream.getAudioTracks();
         tracks.push(...audioTracks);
       }
@@ -588,8 +582,8 @@ export class StreamVideoService extends VideoServiceInterface {
       name: streamParticipant.name || streamParticipant.userId,
       stream: mediaStream,
       isLocal: streamParticipant.isLocalParticipant || false,
-      isMuted: !publishedTracks.includes(TrackType.AUDIO),
-      isVideoOff: !publishedTracks.includes(TrackType.VIDEO),
+      isMuted: !hasAudio(streamParticipant),
+      isVideoOff: !hasVideo(streamParticipant),
       connectionQuality: mapConnectionQuality(
         streamParticipant.connectionQuality
       ),

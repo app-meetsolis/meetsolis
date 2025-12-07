@@ -8,7 +8,7 @@
 import React from 'react';
 import { ParticipantView } from '@stream-io/video-react-sdk';
 import type { StreamVideoParticipant } from '@stream-io/video-react-sdk';
-import { TrackType } from '@stream-io/video-client/dist/src/gen/video/sfu/models/models';
+import { hasAudio, hasVideo } from '@stream-io/video-client';
 import { cn } from '@/lib/utils';
 import type { ConnectionQuality } from '../../../../../packages/shared/types/webrtc';
 
@@ -72,12 +72,10 @@ export function StreamVideoTile({
   const isMuted =
     overrideAudioMuted !== undefined
       ? overrideAudioMuted
-      : !participant.publishedTracks?.includes(TrackType.AUDIO);
+      : !hasAudio(participant);
 
   const isVideoOff =
-    overrideVideoOff !== undefined
-      ? overrideVideoOff
-      : !participant.publishedTracks?.includes(TrackType.VIDEO);
+    overrideVideoOff !== undefined ? overrideVideoOff : !hasVideo(participant);
 
   const isSpeaking = participant.isSpeaking || false;
 
