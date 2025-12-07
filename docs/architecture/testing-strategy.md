@@ -34,12 +34,24 @@ tests/
 #### Frontend Component Test
 ```typescript
 import { render, screen } from '@testing-library/react';
-import { VideoCallManager } from '@/components/meeting/VideoCallManager';
+import { StreamVideoCallManagerV2 } from '@/components/meeting/StreamVideoCallManagerV2';
+import { StreamCall, StreamVideo } from '@stream-io/video-react-sdk';
 
-describe('VideoCallManager', () => {
-  it('should render mute button', () => {
-    render(<VideoCallManager meetingId="test-id" />);
-    expect(screen.getByRole('button', { name: /mute/i })).toBeInTheDocument();
+describe('StreamVideoCallManagerV2', () => {
+  it('should render within Stream context', () => {
+    // Note: Stream SDK components require StreamVideo and StreamCall providers
+    const mockClient = createMockStreamClient();
+    const mockCall = createMockCall();
+
+    render(
+      <StreamVideo client={mockClient}>
+        <StreamCall call={mockCall}>
+          <StreamVideoCallManagerV2 />
+        </StreamCall>
+      </StreamVideo>
+    );
+
+    expect(screen.getByRole('main')).toBeInTheDocument();
   });
 });
 ```

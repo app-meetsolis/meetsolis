@@ -441,18 +441,20 @@ components:
 
 ### Frontend Components
 
-#### VideoCallManager
-**Responsibility:** Orchestrates WebRTC connections, manages peer-to-peer video streams, and coordinates real-time video features
+#### StreamVideoCallManagerV2
+**Responsibility:** Orchestrates Stream SDK video calls, manages participant streams using SFU architecture, and coordinates real-time video features
 
 **Key Interfaces:**
-- `initializeCall(meetingId: string, participantId: string)` - Setup WebRTC connection
-- `toggleMute()` - Audio control with UI feedback
-- `toggleVideo()` - Video control with source selection
-- `handlePeerConnection(peerId: string, offer: RTCSessionDescription)` - P2P signaling
+- Uses Stream SDK's `useCallStateHooks()` for state management
+- Renders participant grid using Stream's `ParticipantView` component
+- Integrates with `StreamControlBar` for mute/video controls
+- Automatic state synchronization via Stream's real-time infrastructure
 
-**Dependencies:** simple-peer, webrtc-adapter, Supabase Realtime (signaling)
+**Dependencies:** @stream-io/video-react-sdk, Supabase Realtime (meeting lifecycle events)
 
-**Technology Stack:** React hooks, WebRTC APIs, TypeScript strict mode, Framer Motion (UI transitions)
+**Technology Stack:** React hooks, Stream Video SDK (SFU), TypeScript strict mode, Tailwind CSS
+
+**Note:** Replaced old WebRTC P2P implementation (VideoCallManager) with Stream SDK in Story 2.2. See `STREAM-SDK-COMPLETE.md` for migration details.
 
 #### CollaborationEngine
 **Responsibility:** Manages real-time collaborative features including whiteboard, messaging, reactions, and polls
@@ -953,9 +955,11 @@ src/
 │   │   ├── card.tsx
 │   │   └── ...
 │   ├── meeting/                # Meeting-specific components
-│   │   ├── VideoCallManager.tsx
-│   │   ├── ParticipantGrid.tsx
-│   │   ├── ControlBar.tsx
+│   │   ├── StreamVideoCallManagerV2.tsx  # Main call manager (Stream SDK)
+│   │   ├── StreamVideoTile.tsx           # Individual video tiles
+│   │   ├── StreamControlBar.tsx          # Control bar with mute/video/etc
+│   │   ├── DeviceSettingsPanel.tsx       # Device selection dialog
+│   │   ├── ControlBar.tsx                # Legacy control bar
 │   │   └── ChatWindow.tsx
 │   ├── collaboration/          # Real-time collaboration
 │   │   ├── ReactionOverlay.tsx
@@ -1616,12 +1620,24 @@ tests/
 #### Frontend Component Test
 ```typescript
 import { render, screen } from '@testing-library/react';
-import { VideoCallManager } from '@/components/meeting/VideoCallManager';
+import { StreamVideoCallManagerV2 } from '@/components/meeting/StreamVideoCallManagerV2';
+import { StreamCall, StreamVideo } from '@stream-io/video-react-sdk';
 
-describe('VideoCallManager', () => {
-  it('should render mute button', () => {
-    render(<VideoCallManager meetingId="test-id" />);
-    expect(screen.getByRole('button', { name: /mute/i })).toBeInTheDocument();
+describe('StreamVideoCallManagerV2', () => {
+  it('should render within Stream context', () => {
+    // Note: Stream SDK components require StreamVideo and StreamCall providers
+    const mockClient = createMockStreamClient();
+    const mockCall = createMockCall();
+
+    render(
+      <StreamVideo client={mockClient}>
+        <StreamCall call={mockCall}>
+          <StreamVideoCallManagerV2 />
+        </StreamCall>
+      </StreamVideo>
+    );
+
+    expect(screen.getByRole('main')).toBeInTheDocument();
   });
 });
 ```
