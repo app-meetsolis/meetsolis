@@ -101,13 +101,11 @@ export const upsertStreamUser = async (
 ): Promise<void> => {
   const client = getStreamServerClient();
 
-  await client.upsertUsers({
-    users: {
-      [userId]: {
-        id: userId,
-        name: userName,
-        role,
-      },
+  await client.upsertUsers([
+    {
+      id: userId,
+      name: userName,
+      role,
     },
-  });
+  ]);
 };

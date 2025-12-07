@@ -8,7 +8,11 @@
 'use client';
 
 import React, { useEffect, useCallback } from 'react';
-import { useCallStateHooks, useCall } from '@stream-io/video-react-sdk';
+import {
+  useCallStateHooks,
+  useCall,
+  CallingState,
+} from '@stream-io/video-react-sdk';
 import type { StreamVideoParticipant } from '@stream-io/video-react-sdk';
 import { StreamVideoTile } from './StreamVideoTile';
 import { StreamControlBar } from './StreamControlBar';
@@ -95,13 +99,15 @@ export function StreamVideoCallManagerV2({
   };
 
   // Show loading state
-  if (!call || callingState !== 'joined') {
+  if (!call || callingState !== CallingState.JOINED) {
     return (
       <div className="flex items-center justify-center h-full bg-gray-900 rounded-lg">
         <div className="text-center text-white">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4" />
           <p>
-            {callingState === 'joining' ? 'Joining call...' : 'Connecting...'}
+            {callingState === CallingState.JOINING
+              ? 'Joining call...'
+              : 'Connecting...'}
           </p>
         </div>
       </div>
@@ -227,9 +233,7 @@ export function StreamVideoCallManagerV2({
           aria-live="polite"
           aria-atomic="true"
         >
-          {callingState === 'joined' && 'Connected to video call'}
-          {callingState === 'joining' && 'Joining video call...'}
-          {callingState === 'left' && 'Left video call'}
+          Connected to video call
         </div>
       </div>
 

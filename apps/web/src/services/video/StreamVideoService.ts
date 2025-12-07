@@ -10,6 +10,7 @@
 
 import { StreamVideoClient, Call } from '@stream-io/video-react-sdk';
 import type { StreamVideoParticipant } from '@stream-io/video-react-sdk';
+import { TrackType } from '@stream-io/video-client/dist/src/gen/video/sfu/models/models';
 import {
   VideoServiceInterface,
   VideoParticipant,
@@ -164,7 +165,7 @@ export class StreamVideoService extends VideoServiceInterface {
 
     try {
       await this.call.microphone.toggle();
-      const isMuted = !this.call.microphone.state.status === 'enabled';
+      const isMuted = this.call.microphone.state.status !== 'enabled';
 
       console.log(
         '[StreamVideoService] Audio toggled:',
@@ -540,13 +541,19 @@ export class StreamVideoService extends VideoServiceInterface {
       const tracks: MediaStreamTrack[] = [];
 
       // Get video track if published
-      if (publishedTracks.includes('video') && streamParticipant.videoStream) {
+      if (
+        publishedTracks.includes(TrackType.VIDEO) &&
+        streamParticipant.videoStream
+      ) {
         const videoTracks = streamParticipant.videoStream.getVideoTracks();
         tracks.push(...videoTracks);
       }
 
       // Get audio track if published
-      if (publishedTracks.includes('audio') && streamParticipant.audioStream) {
+      if (
+        publishedTracks.includes(TrackType.AUDIO) &&
+        streamParticipant.audioStream
+      ) {
         const audioTracks = streamParticipant.audioStream.getAudioTracks();
         tracks.push(...audioTracks);
       }
@@ -580,9 +587,9 @@ export class StreamVideoService extends VideoServiceInterface {
       id: streamParticipant.userId,
       name: streamParticipant.name || streamParticipant.userId,
       stream: mediaStream,
-      isLocal: streamParticipant.isLocalParticipant,
-      isMuted: !publishedTracks.includes('audio'),
-      isVideoOff: !publishedTracks.includes('video'),
+      isLocal: streamParticipant.isLocalParticipant || false,
+      isMuted: !publishedTracks.includes(TrackType.AUDIO),
+      isVideoOff: !publishedTracks.includes(TrackType.VIDEO),
       connectionQuality: mapConnectionQuality(
         streamParticipant.connectionQuality
       ),
