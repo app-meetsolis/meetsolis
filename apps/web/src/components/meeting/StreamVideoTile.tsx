@@ -1,74 +1,83 @@
 /**
- * VideoTile Component
- * Displays individual participant video stream with connection indicators
+ * StreamVideoTile Component
+ * Video tile using Stream SDK's native video rendering
  */
 
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
+import { ParticipantView } from '@stream-io/video-react-sdk';
+import type { StreamVideoParticipant } from '@stream-io/video-react-sdk';
+import { hasAudio, hasVideo } from '@stream-io/video-client';
 import { cn } from '@/lib/utils';
 import type { ConnectionQuality } from '../../../../../packages/shared/types/webrtc';
 
-export interface VideoTileProps {
-  stream: MediaStream | null;
-  participantName: string;
-  participantId: string;
-  isLocal?: boolean;
-  isMuted?: boolean;
-  isVideoOff?: boolean;
+export interface StreamVideoTileProps {
+  participant: StreamVideoParticipant;
   connectionQuality?: ConnectionQuality;
-  isSpeaking?: boolean;
   className?: string;
-  onVideoClick?: (participantId: string) => void;
+  onVideoClick?: () => void;
+  overrideAudioMuted?: boolean;
+  overrideVideoOff?: boolean;
+  isSingleParticipant?: boolean;
 }
 
 /**
- * VideoTile Component
+ * Get participant initials for avatar
  */
-export function VideoTile({
-  stream,
-  participantName,
-  participantId,
-  isLocal = false,
-  isMuted = false,
-  isVideoOff = false,
+const getInitials = (name: string): string => {
+  const parts = name.trim().split(' ');
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+};
+
+/**
+ * Avatar Placeholder Component
+ * Used when video is off - wrapped with forwardRef for ParticipantView
+ */
+const AvatarPlaceholder = React.forwardRef<
+  HTMLDivElement,
+  { name: string; userId: string }
+>(({ name, userId }, ref) => (
+  <div
+    ref={ref}
+    className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-900"
+  >
+    <div className="w-20 h-20 md:w-32 md:h-32 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl md:text-4xl font-bold">
+      {getInitials(name || userId)}
+    </div>
+  </div>
+));
+
+AvatarPlaceholder.displayName = 'AvatarPlaceholder';
+
+/**
+ * StreamVideoTile Component
+ * Uses Stream's ParticipantView for proper video rendering
+ */
+export function StreamVideoTile({
+  participant,
   connectionQuality = 'good',
-  isSpeaking = false,
   className = '',
   onVideoClick,
-}: VideoTileProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+  overrideAudioMuted,
+  overrideVideoOff,
+  isSingleParticipant = false,
+}: StreamVideoTileProps) {
+  const isLocal = participant.isLocalParticipant;
 
-  /**
-   * Attach stream to video element
-   */
-  useEffect(() => {
-    console.log(`[VideoTile] ${participantName}:`, {
-      hasStream: !!stream,
-      streamId: stream?.id,
-      audioTracks: stream?.getAudioTracks().length ?? 0,
-      videoTracks: stream?.getVideoTracks().length ?? 0,
-      isLocal,
-    });
+  // Use override state for local participant (from hooks), otherwise use publishedTracks
+  const isMuted =
+    overrideAudioMuted !== undefined
+      ? overrideAudioMuted
+      : !hasAudio(participant);
 
-    if (videoRef.current && stream) {
-      videoRef.current.srcObject = stream;
-      setIsVideoLoaded(true);
-      console.log(`[VideoTile] ${participantName}: Video attached to element`);
-    } else {
-      setIsVideoLoaded(false);
-      if (!stream) {
-        console.warn(`[VideoTile] ${participantName}: No stream available`);
-      }
-    }
+  const isVideoOff =
+    overrideVideoOff !== undefined ? overrideVideoOff : !hasVideo(participant);
 
-    return () => {
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
-      }
-    };
-  }, [stream, participantName, isLocal]);
+  const isSpeaking = participant.isSpeaking || false;
 
   /**
    * Get connection quality color
@@ -87,37 +96,31 @@ export function VideoTile({
   };
 
   /**
-   * Get participant initials for avatar
-   */
-  const getInitials = (name: string): string => {
-    const parts = name.trim().split(' ');
-    if (parts.length >= 2) {
-      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-    }
-    return name.slice(0, 2).toUpperCase();
-  };
-
-  /**
    * Handle tile click
    */
   const handleClick = () => {
-    if (onVideoClick) {
-      onVideoClick(participantId);
-    }
+    onVideoClick?.();
   };
 
   return (
     <div
       className={cn(
-        'relative bg-gray-900 rounded-lg overflow-hidden aspect-video group',
+        'relative bg-gray-900 overflow-hidden group rounded-lg',
+        // Full width with proper aspect ratio
+        'w-full',
         onVideoClick && 'cursor-pointer hover:ring-2 hover:ring-blue-500',
-        isSpeaking && 'ring-2 ring-green-500 animate-pulse',
+        isSpeaking && 'ring-4 ring-green-500',
         className
       )}
+      style={{
+        // Maintain 16:9 aspect ratio for all video tiles
+        aspectRatio: '16 / 9',
+        maxWidth: '100%',
+      }}
       onClick={handleClick}
       role="button"
       tabIndex={onVideoClick ? 0 : -1}
-      aria-label={`Video feed for ${participantName}${isLocal ? ' (You)' : ''}${isSpeaking ? ' - Speaking' : ''}`}
+      aria-label={`Video feed for ${participant.name || participant.userId}${isLocal ? ' (You)' : ''}${isSpeaking ? ' - Speaking' : ''}`}
       onKeyDown={e => {
         if (onVideoClick && (e.key === 'Enter' || e.key === ' ')) {
           e.preventDefault();
@@ -125,35 +128,33 @@ export function VideoTile({
         }
       }}
     >
-      {/* Video element */}
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        muted={isLocal} // Always mute local video to prevent echo
-        className={cn('w-full h-full object-cover', isVideoOff && 'hidden')}
-        aria-hidden={isVideoOff}
-      />
-
-      {/* Avatar fallback when video is off */}
-      {(isVideoOff || !isVideoLoaded) && (
-        <div
-          className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-900"
-          role="img"
-          aria-label={`Avatar for ${participantName}`}
-        >
-          <div className="w-20 h-20 md:w-32 md:h-32 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl md:text-4xl font-bold">
-            {getInitials(participantName)}
-          </div>
-        </div>
-      )}
+      {/* Stream SDK's native ParticipantView - handles video and avatar */}
+      <div className="w-full h-full">
+        <ParticipantView
+          participant={participant}
+          muteAudio={isLocal} // Mute local audio to prevent echo
+          VideoPlaceholder={React.useMemo(() => {
+            const Placeholder = React.forwardRef<HTMLDivElement>(
+              (props, ref) => (
+                <AvatarPlaceholder
+                  ref={ref}
+                  name={participant.name || participant.userId}
+                  userId={participant.userId}
+                />
+              )
+            );
+            Placeholder.displayName = 'VideoPlaceholder';
+            return Placeholder;
+          }, [participant.name, participant.userId])}
+        />
+      </div>
 
       {/* Participant info overlay - bottom */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 md:p-4">
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-1.5 md:px-3 md:py-2 z-20">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-white font-medium text-sm md:text-base truncate max-w-[150px] md:max-w-[200px]">
-              {participantName}
+          <div className="flex items-center gap-1.5 md:gap-2">
+            <span className="text-white font-medium text-xs md:text-sm truncate max-w-[120px] md:max-w-[150px]">
+              {participant.name || participant.userId}
               {isLocal && ' (You)'}
             </span>
 
@@ -230,21 +231,8 @@ export function VideoTile({
 
       {/* Local video indicator - top left */}
       {isLocal && (
-        <div className="absolute top-3 left-3 px-2 py-1 bg-blue-600 rounded text-white text-xs font-medium">
+        <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-blue-600 rounded text-white text-xs font-medium z-20">
           You
-        </div>
-      )}
-
-      {/* Loading spinner */}
-      {!isVideoLoaded && stream && !isVideoOff && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-900/50">
-          <div
-            className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"
-            role="status"
-            aria-label="Loading video"
-          >
-            <span className="sr-only">Loading video...</span>
-          </div>
         </div>
       )}
     </div>

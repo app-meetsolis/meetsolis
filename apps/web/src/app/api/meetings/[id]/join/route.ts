@@ -94,16 +94,20 @@ export async function POST(
     }
 
     // Check if participant already exists (use meeting.id UUID, not meeting_code)
-    const { data: existingParticipant } = await supabase
-      .from('participants')
-      .select('*')
-      .eq('meeting_id', meeting.id)
-      .eq('user_id', user.id)
-      .single();
+    const { data: existingParticipant, error: participantError } =
+      await supabase
+        .from('participants')
+        .select('*')
+        .eq('meeting_id', meeting.id)
+        .eq('user_id', user.id)
+        .maybeSingle(); // Use maybeSingle() instead of single() to avoid error if not found
 
     // If participant already exists and hasn't left, return existing record
     if (existingParticipant && !existingParticipant.leave_time) {
-      return NextResponse.json(existingParticipant);
+      console.log(
+        '[join/route] Participant already active, returning existing record'
+      );
+      return NextResponse.json(existingParticipant, { status: 200 });
     }
 
     // Count current participants (use meeting.id UUID, not meeting_code)
@@ -168,7 +172,25 @@ export async function POST(
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Handle duplicate key error (race condition - participant was created between check and insert)
+        if (error.code === '23505') {
+          console.log(
+            '[join/route] Race condition detected, fetching existing participant'
+          );
+          const { data: existing } = await supabase
+            .from('participants')
+            .select('*')
+            .eq('meeting_id', meeting.id)
+            .eq('user_id', user.id)
+            .single();
+
+          if (existing) {
+            return NextResponse.json(existing, { status: 200 });
+          }
+        }
+        throw error;
+      }
       participant = data;
     }
 
@@ -185,9 +207,24 @@ export async function POST(
 
     return NextResponse.json(participant, { status: 201 });
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('[join/route] API Error:', error);
+    console.error(
+      '[join/route] Error stack:',
+      error instanceof Error ? error.stack : 'No stack trace'
+    );
+    console.error(
+      '[join/route] Error message:',
+      error instanceof Error ? error.message : String(error)
+    );
+
     return NextResponse.json(
-      { error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } },
+      {
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Internal server error',
+          details: error instanceof Error ? error.message : String(error),
+        },
+      },
       { status: 500 }
     );
   }

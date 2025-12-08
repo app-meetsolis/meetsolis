@@ -10,12 +10,15 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
-import { VideoCallManager } from '@/components/meeting';
-import { ControlBar } from '@/components/meeting/ControlBar';
-import { DeviceSettingsPanel } from '@/components/meeting/DeviceSettingsPanel';
+import { StreamVideoWrapper } from '@/components/meeting';
 import { KeyboardShortcutsHelp } from '@/components/meeting/KeyboardShortcutsHelp';
 import { LeaveMeetingDialog } from '@/components/meeting/LeaveMeetingDialog';
-import type { VideoCallState } from '@/components/meeting';
+import {
+  subscribeToMeetingEvents,
+  unsubscribeChannel,
+} from '@/lib/supabase/realtime';
+import type { MeetingEndedPayload } from '@meetsolis/shared/types/realtime';
+import { useLayoutConfig } from '@/hooks/useLayoutConfig';
 
 interface MeetingRoomClientProps {
   meetingId: string;
@@ -28,13 +31,15 @@ export function MeetingRoomClient({
 }: MeetingRoomClientProps) {
   const router = useRouter();
   const { user, isLoaded } = useUser();
-  const [callState, setCallState] = useState<VideoCallState | null>(null);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
   const [isOrganizer, setIsOrganizer] = useState(false);
   const [participantCount, setParticipantCount] = useState(0);
+  const [meetingUUID, setMeetingUUID] = useState<string | null>(null);
+
+  // Layout configuration for video grid
+  const { layoutConfig } = useLayoutConfig();
 
   // Construct full name from Clerk user object
   const userName =
@@ -56,6 +61,11 @@ export function MeetingRoomClient({
 
         const data = await res.json();
 
+        // Store meeting UUID for real-time subscription
+        if (data.meeting?.id) {
+          setMeetingUUID(data.meeting.id);
+        }
+
         // Check if current user is the organizer
         setIsOrganizer(data.meeting?.host_id === userId);
 
@@ -74,44 +84,32 @@ export function MeetingRoomClient({
   }, [meetingId, userId]);
 
   /**
-   * Handle video call state changes
-   */
-  const handleStateChange = useCallback((state: VideoCallState) => {
-    setCallState(state);
-  }, []);
-
-  /**
    * Handle errors
    */
   const handleError = useCallback((error: Error) => {
     console.error('Meeting error:', error);
-  }, []);
-
-  /**
-   * Handle participant join
-   */
-  const handleParticipantJoin = useCallback((participantId: string) => {
-    console.log('Participant joined:', participantId);
-  }, []);
-
-  /**
-   * Handle participant leave
-   */
-  const handleParticipantLeave = useCallback((participantId: string) => {
-    console.log('Participant left:', participantId);
+    toast.error('Connection Error', {
+      description: error.message,
+      duration: 5000,
+    });
   }, []);
 
   /**
    * Handle meeting ended
-   * Called when organizer leaves or last participant leaves
+   * Called when organizer leaves or last participant leaves via real-time subscription
    */
   const handleMeetingEnded = useCallback(
-    (data: { endedByHost: boolean; endedAt: string }) => {
-      console.log('[MeetingRoomClient] Meeting ended:', data);
+    (payload: MeetingEndedPayload | null) => {
+      if (!payload) {
+        console.warn('[MeetingRoomClient] Invalid meeting ended payload');
+        return;
+      }
+
+      console.log('[MeetingRoomClient] Meeting ended:', payload);
 
       // Show toast notification
       toast.info('Meeting ended', {
-        description: data.endedByHost
+        description: payload.ended_by_host
           ? 'The meeting organizer has left and ended the meeting.'
           : 'The meeting has ended.',
         duration: 5000,
@@ -182,6 +180,32 @@ export function MeetingRoomClient({
     }
   }, [meetingId, router]);
 
+  /**
+   * Subscribe to meeting ended events
+   * Listens for real-time broadcast when organizer or last participant leaves
+   */
+  useEffect(() => {
+    // Only subscribe if we have the meeting UUID
+    if (!meetingUUID) {
+      return;
+    }
+
+    console.log('[MeetingRoomClient] Subscribing to meeting events:', {
+      meetingUUID,
+    });
+
+    // Subscribe to meeting events (meeting ended broadcast)
+    const channel = subscribeToMeetingEvents(meetingUUID, {
+      onMeetingEnded: handleMeetingEnded,
+    });
+
+    // Cleanup subscription on unmount
+    return () => {
+      console.log('[MeetingRoomClient] Unsubscribing from meeting events');
+      unsubscribeChannel(channel);
+    };
+  }, [meetingUUID, handleMeetingEnded]);
+
   // Register keyboard shortcut for help modal (? or Shift+/)
   useHotkeys(
     'shift+/',
@@ -205,82 +229,25 @@ export function MeetingRoomClient({
   }
 
   return (
-    <div className="h-screen w-full bg-gray-950 flex flex-col">
-      {/* Meeting header */}
-      <div className="bg-gray-900 border-b border-gray-800 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-white text-lg font-semibold">Meeting Room</h1>
-            <p className="text-gray-400 text-sm">
-              Meeting ID: {meetingId.slice(0, 8)}
-            </p>
-          </div>
-
-          <button
-            onClick={handleLeaveMeeting}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-            aria-label="Leave meeting"
-          >
-            Leave Meeting
-          </button>
-        </div>
+    <div className="h-screen w-full bg-gray-950 relative overflow-hidden">
+      {/* Floating Meeting ID chip - top left */}
+      <div className="absolute top-4 left-4 z-30 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-gray-700/50">
+        <p className="text-white text-xs font-medium">
+          ID: {meetingId.slice(0, 8)}
+        </p>
       </div>
 
-      {/* Video call area - with bottom padding for control bar */}
-      <div className="flex-1 overflow-hidden pb-20">
-        <VideoCallManager
+      {/* Video call area - full height with bottom padding for control bar */}
+      <div className="h-full pb-24">
+        <StreamVideoWrapper
           meetingId={meetingId}
           userId={userId}
           userName={userName}
-          onStateChange={handleStateChange}
+          layoutConfig={layoutConfig}
           onError={handleError}
-          onParticipantJoin={handleParticipantJoin}
-          onParticipantLeave={handleParticipantLeave}
-          onMeetingEnded={handleMeetingEnded}
+          onLeaveMeeting={handleLeaveMeeting}
         />
       </div>
-
-      {/* Connection status indicator */}
-      {callState && (
-        <div className="absolute top-20 right-6 z-50">
-          {callState.connectionState === 'reconnecting' && (
-            <div className="bg-yellow-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-              <span className="text-sm font-medium">Reconnecting...</span>
-            </div>
-          )}
-
-          {callState.connectionState === 'failed' && (
-            <div className="bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg">
-              <span className="text-sm font-medium">Connection Failed</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Control Bar */}
-      {callState && callState.toggleAudio && callState.toggleVideo && (
-        <ControlBar
-          isAudioMuted={callState.isAudioMuted ?? true}
-          isVideoOff={callState.isVideoOff ?? true}
-          onToggleAudio={callState.toggleAudio}
-          onToggleVideo={callState.toggleVideo}
-          isPushToTalkMode={callState.isPushToTalkMode ?? false}
-          isPushToTalkActive={callState.isPushToTalkActive ?? false}
-          onTogglePushToTalkMode={callState.togglePushToTalkMode || (() => {})}
-          audioLevel={callState.audioLevel ?? 0}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-        />
-      )}
-
-      {/* Device Settings Panel */}
-      {callState?.localStream && (
-        <DeviceSettingsPanel
-          open={isSettingsOpen}
-          onOpenChange={setIsSettingsOpen}
-          stream={callState.localStream}
-        />
-      )}
 
       {/* Keyboard Shortcuts Help */}
       <KeyboardShortcutsHelp

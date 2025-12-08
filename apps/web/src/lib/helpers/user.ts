@@ -30,10 +30,10 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 export async function getUserByClerkId(
   supabase: SupabaseClient,
   clerkId: string
-): Promise<{ id: string } | null> {
+): Promise<{ id: string; name: string | null } | null> {
   const { data } = await supabase
     .from('users')
-    .select('id')
+    .select('id, name')
     .eq('clerk_id', clerkId)
     .single();
 
