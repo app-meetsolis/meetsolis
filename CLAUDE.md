@@ -1,3 +1,5 @@
+In all interactions and commit messages, be extremely concise and sacrifice grammar for the sake of consision.
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -166,3 +168,5 @@ This is a **greenfield project** in the planning phase. Before implementing:
 2. Set up the Next.js project structure as defined in the architecture
 3. Configure Supabase, Clerk, and other external services
 4. Follow the BMad Method workflow for systematic development
+- In all interactions and commit messages, be extremely concise and sacrifice grammar for the sake of consision
+- At the end of each plan, give me a list of unresolved questions to answer, if any. Make the questions extremely concise. Sacrifice grammar for the sake of concision

@@ -39,4 +39,5 @@
 | Form Handling | react-hook-form | ^7.48.2 | Form validation | Optimized form performance |
 | Date Handling | date-fns | ^3.2.0 | Date manipulation | Lightweight alternative to moment |
 | Environment Config | dotenv | ^16.3.1 | Environment management | Secure config handling |
+| Drag & Drop | react-draggable | ^4.4.6 | Self-view dragging | AC 9 requirement for draggable self-view |
 

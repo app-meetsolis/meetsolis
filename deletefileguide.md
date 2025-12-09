@@ -1,14 +1,32 @@
 # File Investigation Guide
 
 **Created:** 2025-12-07
-**Status:** Post-Deployment Investigation Required
+**Updated:** 2025-12-08
+**Status:** ✅ DEFERRED - Moved to Future Cleanup Sprint
 **Related:** Story 2.2 WebRTC to Stream SDK Migration Cleanup
 
 ---
 
 ## Purpose
 
-This document lists files that were identified during the Story 2.2 cleanup but require further investigation before deletion. These files are currently being kept to avoid breaking functionality, but they may become obsolete once we verify they are no longer needed.
+This document lists files that were identified during the Story 2.2 cleanup but require further investigation before deletion. These files are currently being kept to avoid breaking functionality.
+
+**Current Decision:** Cleanup tasks have been deferred to a future story/arc. Story 2.2 migration is complete and stable in production. These non-urgent cleanup tasks will be addressed in a dedicated cleanup sprint (Story 3.x or Arc 3).
+
+---
+
+## Cleanup Status
+
+**Deployment Status:** ✅ Production deployment successful (2025-12-08)
+**Monitoring Period:** Ongoing - No issues observed
+**Cleanup Schedule:** Deferred to future sprint (no immediate action required)
+
+**Why Deferred:**
+- Migration to Stream SDK is complete and stable
+- All critical functionality working in production
+- Old code is not causing issues by remaining
+- Focus prioritized on new features over cleanup
+- Safe to remove after extended monitoring period
 
 ---
 
@@ -187,15 +205,20 @@ export type ConnectionState = ...;  // ❓ VERIFY
 
 ---
 
-## TypeScript Errors - Pre-Existing Issues
+## TypeScript Errors - ✅ RESOLVED
 
-**Status:** 13 TypeScript errors exist (as of 2025-12-07)
-**Impact:** Do NOT affect functionality - these are type definition mismatches with Stream SDK
-**Action Required:** Fix in separate PR after Story 2.2 deployment
+**Status:** ✅ ALL FIXED (2025-12-08)
+**Original Count:** 13 errors identified (2025-12-07)
+**Fixed Count:** 11 errors fixed
+**Current Status:** 0 TypeScript errors - build passes cleanly
 
 ### Error Summary
 
-All 13 errors are related to **Stream SDK type definitions** and existed **before** the cleanup. These are not introduced by Story 2.2 changes.
+All Stream SDK type definition errors have been resolved. The fixes were completed as part of PR #23.
+
+**Commits:**
+- `fix: Resolve all TypeScript build errors (11 errors fixed)`
+- `fix: Replace TrackType imports with Stream SDK helper functions`
 
 ---
 
@@ -426,6 +449,33 @@ If you have questions about this cleanup:
 
 ---
 
-**Document Status:** Active - In Use
-**Last Updated:** 2025-12-07
-**Next Review:** After Story 2.2 production deployment
+---
+
+## Summary & Next Steps
+
+### ✅ Completed Tasks
+- All TypeScript errors fixed (11 errors)
+- Stream SDK migration deployed to production
+- Token generation working locally and in production
+- Users can successfully join video meetings
+- All builds passing in CI/CD
+
+### ⏳ Deferred Cleanup Tasks
+1. Remove `simple-peer` dependency (Risk: Low)
+2. Delete `useConnectionQuality.ts` hook (Risk: Medium)
+3. Clean up `webrtc.ts` types file (Risk: High - requires careful audit)
+4. Database migration 007 - **KEEP** (fields actively used)
+
+### 📅 When to Revisit
+- **Recommended:** After Story 2.3 or 3.x completion
+- **Minimum Wait:** 1-2 weeks of stable production usage
+- **Trigger:** Dedicated cleanup sprint or low-priority backlog item
+
+### 🎯 Action Required
+**None** - Focus on next story/features. This cleanup is non-urgent.
+
+---
+
+**Document Status:** Reference - Deferred to Future Sprint
+**Last Updated:** 2025-12-08
+**Next Review:** Story 3.x or dedicated cleanup sprint
