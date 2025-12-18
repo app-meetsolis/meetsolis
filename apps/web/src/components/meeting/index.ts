@@ -31,3 +31,23 @@ export type {
   DeviceTestError,
   PermissionState,
 } from './types';
+
+// Story 2.3: Video Layout Components
+export { GalleryView } from './GalleryView';
+export type { GalleryViewProps } from './GalleryView';
+export { SpeakerView } from './SpeakerView';
+export type { SpeakerViewProps } from './SpeakerView';
+export { TwoPersonView } from './TwoPersonView';
+export type { TwoPersonViewProps } from './TwoPersonView';
+export { SelfView } from './SelfView';
+export type { SelfViewProps } from './SelfView';
+
+// Story 2.3: Participant Management Components
+export { ParticipantPanel } from './ParticipantPanel';
+export type { ParticipantPanelProps } from './ParticipantPanel';
+export { ParticipantListItem } from './ParticipantListItem';
+export type { ParticipantListItemProps } from './ParticipantListItem';
+
+// Story 2.3: Waiting Room Components
+export { WaitingRoomView } from './WaitingRoomView';
+export { WaitingRoomPanel } from './WaitingRoomPanel';
