@@ -18,6 +18,7 @@ const CreateMeetingSchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().nullish(), // Allow null, undefined, or string
   scheduled_start: z.string().nullish(),
+  waiting_room_enabled: z.boolean().optional().default(true), // Enable by default
   settings: z
     .object({
       allow_screen_share: z.boolean().optional(),
@@ -204,7 +205,7 @@ export async function POST(request: NextRequest) {
         meeting_code: code,
         invite_link: link,
         settings,
-        waiting_room_enabled: false,
+        waiting_room_enabled: validation.data.waiting_room_enabled,
         locked: false,
         max_participants: 100,
       })

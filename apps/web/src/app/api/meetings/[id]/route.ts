@@ -76,9 +76,10 @@ export async function GET(
     }
 
     // Fetch participants for this meeting (use meeting.id UUID, not meeting_code)
+    // JOIN with users table to get clerk_id for role mapping
     const { data: participants, error: participantsError } = await supabase
       .from('participants')
-      .select('*')
+      .select('*, users!inner(clerk_id)')
       .eq('meeting_id', meeting.id)
       .is('leave_time', null) // Only active participants
       .order('join_time', { ascending: true });
@@ -87,9 +88,20 @@ export async function GET(
       console.error('Error fetching participants:', participantsError);
     }
 
+    // Flatten the users relation for easier access
+    const participantsWithClerkId =
+      participants?.map(p => ({
+        ...p,
+        clerk_id: p.users?.clerk_id || null,
+      })) || [];
+
+    // Check if current user is the host
+    const isCurrentUserHost = meeting.host_id === user.id;
+
     return NextResponse.json({
       meeting,
-      participants: participants || [],
+      participants: participantsWithClerkId,
+      is_current_user_host: isCurrentUserHost,
     });
   } catch (error) {
     console.error('API Error:', error);

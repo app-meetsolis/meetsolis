@@ -93,6 +93,128 @@ export async function POST(
       );
     }
 
+    // Check if waiting room is enabled (hosts bypass waiting room)
+    const requestedRole = validation.data.role;
+
+    // If user is host, auto-admit/remove them from waiting room if they have an entry
+    if (requestedRole === 'host') {
+      const { data: existingWaitingEntry } = await supabase
+        .from('waiting_room_participants')
+        .select('id')
+        .eq('meeting_id', meeting.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingWaitingEntry) {
+        console.log('[join/route] Host has waiting room entry, auto-admitting');
+        await supabase
+          .from('waiting_room_participants')
+          .update({ status: 'admitted' })
+          .eq('id', existingWaitingEntry.id);
+      }
+    }
+
+    if (meeting.waiting_room_enabled && requestedRole !== 'host') {
+      console.log(
+        '[join/route] Waiting room enabled, checking participant status'
+      );
+
+      // Check if already in waiting room (any status)
+      const { data: existingWaitingParticipant } = await supabase
+        .from('waiting_room_participants')
+        .select('*')
+        .eq('meeting_id', meeting.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingWaitingParticipant) {
+        // Check status
+        if (existingWaitingParticipant.status === 'admitted') {
+          // Participant was admitted, allow them to join normally
+          console.log('[join/route] Participant was admitted, allowing join');
+          // Continue to normal join flow below
+        } else if (existingWaitingParticipant.status === 'waiting') {
+          // Still waiting
+          return NextResponse.json(
+            {
+              waiting_room: true,
+              waiting_room_id: existingWaitingParticipant.id,
+              meeting_id: meeting.id,
+              meeting_title: meeting.title,
+              user_id: user.id,
+              message: 'You are in the waiting room',
+            },
+            { status: 200 }
+          );
+        } else if (existingWaitingParticipant.status === 'rejected') {
+          // Participant was rejected, don't allow rejoin
+          return NextResponse.json(
+            {
+              error: {
+                code: 'FORBIDDEN',
+                message: 'You have been denied access to this meeting',
+              },
+            },
+            { status: 403 }
+          );
+        }
+      } else {
+        // Not in waiting room yet, add them
+        const displayName = user.name || user.email?.split('@')[0] || 'Guest';
+
+        // Use upsert to avoid duplicate key errors
+        // This handles cases where old entries exist from previous sessions
+        const { data: waitingRoomEntry, error: waitingRoomError } =
+          await supabase
+            .from('waiting_room_participants')
+            .upsert(
+              {
+                meeting_id: meeting.id,
+                user_id: user.id,
+                display_name: displayName,
+                status: 'waiting',
+                joined_at: new Date().toISOString(),
+              },
+              {
+                onConflict: 'meeting_id,user_id',
+              }
+            )
+            .select()
+            .single();
+
+        if (waitingRoomError) {
+          console.error(
+            '[join/route] Failed to add to waiting room:',
+            waitingRoomError
+          );
+          return NextResponse.json(
+            {
+              error: {
+                code: 'WAITING_ROOM_ERROR',
+                message: 'Failed to add to waiting room',
+                details: waitingRoomError.message || String(waitingRoomError),
+              },
+            },
+            { status: 500 }
+          );
+        }
+
+        console.log('[join/route] Added to waiting room:', waitingRoomEntry.id);
+
+        return NextResponse.json(
+          {
+            waiting_room: true,
+            waiting_room_id: waitingRoomEntry.id,
+            meeting_id: meeting.id,
+            meeting_title: meeting.title,
+            user_id: user.id,
+            message: 'Waiting for host to admit you',
+          },
+          { status: 200 }
+        );
+      }
+    }
+
     // Check if participant already exists (use meeting.id UUID, not meeting_code)
     const { data: existingParticipant, error: participantError } =
       await supabase
@@ -102,10 +224,40 @@ export async function POST(
         .eq('user_id', user.id)
         .maybeSingle(); // Use maybeSingle() instead of single() to avoid error if not found
 
-    // If participant already exists and hasn't left, return existing record
+    // If participant already exists and hasn't left, check if role needs updating
     if (existingParticipant && !existingParticipant.leave_time) {
+      // If role differs, update it (e.g., host joining after initial participant join)
+      if (existingParticipant.role !== requestedRole) {
+        console.log(
+          '[join/route] Updating active participant role:',
+          existingParticipant.role,
+          '->',
+          requestedRole
+        );
+
+        const { data: updated, error: updateError } = await supabase
+          .from('participants')
+          .update({
+            role: requestedRole,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existingParticipant.id)
+          .select()
+          .single();
+
+        if (updateError) {
+          console.error(
+            '[join/route] Failed to update participant role:',
+            updateError
+          );
+          return NextResponse.json(existingParticipant, { status: 200 });
+        }
+
+        return NextResponse.json(updated, { status: 200 });
+      }
+
       console.log(
-        '[join/route] Participant already active, returning existing record'
+        '[join/route] Participant already active with correct role, returning existing record'
       );
       return NextResponse.json(existingParticipant, { status: 200 });
     }

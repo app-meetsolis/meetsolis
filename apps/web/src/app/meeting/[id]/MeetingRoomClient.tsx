@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
+import { X } from 'lucide-react';
 import { StreamVideoWrapper } from '@/components/meeting';
 import { KeyboardShortcutsHelp } from '@/components/meeting/KeyboardShortcutsHelp';
 import { LeaveMeetingDialog } from '@/components/meeting/LeaveMeetingDialog';
@@ -19,6 +20,7 @@ import {
 } from '@/lib/supabase/realtime';
 import type { MeetingEndedPayload } from '@meetsolis/shared/types/realtime';
 import { useLayoutConfig } from '@/hooks/useLayoutConfig';
+import { useImmersiveMode } from '@/hooks/meeting/useImmersiveMode';
 
 interface MeetingRoomClientProps {
   meetingId: string;
@@ -35,17 +37,29 @@ export function MeetingRoomClient({
   const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
   const [isOrganizer, setIsOrganizer] = useState(false);
+  const [isLoadingHostStatus, setIsLoadingHostStatus] = useState(true);
   const [participantCount, setParticipantCount] = useState(0);
   const [meetingUUID, setMeetingUUID] = useState<string | null>(null);
 
   // Layout configuration for video grid
-  const { layoutConfig } = useLayoutConfig();
+  const { layoutConfig, setImmersiveMode } = useLayoutConfig();
+
+  // Immersive mode (fullscreen with auto-hiding controls)
+  const { isImmersive, toggleImmersive, showControls, handleMouseMove } =
+    useImmersiveMode();
 
   // Construct full name from Clerk user object
   const userName =
     user?.firstName && user?.lastName
       ? `${user.firstName} ${user.lastName}`
       : user?.firstName || user?.username || 'Unknown User';
+
+  /**
+   * Sync immersive mode state with layout config
+   */
+  useEffect(() => {
+    setImmersiveMode(isImmersive);
+  }, [isImmersive, setImmersiveMode]);
 
   /**
    * Fetch meeting data to determine if user is organizer
@@ -67,7 +81,17 @@ export function MeetingRoomClient({
         }
 
         // Check if current user is the organizer
-        setIsOrganizer(data.meeting?.host_id === userId);
+        // Use the server-provided flag (avoids timing issues with participants list)
+        const isHost = data.is_current_user_host === true;
+        setIsOrganizer(isHost);
+        setIsLoadingHostStatus(false); // Host status determined
+        console.log('[MeetingRoomClient] Host status:', {
+          isHost,
+          userId,
+          is_current_user_host: data.is_current_user_host,
+          meeting_host_id: data.meeting?.host_id,
+          fullData: data,
+        });
 
         // Get active participant count (leave_time IS NULL)
         const activeParticipants =
@@ -75,6 +99,7 @@ export function MeetingRoomClient({
         setParticipantCount(activeParticipants.length);
       } catch (error) {
         console.error('Error fetching meeting data:', error);
+        setIsLoadingHostStatus(false); // Stop loading even on error
       }
     }
 
@@ -105,9 +130,23 @@ export function MeetingRoomClient({
         return;
       }
 
-      console.log('[MeetingRoomClient] Meeting ended:', payload);
+      console.log('[MeetingRoomClient] Meeting ended event received:', {
+        payload,
+        isOrganizer,
+        userId,
+        shouldShowNotification: !isOrganizer, // Don't show to host who triggered it
+      });
 
-      // Show toast notification
+      // Don't show notification to the host who triggered the leave
+      // (they already see a "Left meeting" toast from their own action)
+      if (isOrganizer && payload.ended_by_host) {
+        console.log(
+          '[MeetingRoomClient] Skipping notification - user is the host who left'
+        );
+        return;
+      }
+
+      // Show toast notification to remaining participants
       toast.info('Meeting ended', {
         description: payload.ended_by_host
           ? 'The meeting organizer has left and ended the meeting.'
@@ -120,8 +159,16 @@ export function MeetingRoomClient({
         router.push('/dashboard');
       }, 2000);
     },
-    [router]
+    [router, isOrganizer, userId]
   );
+
+  /**
+   * Handle participant count changes from Stream SDK
+   */
+  const handleParticipantCountChange = useCallback((count: number) => {
+    console.log('[MeetingRoomClient] Participant count updated:', count);
+    setParticipantCount(count);
+  }, []);
 
   /**
    * Open leave confirmation dialog
@@ -142,6 +189,8 @@ export function MeetingRoomClient({
       });
 
       const data = await res.json();
+
+      console.log('[MeetingRoomClient] Leave API response:', data);
 
       if (data.success) {
         console.log('[MeetingRoomClient] Successfully left meeting:', data);
@@ -187,24 +236,102 @@ export function MeetingRoomClient({
   useEffect(() => {
     // Only subscribe if we have the meeting UUID
     if (!meetingUUID) {
+      console.log('[MeetingRoomClient] No meetingUUID yet, waiting...');
       return;
     }
 
-    console.log('[MeetingRoomClient] Subscribing to meeting events:', {
+    console.log('[MeetingRoomClient] 🔌 Setting up subscription:', {
       meetingUUID,
+      meetingCode: meetingId,
+      userId,
+      isOrganizer,
+      channelName: `meeting:${meetingUUID}:participants`,
+      timestamp: new Date().toISOString(),
     });
 
     // Subscribe to meeting events (meeting ended broadcast)
     const channel = subscribeToMeetingEvents(meetingUUID, {
-      onMeetingEnded: handleMeetingEnded,
+      onMeetingEnded: payload => {
+        console.log(
+          '[MeetingRoomClient] 📩 onMeetingEnded callback triggered!',
+          payload
+        );
+        handleMeetingEnded(payload);
+      },
     });
 
     // Cleanup subscription on unmount
     return () => {
-      console.log('[MeetingRoomClient] Unsubscribing from meeting events');
+      console.log('[MeetingRoomClient] 🔌 Cleaning up subscription:', {
+        meetingUUID,
+        userId,
+      });
       unsubscribeChannel(channel);
     };
-  }, [meetingUUID, handleMeetingEnded]);
+  }, [meetingUUID, handleMeetingEnded, meetingId, userId, isOrganizer]);
+
+  /**
+   * Polling fallback: Check meeting status every 5 seconds
+   * This ensures participants are redirected even if realtime fails
+   */
+  useEffect(() => {
+    if (!meetingId) return;
+
+    // Track if we've already triggered redirect to prevent multiple calls
+    let hasTriggeredRedirect = false;
+
+    const pollMeetingStatus = async () => {
+      if (hasTriggeredRedirect) return;
+
+      try {
+        const res = await fetch(`/api/meetings/${meetingId}`);
+        if (!res.ok) return;
+
+        const data = await res.json();
+
+        // If meeting ended, trigger the same handler
+        if (data.meeting?.status === 'ended') {
+          // Don't trigger for host who already left
+          if (isOrganizer) {
+            console.log(
+              '[MeetingRoomClient] Polling: Skipping - user is organizer'
+            );
+            return;
+          }
+
+          console.log(
+            '[MeetingRoomClient] 🎯 Polling detected meeting ended!',
+            {
+              meeting_id: data.meeting.id,
+              status: data.meeting.status,
+              actual_end: data.meeting.actual_end,
+            }
+          );
+
+          hasTriggeredRedirect = true;
+          handleMeetingEnded({
+            meeting_id: data.meeting.id,
+            ended_by_host: true,
+            ended_at: data.meeting.actual_end || new Date().toISOString(),
+            participant_count_before_leave: 0,
+          });
+        }
+      } catch (error) {
+        console.error('[MeetingRoomClient] Polling error:', error);
+      }
+    };
+
+    // Poll every 5 seconds
+    const interval = setInterval(pollMeetingStatus, 5000);
+
+    // Initial poll after 2 seconds (in case we missed the broadcast)
+    const initialTimeout = setTimeout(pollMeetingStatus, 2000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(initialTimeout);
+    };
+  }, [meetingId, handleMeetingEnded, isOrganizer]);
 
   // Register keyboard shortcut for help modal (? or Shift+/)
   useHotkeys(
@@ -229,31 +356,61 @@ export function MeetingRoomClient({
   }
 
   return (
-    <div className="h-screen w-full bg-gray-950 relative overflow-hidden">
-      {/* Floating Meeting ID chip - top left */}
-      <div className="absolute top-4 left-4 z-30 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-gray-700/50">
-        <p className="text-white text-xs font-medium">
-          ID: {meetingId.slice(0, 8)}
-        </p>
+    <div
+      className="h-screen w-full bg-gray-950 relative overflow-hidden"
+      onMouseMove={handleMouseMove}
+    >
+      {/* Floating Meeting ID chip - top left (hidden in immersive mode) */}
+      {!isImmersive && (
+        <div className="absolute top-4 left-4 z-30 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-gray-700/50">
+          <p className="text-white text-xs font-medium">
+            ID: {meetingId.slice(0, 8)}
+          </p>
+        </div>
+      )}
+
+      {/* Exit Immersive Mode Button (always visible in immersive mode) */}
+      {isImmersive && (
+        <button
+          onClick={toggleImmersive}
+          className="absolute top-4 right-4 z-50 p-2 bg-black/60 hover:bg-black/80 backdrop-blur-sm rounded-lg border border-gray-700/50 transition-colors"
+          title="Exit fullscreen (F or ESC)"
+          aria-label="Exit fullscreen"
+        >
+          <X className="w-5 h-5 text-white" />
+        </button>
+      )}
+
+      {/* Video call area - full height with bottom padding for control bar (when not immersive) */}
+      <div className={isImmersive ? 'h-full' : 'h-full pb-24'}>
+        {isLoadingHostStatus ? (
+          <div className="flex items-center justify-center h-full bg-gray-900">
+            <div className="text-center text-white">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4" />
+              <p>Loading meeting...</p>
+            </div>
+          </div>
+        ) : (
+          <StreamVideoWrapper
+            meetingId={meetingId}
+            userId={userId}
+            userName={userName}
+            layoutConfig={layoutConfig}
+            isOrganizer={isOrganizer}
+            onError={handleError}
+            onLeaveMeeting={handleLeaveMeeting}
+            onParticipantCountChange={handleParticipantCountChange}
+          />
+        )}
       </div>
 
-      {/* Video call area - full height with bottom padding for control bar */}
-      <div className="h-full pb-24">
-        <StreamVideoWrapper
-          meetingId={meetingId}
-          userId={userId}
-          userName={userName}
-          layoutConfig={layoutConfig}
-          onError={handleError}
-          onLeaveMeeting={handleLeaveMeeting}
+      {/* Keyboard Shortcuts Help (disabled in immersive mode) */}
+      {!isImmersive && (
+        <KeyboardShortcutsHelp
+          open={isShortcutsOpen}
+          onOpenChange={setIsShortcutsOpen}
         />
-      </div>
-
-      {/* Keyboard Shortcuts Help */}
-      <KeyboardShortcutsHelp
-        open={isShortcutsOpen}
-        onOpenChange={setIsShortcutsOpen}
-      />
+      )}
 
       {/* Leave Meeting Confirmation Dialog */}
       <LeaveMeetingDialog
