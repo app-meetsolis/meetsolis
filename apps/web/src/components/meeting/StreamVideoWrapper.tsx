@@ -8,6 +8,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { StreamVideoProvider } from './StreamVideoProvider';
 import { StreamVideoCallManagerV2 } from './StreamVideoCallManagerV2';
+import { WaitingRoomView } from './WaitingRoomView';
 import type { LayoutConfig } from '@/types/layout';
 
 export interface StreamVideoWrapperProps {
@@ -15,6 +16,7 @@ export interface StreamVideoWrapperProps {
   userId: string;
   userName: string;
   layoutConfig: LayoutConfig;
+  isOrganizer?: boolean;
   meetingOrganizerId?: string;
   onParticipantClick?: (participantId: string) => void;
   onError?: (error: Error) => void;
@@ -24,6 +26,7 @@ export interface StreamVideoWrapperProps {
   onSpotlightParticipantChange?: (
     participantId: string | null | undefined
   ) => void;
+  onParticipantCountChange?: (count: number) => void;
   className?: string;
 }
 
@@ -35,15 +38,23 @@ export function StreamVideoWrapper({
   meetingId,
   userId,
   userName,
+  isOrganizer = false,
   onParticipantClick,
   onError,
   onLeaveMeeting,
   onOpenSettings,
+  onParticipantCountChange,
   className = '',
 }: StreamVideoWrapperProps) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [waitingRoomData, setWaitingRoomData] = useState<{
+    waiting_room_id: string;
+    meeting_id: string;
+    meeting_title: string;
+    user_id: string;
+  } | null>(null);
 
   /**
    * Fetch Stream token
@@ -54,10 +65,19 @@ export function StreamVideoWrapper({
       console.log('[StreamVideoWrapper] Fetching Stream token...');
 
       // 1. Join meeting first
+      // Use 'host' role if user is the organizer, otherwise 'participant'
+      const role = isOrganizer ? 'host' : 'participant';
+      console.log('[StreamVideoWrapper] Joining meeting with role:', role, {
+        isOrganizer,
+        userId,
+        isOrganizerType: typeof isOrganizer,
+        isOrganizerValue: isOrganizer,
+      });
+
       const joinResponse = await fetch(`/api/meetings/${meetingId}/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: 'participant' }),
+        body: JSON.stringify({ role }),
       });
 
       if (!joinResponse.ok) {
@@ -67,6 +87,19 @@ export function StreamVideoWrapper({
 
       const joinData = await joinResponse.json();
       console.log('[StreamVideoWrapper] Joined meeting:', joinData);
+
+      // Check if participant needs to wait in waiting room
+      if (joinData.waiting_room) {
+        console.log('[StreamVideoWrapper] Participant in waiting room');
+        setWaitingRoomData({
+          waiting_room_id: joinData.waiting_room_id,
+          meeting_id: joinData.meeting_id,
+          meeting_title: joinData.meeting_title,
+          user_id: joinData.user_id,
+        });
+        setIsLoading(false);
+        return; // Don't fetch token, show waiting room instead
+      }
 
       // 2. Get Stream token
       const tokenResponse = await fetch(
@@ -94,7 +127,7 @@ export function StreamVideoWrapper({
       setIsLoading(false);
       onError?.(error);
     }
-  }, [meetingId, onError]);
+  }, [meetingId, userId, isOrganizer, onError]);
 
   /**
    * Fetch token on mount
@@ -102,6 +135,24 @@ export function StreamVideoWrapper({
   useEffect(() => {
     fetchToken();
   }, [fetchToken]);
+
+  /**
+   * Show waiting room if participant needs to wait for admission
+   */
+  if (waitingRoomData) {
+    return (
+      <WaitingRoomView
+        meetingId={waitingRoomData.meeting_id}
+        meetingTitle={waitingRoomData.meeting_title}
+        currentUserId={waitingRoomData.user_id}
+        onAdmitted={() => {
+          // When admitted, clear waiting room data and refetch token
+          setWaitingRoomData(null);
+          fetchToken();
+        }}
+      />
+    );
+  }
 
   /**
    * Show loading state
@@ -162,10 +213,13 @@ export function StreamVideoWrapper({
       onError={onError}
     >
       <StreamVideoCallManagerV2
+        meetingId={meetingId}
+        userId={userId}
         className={className}
         onParticipantClick={onParticipantClick}
         onLeaveMeeting={onLeaveMeeting}
         onOpenSettings={onOpenSettings}
+        onParticipantCountChange={onParticipantCountChange}
       />
     </StreamVideoProvider>
   );

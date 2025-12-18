@@ -7,23 +7,36 @@
 
 'use client';
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import {
   useCallStateHooks,
   useCall,
   CallingState,
 } from '@stream-io/video-react-sdk';
 import type { StreamVideoParticipant } from '@stream-io/video-react-sdk';
-import { StreamVideoTile } from './StreamVideoTile';
+import { createClient } from '@supabase/supabase-js';
+import { config } from '@/lib/config/env';
+import { SpeakerView } from './SpeakerView';
+import { GalleryView } from './GalleryView';
+import { TwoPersonView } from './TwoPersonView';
 import { StreamControlBar } from './StreamControlBar';
+import { SelfView } from './SelfView';
+import { ParticipantPanel } from './ParticipantPanel';
+import { WaitingRoomPanel } from './WaitingRoomPanel';
 import { cn } from '@/lib/utils';
-import { mapConnectionQuality } from '@/lib/stream/utils';
+import { useViewMode } from '@/hooks/meeting/useViewMode';
+import { useLayoutConfig } from '@/hooks/useLayoutConfig';
+import { useImmersiveMode } from '@/hooks/meeting/useImmersiveMode';
+import { toast } from 'sonner';
 
 export interface StreamVideoCallManagerV2Props {
+  meetingId?: string;
+  userId?: string;
   className?: string;
   onParticipantClick?: (participantId: string) => void;
   onLeaveMeeting?: () => void;
   onOpenSettings?: () => void;
+  onParticipantCountChange?: (count: number) => void;
 }
 
 /**
@@ -31,10 +44,13 @@ export interface StreamVideoCallManagerV2Props {
  * Uses Stream SDK hooks for participant management
  */
 export function StreamVideoCallManagerV2({
+  meetingId,
+  userId,
   className = '',
   onParticipantClick,
   onLeaveMeeting,
   onOpenSettings,
+  onParticipantCountChange,
 }: StreamVideoCallManagerV2Props) {
   const call = useCall();
   const {
@@ -50,12 +66,63 @@ export function StreamVideoCallManagerV2({
   const localParticipant = useLocalParticipant();
   const callingState = useCallCallingState();
 
+  // Debug: Log localParticipant
+  useEffect(() => {
+    console.log(
+      '[StreamVideoCallManagerV2] localParticipant:',
+      localParticipant
+    );
+    console.log(
+      '[StreamVideoCallManagerV2] participants count:',
+      participants?.length || 0
+    );
+  }, [localParticipant, participants]);
+
   // Get local audio/video state for accurate icon display
   const { isMute: isLocalAudioMuted } = useMicrophoneState();
   const { isMute: isLocalVideoOff } = useCameraState();
 
+  // Participant panel state
+  const [isParticipantPanelOpen, setIsParticipantPanelOpen] = useState(false);
+  const [participantRoles, setParticipantRoles] = useState<
+    Map<string, 'host' | 'co-host' | 'participant'>
+  >(new Map());
+  const [currentUserRole, setCurrentUserRole] = useState<
+    'host' | 'co-host' | 'participant'
+  >('participant');
+  // Map Clerk IDs to participant database IDs for API calls
+  const [clerkIdToParticipantId, setClerkIdToParticipantId] = useState<
+    Map<string, string>
+  >(new Map());
+
+  // Waiting room state
+  const [isWaitingRoomPanelOpen, setIsWaitingRoomPanelOpen] = useState(false);
+  const [waitingRoomCount, setWaitingRoomCount] = useState(0);
+
+  // Layout configuration
+  const {
+    layoutConfig,
+    setPinnedParticipant,
+    setImmersiveMode,
+    setSpotlightParticipant,
+  } = useLayoutConfig();
+
+  // Auto-detect view mode based on participant count
+  const { viewMode, setViewMode } = useViewMode({
+    participantCount: participants.length,
+    allowManualOverride: true,
+  });
+
+  // Immersive mode
+  const { isImmersive, toggleImmersive, showControls } = useImmersiveMode();
+
+  // Sync immersive mode with layout config
+  useEffect(() => {
+    setImmersiveMode(isImmersive);
+  }, [isImmersive, setImmersiveMode]);
+
   /**
-   * Log participant updates
+   * Log participant updates and notify parent of count changes
    */
   useEffect(() => {
     console.log('[StreamVideoCallManagerV2] Participants updated:', {
@@ -68,7 +135,12 @@ export function StreamVideoCallManagerV2({
         isSpeaking: p.isSpeaking,
       })),
     });
-  }, [participants]);
+
+    // Notify parent component of participant count changes
+    if (onParticipantCountChange) {
+      onParticipantCountChange(participants.length);
+    }
+  }, [participants, onParticipantCountChange]);
 
   /**
    * Log calling state changes
@@ -78,7 +150,275 @@ export function StreamVideoCallManagerV2({
   }, [callingState]);
 
   /**
-   * Handle participant click
+   * Fetch participant roles from meeting API
+   * Extracted as useCallback so it can be called from multiple places
+   */
+  const fetchParticipantRoles = useCallback(async () => {
+    if (!meetingId || !userId) return;
+
+    try {
+      const res = await fetch(`/api/meetings/${meetingId}`);
+      if (!res.ok) {
+        console.error(
+          '[StreamVideoCallManagerV2] Failed to fetch meeting data'
+        );
+        return;
+      }
+
+      const data = await res.json();
+      const meeting = data.meeting;
+      const dbParticipants = data.participants || [];
+
+      // Build roles map using clerk_id (to match Stream SDK user IDs)
+      const rolesMap = new Map<string, 'host' | 'co-host' | 'participant'>();
+      // Build mapping from clerk_id to participant database ID
+      const clerkToParticipantMap = new Map<string, string>();
+
+      // First, mark host by clerk_id
+      // We need to find the host's clerk_id from participants
+      const hostParticipant = dbParticipants.find(
+        (p: any) => p.user_id === meeting?.host_id
+      );
+      if (hostParticipant?.clerk_id) {
+        rolesMap.set(hostParticipant.clerk_id, 'host');
+      }
+
+      // Get roles from participants table using clerk_id
+      // IMPORTANT: Don't overwrite host role
+      dbParticipants.forEach((p: any) => {
+        if (p.clerk_id && p.role) {
+          // Build clerk_id → participant_id mapping
+          if (p.id) {
+            clerkToParticipantMap.set(p.clerk_id, p.id);
+          }
+          // If user is already marked as host, keep them as host
+          if (rolesMap.get(p.clerk_id) !== 'host') {
+            rolesMap.set(p.clerk_id, p.role);
+          }
+        }
+      });
+
+      setParticipantRoles(rolesMap);
+      setClerkIdToParticipantId(clerkToParticipantMap);
+
+      // Set current user role using userId (which is clerk_id)
+      let userRole: 'host' | 'co-host' | 'participant' = 'participant';
+      if (userId) {
+        userRole = rolesMap.get(userId) || 'participant';
+        setCurrentUserRole(userRole);
+      }
+
+      console.log('[StreamVideoCallManagerV2] Participant roles loaded:', {
+        rolesMap: Array.from(rolesMap.entries()),
+        currentUserRole: userRole,
+        userId,
+      });
+    } catch (error) {
+      console.error(
+        '[StreamVideoCallManagerV2] Error fetching participant roles:',
+        error
+      );
+    }
+  }, [meetingId, userId]);
+
+  /**
+   * Call fetchParticipantRoles on mount and when participants change
+   */
+  useEffect(() => {
+    fetchParticipantRoles();
+  }, [fetchParticipantRoles, participants.length]);
+
+  /**
+   * Fetch waiting room participant count (only for hosts/co-hosts)
+   */
+  const fetchWaitingRoomCount = useCallback(async () => {
+    if (!meetingId) return;
+    if (currentUserRole !== 'host' && currentUserRole !== 'co-host') {
+      setWaitingRoomCount(0);
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/meetings/${meetingId}/waiting-room`);
+      if (!res.ok) {
+        console.error(
+          '[StreamVideoCallManagerV2] Failed to fetch waiting room:',
+          res.status
+        );
+        return;
+      }
+
+      const data = await res.json();
+      const count = data.data?.length || 0;
+      setWaitingRoomCount(count);
+      console.log('[StreamVideoCallManagerV2] Waiting room count:', count);
+    } catch (error) {
+      console.error(
+        '[StreamVideoCallManagerV2] Error fetching waiting room:',
+        error
+      );
+    }
+  }, [meetingId, currentUserRole]);
+
+  /**
+   * Poll for waiting room updates
+   * Note: Realtime subscription is the primary mechanism, polling is a fallback
+   */
+  useEffect(() => {
+    fetchWaitingRoomCount();
+
+    // Poll every 10 seconds as fallback (realtime subscription is primary)
+    const interval = setInterval(fetchWaitingRoomCount, 10000);
+    return () => clearInterval(interval);
+  }, [fetchWaitingRoomCount]);
+
+  /**
+   * Auto-open waiting room panel when participants join
+   */
+  useEffect(() => {
+    if (waitingRoomCount > 0 && !isWaitingRoomPanelOpen) {
+      setIsWaitingRoomPanelOpen(true);
+    }
+  }, [waitingRoomCount, isWaitingRoomPanelOpen]);
+
+  /**
+   * Subscribe to realtime updates for participant roles and meeting spotlight
+   */
+  useEffect(() => {
+    if (!meetingId) return;
+
+    // Use environment variables directly for client-side access
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey =
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error(
+        '[StreamVideoCallManagerV2] Supabase credentials not found'
+      );
+      return;
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+    // Get meeting UUID for subscription
+    async function subscribeToRealtime() {
+      try {
+        const res = await fetch(`/api/meetings/${meetingId}`);
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const meetingUUID = data.meeting?.id;
+
+        if (!meetingUUID) return;
+
+        // Subscribe to participant changes (role updates, join/leave)
+        const participantsChannel = supabase
+          .channel(`participants:${meetingUUID}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'participants',
+              filter: `meeting_id=eq.${meetingUUID}`,
+            },
+            payload => {
+              console.log(
+                '[StreamVideoCallManagerV2] Participant changed:',
+                payload
+              );
+              // Refetch participant roles when any participant changes
+              fetchParticipantRoles();
+            }
+          )
+          .subscribe();
+
+        // Subscribe to meeting changes (spotlight updates)
+        const meetingChannel = supabase
+          .channel(`meeting:${meetingUUID}`)
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'meetings',
+              filter: `id=eq.${meetingUUID}`,
+            },
+            payload => {
+              console.log(
+                '[StreamVideoCallManagerV2] Meeting updated:',
+                payload
+              );
+              // Update spotlight if changed
+              const newSpotlight = (payload.new as any)
+                ?.spotlight_participant_id;
+              if (newSpotlight !== undefined) {
+                // Refetch to get updated spotlight participant clerk_id
+                fetchParticipantRoles();
+              }
+            }
+          )
+          .subscribe();
+
+        // Subscribe to waiting room changes (realtime notification when participants join/leave waiting room)
+        const waitingRoomChannel = supabase
+          .channel(`waiting_room:${meetingUUID}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'waiting_room_participants',
+              filter: `meeting_id=eq.${meetingUUID}`,
+            },
+            payload => {
+              console.log(
+                '[StreamVideoCallManagerV2] Waiting room changed:',
+                payload
+              );
+
+              // Show toast notification when new participant joins waiting room
+              if (payload.eventType === 'INSERT' && payload.new) {
+                const participantName =
+                  (payload.new as any).display_name || 'Someone';
+                toast.info(`${participantName} wants to join`, {
+                  description: 'New participant in waiting room',
+                  duration: 5000,
+                });
+              }
+
+              // Refetch waiting room count
+              if (currentUserRole === 'host' || currentUserRole === 'co-host') {
+                fetchWaitingRoomCount();
+              }
+            }
+          )
+          .subscribe();
+
+        // Cleanup on unmount
+        return () => {
+          participantsChannel.unsubscribe();
+          meetingChannel.unsubscribe();
+          waitingRoomChannel.unsubscribe();
+        };
+      } catch (error) {
+        console.error(
+          '[StreamVideoCallManagerV2] Realtime subscription error:',
+          error
+        );
+      }
+    }
+
+    const cleanup = subscribeToRealtime();
+    return () => {
+      cleanup.then(fn => fn?.());
+    };
+  }, [meetingId]);
+
+  /**
+   * Handle participant click - pin/unpin participant
    */
   const handleParticipantClick = useCallback(
     (participantId: string) => {
@@ -86,17 +426,201 @@ export function StreamVideoCallManagerV2({
         '[StreamVideoCallManagerV2] Participant clicked:',
         participantId
       );
+
+      // Toggle pin: if already pinned, unpin; otherwise pin
+      if (layoutConfig.pinnedParticipantId === participantId) {
+        setPinnedParticipant(null);
+      } else {
+        setPinnedParticipant(participantId);
+      }
+
       onParticipantClick?.(participantId);
     },
-    [onParticipantClick]
+    [onParticipantClick, layoutConfig.pinnedParticipantId, setPinnedParticipant]
   );
 
   /**
-   * Create participant click handler with participant ID
+   * Toggle view mode between speaker and gallery
    */
-  const createClickHandler = (participantId: string) => () => {
-    handleParticipantClick(participantId);
-  };
+  const handleToggleViewMode = useCallback(() => {
+    setViewMode(viewMode === 'speaker' ? 'gallery' : 'speaker');
+  }, [viewMode, setViewMode]);
+
+  /**
+   * Toggle participant panel
+   */
+  const handleToggleParticipantPanel = useCallback(() => {
+    setIsParticipantPanelOpen(prev => !prev);
+  }, []);
+
+  /**
+   * Handle spotlight participant (global, synced)
+   */
+  const handleSpotlight = useCallback(
+    async (clerkUserId: string) => {
+      if (!meetingId) return;
+
+      try {
+        // Convert Clerk ID to participant database ID
+        const participantDbId = clerkIdToParticipantId.get(clerkUserId);
+        if (!participantDbId) {
+          console.error(
+            '[StreamVideoCallManagerV2] Participant ID not found for Clerk ID:',
+            clerkUserId
+          );
+          return;
+        }
+
+        // If spotlighting same user, clear spotlight
+        const isClearing = layoutConfig.spotlightParticipantId === clerkUserId;
+
+        const res = await fetch(`/api/meetings/${meetingId}/spotlight`, {
+          method: 'PUT', // API expects PUT
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            spotlight_participant_id: isClearing ? null : participantDbId, // Use correct param name
+          }),
+        });
+
+        if (!res.ok) {
+          const error = await res.json();
+          console.error(
+            '[StreamVideoCallManagerV2] Failed to spotlight participant:',
+            error
+          );
+          return;
+        }
+
+        const data = await res.json();
+        console.log('[StreamVideoCallManagerV2] Spotlight updated:', data);
+
+        // Update local state using Clerk ID
+        setSpotlightParticipant(isClearing ? null : clerkUserId);
+      } catch (error) {
+        console.error(
+          '[StreamVideoCallManagerV2] Error spotlighting participant:',
+          error
+        );
+      }
+    },
+    [
+      meetingId,
+      layoutConfig.spotlightParticipantId,
+      setSpotlightParticipant,
+      clerkIdToParticipantId,
+    ]
+  );
+
+  /**
+   * Handle role change (promote/demote)
+   */
+  const handleChangeRole = useCallback(
+    async (
+      clerkUserId: string,
+      newRole: 'host' | 'co-host' | 'participant'
+    ) => {
+      if (!meetingId) return;
+
+      try {
+        // Convert Clerk ID to participant database ID
+        const participantDbId = clerkIdToParticipantId.get(clerkUserId);
+        if (!participantDbId) {
+          console.error(
+            '[StreamVideoCallManagerV2] Participant ID not found for Clerk ID:',
+            clerkUserId
+          );
+          return;
+        }
+
+        const res = await fetch(
+          `/api/meetings/${meetingId}/participants/${participantDbId}/role`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role: newRole }),
+          }
+        );
+
+        if (!res.ok) {
+          const error = await res.json();
+          console.error(
+            '[StreamVideoCallManagerV2] Failed to change participant role:',
+            error
+          );
+          return;
+        }
+
+        const data = await res.json();
+        console.log('[StreamVideoCallManagerV2] Role changed:', data);
+
+        // Update local state using Clerk ID
+        setParticipantRoles(prev => {
+          const updated = new Map(prev);
+          updated.set(clerkUserId, newRole);
+          return updated;
+        });
+      } catch (error) {
+        console.error(
+          '[StreamVideoCallManagerV2] Error changing participant role:',
+          error
+        );
+      }
+    },
+    [meetingId, clerkIdToParticipantId]
+  );
+
+  /**
+   * Handle remove participant
+   */
+  const handleRemoveParticipant = useCallback(
+    async (clerkUserId: string) => {
+      if (!meetingId) return;
+
+      try {
+        // Convert Clerk ID to participant database ID
+        const participantDbId = clerkIdToParticipantId.get(clerkUserId);
+        if (!participantDbId) {
+          console.error(
+            '[StreamVideoCallManagerV2] Participant ID not found for Clerk ID:',
+            clerkUserId
+          );
+          return;
+        }
+
+        const res = await fetch(
+          `/api/meetings/${meetingId}/participants/${participantDbId}/remove`,
+          {
+            method: 'DELETE', // API expects DELETE
+          }
+        );
+
+        if (!res.ok) {
+          const error = await res.json();
+          console.error(
+            '[StreamVideoCallManagerV2] Failed to remove participant:',
+            error
+          );
+          return;
+        }
+
+        const data = await res.json();
+        console.log('[StreamVideoCallManagerV2] Participant removed:', data);
+
+        // Remove from roles map using Clerk ID
+        setParticipantRoles(prev => {
+          const updated = new Map(prev);
+          updated.delete(clerkUserId);
+          return updated;
+        });
+      } catch (error) {
+        console.error(
+          '[StreamVideoCallManagerV2] Error removing participant:',
+          error
+        );
+      }
+    },
+    [meetingId, clerkIdToParticipantId]
+  );
 
   // Show loading state
   if (!call || callingState !== CallingState.JOINED) {
@@ -115,9 +639,9 @@ export function StreamVideoCallManagerV2({
   }
 
   /**
-   * Render participant grid
+   * Render appropriate view based on mode
    */
-  const renderParticipantGrid = () => {
+  const renderView = () => {
     if (participants.length === 0) {
       return (
         <div className="flex items-center justify-center h-full">
@@ -126,94 +650,48 @@ export function StreamVideoCallManagerV2({
       );
     }
 
-    // Determine grid layout based on participant count (Responsive Adaptive Grid)
-    const getGridClass = () => {
-      const count = participants.length;
+    // Special case: Exactly 2 participants → TwoPersonView
+    // Shows remote participant large + self-view small (no grid)
+    if (participants.length === 2 && localParticipant) {
+      const remoteParticipant = participants.find(
+        p => p.userId !== localParticipant.userId
+      );
 
-      // 1 participant: Single column
-      if (count === 1) return 'grid-cols-1';
+      if (remoteParticipant) {
+        return (
+          <TwoPersonView
+            localParticipant={localParticipant}
+            remoteParticipant={remoteParticipant}
+            immersiveMode={isImmersive}
+            className="h-full"
+          />
+        );
+      }
+    }
 
-      // 2 participants: Responsive
-      // Mobile: 1 column (stacked), Desktop: 2 columns (side by side)
-      if (count === 2) return 'grid-cols-1 lg:grid-cols-2';
+    // Single participant or 3+ participants
+    // For 3+ participants: use view mode toggle (speaker vs gallery)
+    if (viewMode === 'speaker') {
+      return (
+        <SpeakerView
+          participants={participants}
+          spotlightId={layoutConfig.spotlightParticipantId}
+          pinnedId={layoutConfig.pinnedParticipantId}
+          onParticipantClick={handleParticipantClick}
+          className="h-full"
+        />
+      );
+    }
 
-      // 3-4 participants: Responsive 2x2 grid
-      // Mobile: 1 column, Desktop: 2 columns
-      if (count <= 4) return 'grid-cols-1 lg:grid-cols-2';
-
-      // 5-9 participants: Responsive 3x3 grid
-      // Mobile: 1 column, Tablet: 2 columns, Desktop: 3 columns
-      if (count <= 9) return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3';
-
-      // 10-16 participants: Responsive 4x4 grid
-      // Mobile: 2 columns, Tablet: 3 columns, Desktop: 4 columns
-      if (count <= 16) return 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4';
-
-      // 17-25 participants: Responsive 5x5 grid
-      // Mobile: 2 columns, Tablet: 3 columns, Desktop: 5 columns
-      if (count <= 25) return 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5';
-
-      // 26+ participants: Responsive 6 columns max
-      // Mobile: 2 columns, Tablet: 4 columns, Desktop: 6 columns
-      return 'grid-cols-2 md:grid-cols-4 lg:grid-cols-6';
-    };
-
-    // Get container max-width based on participant count
-    const getMaxWidth = () => {
-      const count = participants.length;
-      if (count === 1) return 'max-w-4xl'; // Single: larger container
-      if (count === 2) return 'max-w-6xl'; // Two: wider container
-      return 'max-w-7xl'; // Multiple: full width
-    };
-
+    // Default to gallery view (1 participant or 3+ in gallery mode)
     return (
-      <div
-        className={cn(
-          // Centered container with responsive padding
-          'flex items-center justify-center h-full w-full',
-          'px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-10'
-        )}
-      >
-        <div
-          className={cn(
-            // Grid with responsive gap and max-width
-            'grid w-full overflow-y-auto',
-            'gap-3 md:gap-4 lg:gap-6',
-            // Center content
-            'place-content-center place-items-center',
-            // Max width based on participant count
-            getMaxWidth(),
-            getGridClass()
-          )}
-          style={{
-            gridAutoRows: 'minmax(0, 1fr)',
-          }}
-        >
-          {participants.map(participant => (
-            <StreamVideoTile
-              key={participant.sessionId}
-              participant={participant}
-              connectionQuality={mapConnectionQuality(
-                participant.connectionQuality
-              )}
-              onVideoClick={
-                onParticipantClick
-                  ? createClickHandler(participant.userId)
-                  : undefined
-              }
-              // Pass actual state for local participant
-              overrideAudioMuted={
-                participant.isLocalParticipant ? isLocalAudioMuted : undefined
-              }
-              overrideVideoOff={
-                participant.isLocalParticipant ? isLocalVideoOff : undefined
-              }
-              // No longer need single participant flag - use proper container sizing instead
-              isSingleParticipant={false}
-            />
-          ))}
-        </div>
-      </div>
+      <GalleryView
+        participants={participants}
+        maxTilesVisible={layoutConfig.maxTilesVisible}
+        hideNoVideo={layoutConfig.hideNoVideo}
+        onParticipantClick={handleParticipantClick}
+        className="h-full"
+      />
     );
   };
 
@@ -224,7 +702,7 @@ export function StreamVideoCallManagerV2({
         role="main"
         aria-label="Video call"
       >
-        {renderParticipantGrid()}
+        {renderView()}
 
         {/* Connection state indicator */}
         <div
@@ -237,11 +715,57 @@ export function StreamVideoCallManagerV2({
         </div>
       </div>
 
+      {/* Self View - REMOVED from here */}
+      {/* Now only rendered inside TwoPersonView component (2-person mode only) */}
+
       {/* Control Bar - inside Stream context */}
       <StreamControlBar
         onLeaveMeeting={onLeaveMeeting}
         onOpenSettings={onOpenSettings}
+        onToggleParticipantPanel={handleToggleParticipantPanel}
+        onToggleWaitingRoom={
+          currentUserRole === 'host' || currentUserRole === 'co-host'
+            ? () => setIsWaitingRoomPanelOpen(!isWaitingRoomPanelOpen)
+            : undefined
+        }
+        // Only show view toggle button when 3+ participants
+        onToggleViewMode={
+          participants.length >= 3 ? handleToggleViewMode : undefined
+        }
+        onToggleImmersiveMode={toggleImmersive}
+        isParticipantPanelOpen={isParticipantPanelOpen}
+        isWaitingRoomOpen={isWaitingRoomPanelOpen}
+        currentViewMode={viewMode}
+        isImmersiveMode={isImmersive}
+        showControls={showControls}
+        waitingRoomCount={waitingRoomCount}
       />
+
+      {/* Participant Panel */}
+      {userId && (
+        <ParticipantPanel
+          participants={participants}
+          participantRoles={participantRoles}
+          currentUserId={userId}
+          currentUserRole={currentUserRole}
+          spotlightId={layoutConfig.spotlightParticipantId}
+          isOpen={isParticipantPanelOpen}
+          onClose={handleToggleParticipantPanel}
+          onSpotlight={handleSpotlight}
+          onChangeRole={handleChangeRole}
+          onRemove={handleRemoveParticipant}
+        />
+      )}
+
+      {/* Waiting Room Panel - Shows when there are waiting participants */}
+      {meetingId && waitingRoomCount > 0 && (
+        <WaitingRoomPanel
+          meetingId={meetingId}
+          isOpen={isWaitingRoomPanelOpen}
+          onClose={() => setIsWaitingRoomPanelOpen(false)}
+          isHost={currentUserRole === 'host' || currentUserRole === 'co-host'}
+        />
+      )}
     </>
   );
 }

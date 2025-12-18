@@ -275,3 +275,140 @@ export function formatMeetingEndedLogData(data: MeetingEndedPayload) {
     participant_count: data.participant_count_before_leave,
   };
 }
+
+/**
+ * Spotlight changed event payload (broadcast + postgres_changes)
+ *
+ * Sent when host/co-host changes the spotlighted participant.
+ * This affects all participants' views (global state change).
+ */
+export interface SpotlightChangedPayload {
+  meeting_id: string;
+  spotlight_participant_id: string | null;
+  changed_by_user_id: string;
+}
+
+/**
+ * Type guard: Check if payload is a spotlight changed event
+ */
+export function isSpotlightChangedPayload(
+  payload: any
+): payload is SpotlightChangedPayload {
+  return (
+    payload &&
+    typeof payload === 'object' &&
+    typeof payload.meeting_id === 'string' &&
+    (payload.spotlight_participant_id === null || typeof payload.spotlight_participant_id === 'string') &&
+    typeof payload.changed_by_user_id === 'string'
+  );
+}
+
+/**
+ * Participant role changed event payload (broadcast only)
+ *
+ * Sent when host changes a participant's role (promote/demote).
+ */
+export interface ParticipantRoleChangedPayload {
+  meeting_id: string;
+  user_id: string;
+  new_role: 'host' | 'co-host' | 'participant';
+  changed_by_user_id: string;
+}
+
+/**
+ * Type guard: Check if payload is a role changed event
+ */
+export function isParticipantRoleChangedPayload(
+  payload: any
+): payload is ParticipantRoleChangedPayload {
+  return (
+    payload &&
+    typeof payload === 'object' &&
+    typeof payload.meeting_id === 'string' &&
+    typeof payload.user_id === 'string' &&
+    ['host', 'co-host', 'participant'].includes(payload.new_role) &&
+    typeof payload.changed_by_user_id === 'string'
+  );
+}
+
+/**
+ * Meeting locked status changed event payload (broadcast + postgres_changes)
+ *
+ * Sent when host locks/unlocks the meeting.
+ */
+export interface MeetingLockedPayload {
+  meeting_id: string;
+  locked: boolean;
+  changed_by_user_id: string;
+}
+
+/**
+ * Type guard: Check if payload is a meeting locked event
+ */
+export function isMeetingLockedPayload(
+  payload: any
+): payload is MeetingLockedPayload {
+  return (
+    payload &&
+    typeof payload === 'object' &&
+    typeof payload.meeting_id === 'string' &&
+    typeof payload.locked === 'boolean' &&
+    typeof payload.changed_by_user_id === 'string'
+  );
+}
+
+/**
+ * Waiting room event payload (broadcast only)
+ *
+ * Sent when a participant is admitted or rejected from waiting room.
+ */
+export interface WaitingRoomEventPayload {
+  meeting_id: string;
+  user_id: string;
+  status: 'admitted' | 'rejected';
+  action_by_user_id: string;
+}
+
+/**
+ * Type guard: Check if payload is a waiting room event
+ */
+export function isWaitingRoomEventPayload(
+  payload: any
+): payload is WaitingRoomEventPayload {
+  return (
+    payload &&
+    typeof payload === 'object' &&
+    typeof payload.meeting_id === 'string' &&
+    typeof payload.user_id === 'string' &&
+    ['admitted', 'rejected'].includes(payload.status) &&
+    typeof payload.action_by_user_id === 'string'
+  );
+}
+
+/**
+ * Participant removed event payload (broadcast only)
+ *
+ * Sent when host/co-host removes a participant from the meeting.
+ */
+export interface ParticipantRemovedPayload {
+  meeting_id: string;
+  user_id: string;
+  removed_by_user_id: string;
+  removed_at: string;
+}
+
+/**
+ * Type guard: Check if payload is a participant removed event
+ */
+export function isParticipantRemovedPayload(
+  payload: any
+): payload is ParticipantRemovedPayload {
+  return (
+    payload &&
+    typeof payload === 'object' &&
+    typeof payload.meeting_id === 'string' &&
+    typeof payload.user_id === 'string' &&
+    typeof payload.removed_by_user_id === 'string' &&
+    typeof payload.removed_at === 'string'
+  );
+}

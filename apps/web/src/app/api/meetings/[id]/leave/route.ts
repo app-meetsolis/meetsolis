@@ -105,6 +105,17 @@ export async function POST(
     const isOrganizer = user.id === meeting.host_id;
     const isLastParticipant = activeParticipantCount === 1;
 
+    console.log('[API] Leave meeting - checking if should end:', {
+      user_id: user.id,
+      meeting_host_id: meeting.host_id,
+      isOrganizer,
+      activeParticipantCount,
+      isLastParticipant,
+      meeting_status: meeting.status,
+      shouldEndMeeting:
+        (isOrganizer || isLastParticipant) && meeting.status === 'active',
+    });
+
     let meetingEnded = false;
 
     // 9. End meeting if organizer leaves or last participant leaves
@@ -130,28 +141,64 @@ export async function POST(
 
           console.log('[API] Broadcasting meeting_ended event:', {
             channel: channelName,
+            meeting_id: meeting.id,
+            meeting_code: meeting.meeting_code,
             ended_by_host: isOrganizer,
             participant_count_before_leave: activeParticipantCount,
+            user_clerk_id: userId,
             timestamp: new Date().toISOString(),
           });
 
-          const broadcastResult = await clientSupabase
-            .channel(channelName)
-            .send({
-              type: 'broadcast',
-              event: 'meeting_ended',
-              payload: {
-                meeting_id: meeting.id,
-                ended_by_host: isOrganizer,
-                ended_at: new Date().toISOString(),
-                participant_count_before_leave: activeParticipantCount,
-              },
+          // Must subscribe to channel before broadcasting
+          const channel = clientSupabase.channel(channelName);
+
+          // Wait for subscription to be ready, then broadcast
+          await new Promise<void>((resolve, reject) => {
+            channel.subscribe(async status => {
+              console.log('[API] Channel subscription status:', status);
+
+              if (status === 'SUBSCRIBED') {
+                try {
+                  const broadcastResult = await channel.send({
+                    type: 'broadcast',
+                    event: 'meeting_ended',
+                    payload: {
+                      meeting_id: meeting.id,
+                      ended_by_host: isOrganizer,
+                      ended_at: new Date().toISOString(),
+                      participant_count_before_leave: activeParticipantCount,
+                    },
+                  });
+
+                  console.log('[API] Meeting ended broadcast sent:', {
+                    status: broadcastResult,
+                    channel: channelName,
+                  });
+
+                  // Unsubscribe and resolve
+                  await channel.unsubscribe();
+                  resolve();
+                } catch (error) {
+                  console.error('[API] Error sending broadcast:', error);
+                  await channel.unsubscribe();
+                  reject(error);
+                }
+              } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                console.error('[API] Channel subscription failed:', status);
+                await channel.unsubscribe();
+                reject(new Error(`Channel subscription failed: ${status}`));
+              }
             });
 
-          console.log('[API] Meeting ended broadcast result:', {
-            status: broadcastResult ? 'success' : 'unknown',
-            channel: channelName,
+            // Timeout after 5 seconds
+            setTimeout(async () => {
+              console.error('[API] Channel subscription timeout');
+              await channel.unsubscribe();
+              reject(new Error('Channel subscription timeout'));
+            }, 5000);
           });
+
+          console.log('[API] Meeting ended broadcast completed');
         } catch (broadcastError) {
           console.error('[API] Failed to broadcast meeting_ended:', {
             error: broadcastError,
@@ -169,6 +216,16 @@ export async function POST(
       message: meetingEnded
         ? 'Meeting ended successfully'
         : 'Left meeting successfully',
+      debug: {
+        user_id: user.id,
+        meeting_host_id: meeting.host_id,
+        isOrganizer,
+        activeParticipantCount,
+        isLastParticipant,
+        meeting_status: meeting.status,
+        shouldEndMeeting:
+          (isOrganizer || isLastParticipant) && meeting.status === 'active',
+      },
     });
   } catch (error) {
     console.error('Error in leave meeting endpoint:', error);

@@ -20,6 +20,11 @@ export interface StreamVideoTileProps {
   overrideAudioMuted?: boolean;
   overrideVideoOff?: boolean;
   isSingleParticipant?: boolean;
+  /**
+   * When true, removes aspect ratio constraint and fills the container completely.
+   * Used in TwoPersonView for edge-to-edge video.
+   */
+  fillContainer?: boolean;
 }
 
 /**
@@ -65,6 +70,7 @@ export function StreamVideoTile({
   overrideAudioMuted,
   overrideVideoOff,
   isSingleParticipant = false,
+  fillContainer = false,
 }: StreamVideoTileProps) {
   const isLocal = participant.isLocalParticipant;
 
@@ -106,17 +112,21 @@ export function StreamVideoTile({
     <div
       className={cn(
         'relative bg-gray-900 overflow-hidden group rounded-lg',
-        // Full width with proper aspect ratio
-        'w-full',
+        // Full width with proper aspect ratio (unless fillContainer)
+        fillContainer ? 'w-full h-full' : 'w-full',
         onVideoClick && 'cursor-pointer hover:ring-2 hover:ring-blue-500',
         isSpeaking && 'ring-4 ring-green-500',
         className
       )}
-      style={{
-        // Maintain 16:9 aspect ratio for all video tiles
-        aspectRatio: '16 / 9',
-        maxWidth: '100%',
-      }}
+      style={
+        fillContainer
+          ? undefined
+          : {
+              // Maintain 16:9 aspect ratio for grid tiles (not for fillContainer mode)
+              aspectRatio: '16 / 9',
+              maxWidth: '100%',
+            }
+      }
       onClick={handleClick}
       role="button"
       tabIndex={onVideoClick ? 0 : -1}
@@ -129,7 +139,12 @@ export function StreamVideoTile({
       }}
     >
       {/* Stream SDK's native ParticipantView - handles video and avatar */}
-      <div className="w-full h-full">
+      <div
+        className={cn(
+          'w-full h-full',
+          fillContainer && 'relative video-fill-container'
+        )}
+      >
         <ParticipantView
           participant={participant}
           muteAudio={isLocal} // Mute local audio to prevent echo

@@ -27,6 +27,7 @@ import { useCreateMeeting } from '@/hooks/useMeetings';
 interface MeetingFormData {
   title: string;
   description?: string;
+  waiting_room_enabled?: boolean;
 }
 
 export function CreateMeetingButton() {
