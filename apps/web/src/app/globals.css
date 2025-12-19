@@ -58,16 +58,40 @@
   }
 }
 
-/* Override Stream SDK constraints for single participant full-screen mode */
-.single-participant-fullscreen .str-video__participant-view {
-  max-width: 100% !important;
-  width: 100% !important;
-  height: 100% !important;
-  aspect-ratio: unset !important;
-}
+@layer components {
+  /* Override Stream SDK constraints for single participant full-screen mode */
+  .single-participant-fullscreen .str-video__participant-view {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: unset !important;
+  }
 
-.single-participant-fullscreen .str-video__video {
-  object-fit: cover !important;
-  width: 100% !important;
-  height: 100% !important;
+  .single-participant-fullscreen .str-video__video {
+    object-fit: cover !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* Override Stream SDK constraints for video fill container mode (TwoPersonView) */
+  .video-fill-container {
+    position: relative !important;
+  }
+
+  .video-fill-container .str-video__participant-view {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: unset !important;
+    position: absolute !important;
+    inset: 0 !important;
+  }
+
+  .video-fill-container .str-video__video {
+    object-fit: cover !important;
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute !important;
+    inset: 0 !important;
+  }
 }
