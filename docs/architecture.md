@@ -20,7 +20,7 @@ Based on the PRD and raw requirements, this is a new Next.js project starting fr
 
 ### Technical Summary
 
-MeetSolis follows a **Jamstack serverless architecture** deployed on Vercel's free tier with Supabase as the backend-as-a-service. The frontend is a Next.js 14 application using App Router for optimal SSR/SSG performance, while the backend leverages Vercel Edge Functions and Supabase's real-time capabilities. WebRTC handles peer-to-peer video communication with DTLS/SRTP encryption, while Supabase Realtime manages collaborative features like whiteboard synchronization and messaging. AI integrations (OpenAI, DeepL) are proxied through Vercel Edge Functions to maintain security, and the entire system is designed to operate within free tier constraints while supporting up to 1,000 users at ~$185/month operational costs.
+MeetSolis follows a **Jamstack serverless architecture** deployed on Vercel's free tier with Supabase as the backend-as-a-service. The frontend is a Next.js 14 application using App Router for optimal SSR/SSG performance, while the backend leverages Vercel Edge Functions and Supabase's real-time capabilities. Stream SDK handles real-time video communication with encrypted connections, while Supabase Realtime manages collaborative features like whiteboard synchronization and messaging. AI integrations (OpenAI, DeepL) are proxied through Vercel Edge Functions to maintain security, and the entire system is designed to operate within free tier constraints while supporting up to 1,000 users at ~$185/month operational costs.
 
 ### Platform and Infrastructure Choice
 
@@ -56,7 +56,7 @@ graph TB
         STORAGE[File Storage]
     end
 
-    subgraph "WebRTC P2P"
+    subgraph "Stream SDK Video"
         PEER1[Peer 1]
         PEER2[Peer 2]
         PEER3[Peer N...]
@@ -97,7 +97,7 @@ graph TB
 - **Component-Based UI:** Reusable React components with TypeScript - _Rationale:_ Maintainability and type safety across large video conferencing interface
 - **Backend-for-Frontend (BFF):** Vercel Edge Functions as API layer - _Rationale:_ Abstracts external APIs and enforces security policies
 - **Event-Driven Real-time:** Supabase Realtime for collaborative features - _Rationale:_ Essential for whiteboard, messaging, and participant management
-- **Peer-to-Peer Communication:** WebRTC for direct video streams - _Rationale:_ Reduces server load and improves latency within free tier limits
+- **Real-Time Video Communication:** Stream SDK for video streams - _Rationale:_ Managed infrastructure reduces complexity while maintaining performance
 - **Row-Level Security (RLS):** Database-level access control - _Rationale:_ Multi-tenant security without complex authorization logic
 
 ## Tech Stack
@@ -120,8 +120,7 @@ graph TB
 | Real-time Engine | @supabase/realtime-js | ^2.9.3 | WebSocket connections | PRD live collaboration |
 | File Storage | @supabase/storage-js | ^2.5.1 | File uploads with signed URLs | PRD automatic expiration |
 | Authentication | @clerk/nextjs | ^4.29.1 | User auth with social logins | PRD role-based access |
-| WebRTC Library | simple-peer | ^9.11.1 | P2P video communication | PRD encrypted video calls |
-| WebRTC Adapter | webrtc-adapter | ^8.2.3 | Cross-browser compatibility | PRD browser support requirement |
+| Video SDK | @stream-io/video-react-sdk | Latest | Real-time video communication | PRD encrypted video calls and browser compatibility |
 | Whiteboard | @excalidraw/excalidraw | ^0.17.0 | Collaborative whiteboard | PRD real-time synchronization |
 | Frontend Testing | Jest ^29.7.0 + @testing-library/react ^14.1.2 | 29.7.0, 14.1.2 | Component and unit tests | PRD testing pyramid |
 | Backend Testing | Jest ^29.7.0 + supertest ^6.3.3 | 29.7.0, 6.3.3 | API route testing | Edge function integration tests |
@@ -605,7 +604,7 @@ sequenceDiagram
     Note over U,GC: Meeting is ready for participants
 ```
 
-### Video Call Initiation with WebRTC Signaling
+### Video Call Initiation with Stream SDK
 
 ```mermaid
 sequenceDiagram
@@ -620,7 +619,7 @@ sequenceDiagram
     P1->>FE1: Join Meeting
     FE1->>API: POST /api/meetings/{id}/join
     API->>DB: CREATE participant record
-    API-->>FE1: WebRTC config + participant list
+    API-->>FE1: Stream config + participant list
 
     FE1->>RT: Subscribe to meeting signals
     FE1->>RT: Broadcast "user_joined" event
@@ -630,17 +629,17 @@ sequenceDiagram
     FE2->>RT: Subscribe to meeting signals
 
     RT-->>FE1: Notify new participant joined
-    FE1->>FE1: Create WebRTC peer connection
-    FE1->>RT: Send WebRTC offer via signaling
+    FE1->>FE1: Initialize Stream SDK connection
+    FE1->>RT: Send connection details via signaling
 
-    RT-->>FE2: Receive WebRTC offer
-    FE2->>FE2: Create answer
-    FE2->>RT: Send WebRTC answer via signaling
+    RT-->>FE2: Receive connection details
+    FE2->>FE2: Join Stream call
+    FE2->>RT: Send join acknowledgment
 
-    RT-->>FE1: Receive WebRTC answer
-    FE1->>FE2: Direct P2P video stream established
+    RT-->>FE1: Receive join acknowledgment
+    FE1->>FE2: Stream video connection established
 
-    Note over P1,P2: Video call active with E2E encryption
+    Note over P1,P2: Video call active via Stream SDK
 ```
 
 ### AI-Powered Meeting Summary Generation
@@ -1046,8 +1045,8 @@ interface AppState {
     reactions: Reaction[];
   };
 
-  // WebRTC state
-  webrtc: {
+  // Stream SDK state
+  video: {
     localStream: MediaStream | null;
     remoteStreams: Map<string, MediaStream>;
     isAudioMuted: boolean;
@@ -1468,10 +1467,9 @@ PADDLE_VENDOR_AUTH_CODE=...
 RAZORPAY_KEY_ID=rzp_test_...
 RAZORPAY_KEY_SECRET=...
 
-# WebRTC TURN Server Configuration (optional)
-NEXT_PUBLIC_TURN_URL=turn:your-turn-server.com:3478
-NEXT_PUBLIC_TURN_USERNAME=your-username
-NEXT_PUBLIC_TURN_CREDENTIAL=your-credential
+# Stream SDK Configuration
+NEXT_PUBLIC_STREAM_API_KEY=your-stream-api-key
+NEXT_PUBLIC_STREAM_APP_ID=your-stream-app-id
 ```
 
 ## Deployment Architecture
@@ -1737,31 +1735,24 @@ interface ApiError {
 
 ## Risk Mitigations
 
-### WebRTC TURN Server Fallback
+### Stream SDK Connection Fallback
 
 ```typescript
-// lib/webrtc-config.ts - Enhanced WebRTC configuration with fallback
-export class WebRTCConnectionManager {
-  private config: WebRTCConfig;
+// lib/stream-config.ts - Stream SDK configuration with fallback
+export class StreamConnectionManager {
+  private client: StreamVideoClient;
   private fallbackAttempts = 0;
 
   constructor() {
-    this.config = this.getOptimalConfig();
+    this.client = this.initializeStreamClient();
   }
 
-  private getOptimalConfig(): WebRTCConfig {
-    return {
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        // TURN servers when available
-        ...(process.env.NEXT_PUBLIC_TURN_URL ? [{
-          urls: process.env.NEXT_PUBLIC_TURN_URL,
-          username: process.env.NEXT_PUBLIC_TURN_USERNAME,
-          credential: process.env.NEXT_PUBLIC_TURN_CREDENTIAL,
-        }] : []),
-      ],
-      iceCandidatePoolSize: 10,
-    };
+  private initializeStreamClient(): StreamVideoClient {
+    return new StreamVideoClient({
+      apiKey: process.env.NEXT_PUBLIC_STREAM_API_KEY!,
+      user: { id: userId },
+      token: userToken,
+    });
   }
 
   async createConnection(): Promise<RTCPeerConnection> {

@@ -3,17 +3,17 @@
 ### Frontend Components
 
 #### VideoCallManager
-**Responsibility:** Orchestrates WebRTC connections, manages peer-to-peer video streams, and coordinates real-time video features
+**Responsibility:** Orchestrates Stream SDK connections, manages video streams, and coordinates real-time video features
 
 **Key Interfaces:**
-- `initializeCall(meetingId: string, participantId: string)` - Setup WebRTC connection
+- `initializeCall(meetingId: string, participantId: string)` - Setup Stream SDK connection
 - `toggleMute()` - Audio control with UI feedback
 - `toggleVideo()` - Video control with source selection
 - `handlePeerConnection(peerId: string, offer: RTCSessionDescription)` - P2P signaling
 
-**Dependencies:** simple-peer, webrtc-adapter, Supabase Realtime (signaling)
+**Dependencies:** @stream-io/video-react-sdk, Supabase Realtime (signaling)
 
-**Technology Stack:** React hooks, WebRTC APIs, TypeScript strict mode, Framer Motion (UI transitions)
+**Technology Stack:** React hooks, Stream Video SDK, TypeScript strict mode, Framer Motion (UI transitions)
 
 #### CollaborationEngine
 **Responsibility:** Manages real-time collaborative features including whiteboard, messaging, reactions, and polls

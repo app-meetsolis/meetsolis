@@ -101,8 +101,8 @@ interface AppState {
     reactions: Reaction[];
   };
 
-  // WebRTC state
-  webrtc: {
+  // Stream SDK state
+  video: {
     localStream: MediaStream | null;
     remoteStreams: Map<string, MediaStream>;
     isAudioMuted: boolean;

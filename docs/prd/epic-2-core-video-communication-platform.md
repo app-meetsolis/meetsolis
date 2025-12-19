@@ -1,22 +1,22 @@
 # Epic 2: Core Video Communication Platform
 
-**Epic Goal:** Implement WebRTC-based HD video calling with essential controls, participant management, and real-time messaging to deliver the core video conferencing functionality that defines MeetSolis as a Zoom alternative.
+**Epic Goal:** Implement Stream SDK-based HD video calling with essential controls, participant management, and real-time messaging to deliver the core video conferencing functionality that defines MeetSolis as a Zoom alternative.
 
-### Story 2.1: WebRTC Infrastructure and Basic Video Calls
+### Story 2.1: Stream Infrastructure and Basic Video Calls
 As a freelancer,
 I want to start and join HD video calls with reliable connection quality,
 so that I can conduct professional client meetings without technical issues.
 
 #### Acceptance Criteria
-1. WebRTC implementation using simple-peer with P2P encrypted connections (DTLS/SRTP)
+1. Stream SDK implementation with encrypted video connections and real-time communication
 2. Meeting room creation and joining via unique URLs
 3. HD video quality (720p minimum) with automatic bandwidth optimization
-4. Cross-browser compatibility using webrtc-adapter
+4. Cross-browser compatibility via Stream SDK
 5. Connection quality indicators and automatic reconnection handling
 6. Low-latency mode configuration (<500ms target)
 7. Basic video grid layout supporting 1-4 participants
 8. Pre-call device testing and permission handling
-9.  Error handling for WebRTC failures with fallback options
+9.  Error handling for Stream SDK connection failures with fallback options
 10. Meeting persistence in Supabase with participant tracking
 
 ### Story 2.2: Essential Video Controls and Audio Management
@@ -27,7 +27,7 @@ so that I can quickly manage my presence during client calls.
 #### Acceptance Criteria
 1. Prominent mute/unmute toggle with visual and audio feedback
 2. Video on/off toggle with privacy-first defaults
-3. AI-powered noise suppression integration via WebRTC
+3. AI-powered noise suppression integration via Stream SDK
 4. Audio source selection (microphone) with pre-call testing
 5. Video source selection (camera) with quality preview
 6. Speaker/output device selection and volume controls

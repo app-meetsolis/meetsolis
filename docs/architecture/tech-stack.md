@@ -18,8 +18,7 @@
 | Real-time Engine | @supabase/realtime-js | ^2.9.3 | WebSocket connections | PRD live collaboration |
 | File Storage | @supabase/storage-js | ^2.5.1 | File uploads with signed URLs | PRD automatic expiration |
 | Authentication | @clerk/nextjs | ^4.29.1 | User auth with social logins | PRD role-based access |
-| WebRTC Library | simple-peer | ^9.11.1 | P2P video communication | PRD encrypted video calls |
-| WebRTC Adapter | webrtc-adapter | ^8.2.3 | Cross-browser compatibility | PRD browser support requirement |
+| Video SDK | @stream-io/video-react-sdk | Latest | Real-time video communication | PRD encrypted video calls and browser compatibility |
 | Whiteboard | @excalidraw/excalidraw | ^0.17.0 | Collaborative whiteboard | PRD real-time synchronization |
 | Frontend Testing | Jest ^29.7.0 + @testing-library/react ^14.1.2 | 29.7.0, 14.1.2 | Component and unit tests | PRD testing pyramid |
 | Backend Testing | Jest ^29.7.0 + supertest ^6.3.3 | 29.7.0, 6.3.3 | API route testing | Edge function integration tests |

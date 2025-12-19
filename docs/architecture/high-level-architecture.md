@@ -2,7 +2,7 @@
 
 ### Technical Summary
 
-MeetSolis follows a **Jamstack serverless architecture** deployed on Vercel's free tier with Supabase as the backend-as-a-service. The frontend is a Next.js 14 application using App Router for optimal SSR/SSG performance, while the backend leverages Vercel Edge Functions and Supabase's real-time capabilities. WebRTC handles peer-to-peer video communication with DTLS/SRTP encryption, while Supabase Realtime manages collaborative features like whiteboard synchronization and messaging. AI integrations (OpenAI, DeepL) are proxied through Vercel Edge Functions to maintain security, and the entire system is designed to operate within free tier constraints while supporting up to 1,000 users at ~$185/month operational costs.
+MeetSolis follows a **Jamstack serverless architecture** deployed on Vercel's free tier with Supabase as the backend-as-a-service. The frontend is a Next.js 14 application using App Router for optimal SSR/SSG performance, while the backend leverages Vercel Edge Functions and Supabase's real-time capabilities. Stream SDK handles real-time video communication with encrypted connections, while Supabase Realtime manages collaborative features like whiteboard synchronization and messaging. AI integrations (OpenAI, DeepL) are proxied through Vercel Edge Functions to maintain security, and the entire system is designed to operate within free tier constraints while supporting up to 1,000 users at ~$185/month operational costs.
 
 ### Platform and Infrastructure Choice
 
@@ -38,7 +38,7 @@ graph TB
         STORAGE[File Storage]
     end
 
-    subgraph "WebRTC P2P"
+    subgraph "Stream SDK Video"
         PEER1[Peer 1]
         PEER2[Peer 2]
         PEER3[Peer N...]
@@ -79,6 +79,6 @@ graph TB
 - **Component-Based UI:** Reusable React components with TypeScript - _Rationale:_ Maintainability and type safety across large video conferencing interface
 - **Backend-for-Frontend (BFF):** Vercel Edge Functions as API layer - _Rationale:_ Abstracts external APIs and enforces security policies
 - **Event-Driven Real-time:** Supabase Realtime for collaborative features - _Rationale:_ Essential for whiteboard, messaging, and participant management
-- **Peer-to-Peer Communication:** WebRTC for direct video streams - _Rationale:_ Reduces server load and improves latency within free tier limits
+- **Real-Time Video Communication:** Stream SDK for video streams - _Rationale:_ Managed infrastructure reduces complexity while maintaining performance
 - **Row-Level Security (RLS):** Database-level access control - _Rationale:_ Multi-tenant security without complex authorization logic
 
