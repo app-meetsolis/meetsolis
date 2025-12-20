@@ -1,137 +1,78 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { fadeInUp, fadeInDown } from '@/lib/animations/variants';
-import { ArrowRight } from 'lucide-react';
-import { DemoModal } from './DemoModal';
-import { analytics } from '@/lib/analytics';
+import { AnimatedBackground } from './AnimatedBackground';
+import { LottiePlaceholder } from './LottiePlaceholder';
+import { ArrowRight, PlayCircle } from 'lucide-react';
 
 export function Hero() {
-  const handleCTAClick = () => {
-    analytics.track('landing_page_cta_clicked', {
-      cta_location: 'hero',
-      cta_text: 'Start Free Trial',
-    });
-  };
   return (
     <section className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 -z-10" />
+      {/* Background Layer: z-0 */}
+      <AnimatedBackground />
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          {/* Left column - Content */}
-          <motion.div
-            initial="initial"
-            animate="animate"
-            variants={fadeInUp}
-            className="text-center lg:text-left"
-          >
-            <motion.div
-              variants={fadeInDown}
-              className="inline-block mb-4 px-4 py-2 bg-accent/10 rounded-full"
-            >
-              <span className="text-sm font-medium text-primary">
-                🚀 Now in Beta - Start Free Trial
-              </span>
-            </motion.div>
+      {/* Content Layer: z-10 */}
+      <div className="relative z-10 container mx-auto px-4 md:px-6">
+        <div className="flex flex-col items-center text-center max-w-4xl mx-auto mb-16 space-y-8">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-border/60 shadow-sm text-sm font-medium text-muted-foreground animate-in fade-in slide-in-from-bottom-4 duration-1000">
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            New: Enhanced Client Management
+          </div>
 
-            <motion.h1
-              variants={fadeInUp}
-              className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight"
-            >
-              Professional Video Meetings for{' '}
-              <span className="text-primary">Freelancers & Agencies</span>
-            </motion.h1>
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground leading-[1.1] animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-100">
+            Stop Just Meeting.
+            <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
+              Start Managing.
+            </span>
+          </h1>
 
-            <motion.p
-              variants={fadeInUp}
-              className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto lg:mx-0"
-            >
-              HD calls, AI summaries, and collaborative tools—without
-              Zoom&apos;s price tag. Unlimited meetings from just $15/month.
-            </motion.p>
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+            The video conferencing tool built for freelancers. Create dedicated
+            Client Cards, save your presentations, and launch context-rich calls
+            in one click.
+          </p>
 
-            {/* Value props */}
-            <motion.div
-              variants={fadeInUp}
-              className="flex flex-wrap justify-center lg:justify-start gap-4 mb-8 text-sm"
+          <div className="flex flex-col sm:flex-row items-center gap-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
+            <Button
+              asChild
+              size="lg"
+              className="h-14 px-8 rounded-full bg-primary hover:bg-primary/90 text-white text-lg font-semibold shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300"
             >
-              <div className="flex items-center text-gray-700">
-                <svg
-                  className="w-5 h-5 text-green-500 mr-2"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                Unlimited meetings
-              </div>
-              <div className="flex items-center text-gray-700">
-                <svg
-                  className="w-5 h-5 text-green-500 mr-2"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                No time limits
-              </div>
-              <div className="flex items-center text-gray-700">
-                <svg
-                  className="w-5 h-5 text-green-500 mr-2"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                No downloads required
-              </div>
-            </motion.div>
-
-            {/* CTAs */}
-            <motion.div
-              variants={fadeInUp}
-              className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
-            >
-              <Link href="/sign-up" onClick={handleCTAClick}>
-                <Button size="lg" className="group">
-                  Start Free Trial
-                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Button>
+              <Link href="/sign-up">
+                Get MeetSolis Free <ArrowRight className="w-5 h-5 ml-2" />
               </Link>
-              <DemoModal />
-            </motion.div>
-          </motion.div>
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-14 px-8 rounded-full bg-white/50 border-2 hover:bg-white hover:border-primary/20 text-lg font-medium hover:scale-105 transition-all duration-300 backdrop-blur-sm"
+            >
+              <PlayCircle className="w-5 h-5 mr-2 text-primary" />
+              See how it works
+            </Button>
+          </div>
+        </div>
 
-          {/* Right column - Hero image placeholder */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="hidden lg:block"
-          >
-            <div className="relative aspect-video rounded-lg shadow-2xl bg-gradient-to-br from-primary to-secondary overflow-hidden">
-              {/* Placeholder for hero image/screenshot */}
-              <div className="absolute inset-0 flex items-center justify-center text-white text-2xl font-bold">
-                Platform Screenshot
-              </div>
-            </div>
-          </motion.div>
+        {/* Hero Media / Lottie */}
+        <div className="relative max-w-6xl mx-auto rounded-[32px] p-2 bg-gradient-to-b from-white/60 to-white/20 backdrop-blur-xl border border-white/50 shadow-2xl animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-500">
+          <div className="aspect-video w-full rounded-[24px] overflow-hidden bg-white shadow-inner">
+            {/* 
+                PRD Requirement: 
+                The Animation: The animation starts with a messy desktop of scattered files. 
+                A cursor clicks a button, and the files suck into a neat, glowing card labeled "Client: Acme Corp". 
+                The card expands, the webcam activates, and a meeting starts.
+             */}
+            <LottiePlaceholder
+              label="Hero Animation: Desktop to Client Card Transformation"
+              className="w-full h-full bg-transparent border-0"
+            />
+          </div>
+
+          {/* Decorative Elements */}
+          <div className="absolute -top-12 -right-12 w-24 h-24 bg-secondary/30 rounded-full blur-[40px] animate-pulse" />
+          <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-primary/20 rounded-full blur-[50px] animate-pulse delay-1000" />
         </div>
       </div>
     </section>

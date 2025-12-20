@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/react';
+import { cn } from '@/lib/utils';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Providers } from './providers';
 import { CookieConsent } from '@/components/common/CookieConsent';
@@ -26,7 +27,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={cn(inter.className, 'overflow-x-hidden')}>
         <DebugLoggerInit />
         <AnalyticsProvider>
           <Providers>{children}</Providers>
