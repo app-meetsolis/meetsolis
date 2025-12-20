@@ -13,6 +13,7 @@
 
 import React, { useMemo } from 'react';
 import type { StreamVideoParticipant } from '@stream-io/video-react-sdk';
+import type { Participant } from '@meetsolis/shared';
 import { StreamVideoTile } from './StreamVideoTile';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +22,11 @@ export interface SpeakerViewProps {
    * All participants in the meeting (from Stream SDK)
    */
   participants: StreamVideoParticipant[];
+
+  /**
+   * Database participants with hand raise status
+   */
+  dbParticipants?: Participant[];
 
   /**
    * ID of participant currently spotlighted by host (global, persisted to DB)
@@ -67,11 +73,20 @@ export interface SpeakerViewProps {
  */
 export function SpeakerView({
   participants,
+  dbParticipants = [],
   spotlightId,
   pinnedId,
   onParticipantClick,
   className,
 }: SpeakerViewProps) {
+  /**
+   * Helper to check if participant has raised hand
+   */
+  const isHandRaised = (userId: string): boolean => {
+    const dbParticipant = dbParticipants.find(p => p.user_id === userId);
+    return dbParticipant?.hand_raised || false;
+  };
+
   /**
    * Determine main speaker based on priority logic
    * Priority: spotlight > pin > active speaker > first participant
@@ -131,6 +146,7 @@ export function SpeakerView({
         <div className="w-full h-full max-w-6xl max-h-[85vh] mx-auto rounded-lg overflow-hidden">
           <StreamVideoTile
             participant={mainSpeaker}
+            handRaised={isHandRaised(mainSpeaker.userId)}
             onVideoClick={
               onParticipantClick
                 ? () => onParticipantClick(mainSpeaker!.userId)
@@ -189,6 +205,7 @@ export function SpeakerView({
               >
                 <StreamVideoTile
                   participant={participant}
+                  handRaised={isHandRaised(participant.userId)}
                   onVideoClick={
                     onParticipantClick
                       ? () => onParticipantClick(participant.userId)

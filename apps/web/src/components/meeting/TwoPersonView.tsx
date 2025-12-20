@@ -12,6 +12,7 @@
 
 import React from 'react';
 import type { StreamVideoParticipant } from '@stream-io/video-react-sdk';
+import type { Participant } from '@meetsolis/shared';
 import { StreamVideoTile } from './StreamVideoTile';
 import { SelfView } from './SelfView';
 import { cn } from '@/lib/utils';
@@ -26,6 +27,11 @@ export interface TwoPersonViewProps {
    * Remote participant (the other person)
    */
   remoteParticipant: StreamVideoParticipant;
+
+  /**
+   * Database participants with hand raise status
+   */
+  dbParticipants?: Participant[];
 
   /**
    * Whether immersive (fullscreen) mode is active
@@ -62,15 +68,25 @@ export interface TwoPersonViewProps {
 export function TwoPersonView({
   localParticipant,
   remoteParticipant,
+  dbParticipants = [],
   immersiveMode = false,
   className,
 }: TwoPersonViewProps) {
+  /**
+   * Helper to check if participant has raised hand
+   */
+  const isHandRaised = (userId: string): boolean => {
+    const dbParticipant = dbParticipants.find(p => p.user_id === userId);
+    return dbParticipant?.hand_raised || false;
+  };
+
   return (
     <div className={cn('relative h-full w-full bg-gray-900', className)}>
       {/* Remote Participant - Full width/height with minimal padding */}
       <div className="absolute inset-0 p-2 md:p-3">
         <StreamVideoTile
           participant={remoteParticipant}
+          handRaised={isHandRaised(remoteParticipant.userId)}
           className="w-full h-full rounded-lg overflow-hidden"
           isSingleParticipant={false}
           fillContainer={true}

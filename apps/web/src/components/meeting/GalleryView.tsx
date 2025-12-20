@@ -17,6 +17,7 @@
 
 import React, { useState, useMemo } from 'react';
 import type { StreamVideoParticipant } from '@stream-io/video-react-sdk';
+import type { Participant } from '@meetsolis/shared';
 import { StreamVideoTile } from './StreamVideoTile';
 import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -26,6 +27,11 @@ export interface GalleryViewProps {
    * All participants in the meeting (from Stream SDK)
    */
   participants: StreamVideoParticipant[];
+
+  /**
+   * Database participants with hand raise status
+   */
+  dbParticipants?: Participant[];
 
   /**
    * Maximum number of tiles to show per page (default: 16)
@@ -97,12 +103,21 @@ function getGridLayout(count: number): {
  */
 export function GalleryView({
   participants,
+  dbParticipants = [],
   maxTilesVisible = 16,
   hideNoVideo = false,
   onParticipantClick,
   className,
 }: GalleryViewProps) {
   const [currentPage, setCurrentPage] = useState(0);
+
+  /**
+   * Helper to check if participant has raised hand
+   */
+  const isHandRaised = (userId: string): boolean => {
+    const dbParticipant = dbParticipants.find(p => p.user_id === userId);
+    return dbParticipant?.hand_raised || false;
+  };
 
   /**
    * Filter participants if hideNoVideo is enabled
@@ -201,6 +216,7 @@ export function GalleryView({
             <div key={participant.sessionId} className="w-full h-full">
               <StreamVideoTile
                 participant={participant}
+                handRaised={isHandRaised(participant.userId)}
                 onVideoClick={
                   onParticipantClick
                     ? () => onParticipantClick(participant.userId)

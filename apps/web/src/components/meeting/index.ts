@@ -51,3 +51,18 @@ export type { ParticipantListItemProps } from './ParticipantListItem';
 // Story 2.3: Waiting Room Components
 export { WaitingRoomView } from './WaitingRoomView';
 export { WaitingRoomPanel } from './WaitingRoomPanel';
+
+// Story 2.4: Chat and Messaging Components
+export { ChatWindow } from './ChatWindow';
+export type { ChatWindowProps } from './ChatWindow';
+export { MessageBubble } from './MessageBubble';
+export type { MessageBubbleProps } from './MessageBubble';
+export { MessageInput } from './MessageInput';
+export type { MessageInputProps } from './MessageInput';
+export { EmojiPicker } from './EmojiPicker';
+export type { EmojiPickerProps } from './EmojiPicker';
+export { MeetingSettingsPanel } from './MeetingSettingsPanel';
+export type {
+  MeetingSettingsPanelProps,
+  MeetingSettings,
+} from './MeetingSettingsPanel';

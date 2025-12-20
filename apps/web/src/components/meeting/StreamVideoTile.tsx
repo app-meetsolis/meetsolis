@@ -25,6 +25,10 @@ export interface StreamVideoTileProps {
    * Used in TwoPersonView for edge-to-edge video.
    */
   fillContainer?: boolean;
+  /**
+   * Whether the participant has raised their hand
+   */
+  handRaised?: boolean;
 }
 
 /**
@@ -71,6 +75,7 @@ export function StreamVideoTile({
   overrideVideoOff,
   isSingleParticipant = false,
   fillContainer = false,
+  handRaised = false,
 }: StreamVideoTileProps) {
   const isLocal = participant.isLocalParticipant;
 
@@ -248,6 +253,17 @@ export function StreamVideoTile({
       {isLocal && (
         <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-blue-600 rounded text-white text-xs font-medium z-20">
           You
+        </div>
+      )}
+
+      {/* Hand raised indicator - top right */}
+      {handRaised && (
+        <div
+          className="absolute top-2 right-2 px-2 py-1 bg-yellow-500 rounded-full text-white text-sm font-medium z-20 animate-pulse"
+          role="status"
+          aria-label="Hand raised"
+        >
+          ✋
         </div>
       )}
     </div>

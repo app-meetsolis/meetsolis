@@ -284,8 +284,14 @@ export function MeetingRoomClient({
       if (hasTriggeredRedirect) return;
 
       try {
-        const res = await fetch(`/api/meetings/${meetingId}`);
-        if (!res.ok) return;
+        const res = await fetch(`/api/meetings/${meetingId}`, {
+          credentials: 'include', // Ensure cookies are sent
+        });
+        if (!res.ok) {
+          // Silently ignore auth errors (user might not be fully initialized yet)
+          if (res.status === 401) return;
+          return;
+        }
 
         const data = await res.json();
 

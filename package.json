@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@modelcontextprotocol/server-sequential-thinking": "^2025.7.1",
+    "hono": "^4.11.1",
     "supabase": "^2.47.2"
   },
   "dependencies": {

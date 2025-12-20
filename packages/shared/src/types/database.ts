@@ -41,6 +41,9 @@ export interface MeetingSettings {
   allow_recording?: boolean;
   allow_chat?: boolean;
   allow_reactions?: boolean;
+  chat_enabled?: boolean;
+  private_chat_enabled?: boolean;
+  file_uploads_enabled?: boolean;
   max_participants?: number;
   enable_waiting_room?: boolean;
   enable_translation?: boolean;
@@ -110,6 +113,8 @@ export interface Participant {
   role: ParticipantRole;
   permissions: ParticipantPermissions;
   status: ParticipantStatus;
+  hand_raised: boolean;
+  hand_raised_at: string | null;
   joined_at: string | null;
   left_at: string | null;
   created_at: string;
@@ -136,11 +141,17 @@ export interface ParticipantUpdate {
 // MESSAGE TYPES
 // =============================================================================
 
-export type MessageType = 'text' | 'file' | 'system';
+export type MessageType = 'public' | 'private' | 'system' | 'text' | 'file';
+
+export interface MessageReadReceipt {
+  user_id: string;
+  read_at: string;
+}
 
 export interface MessageMetadata {
   file_id?: string;
   file_name?: string;
+  file_url?: string;
   system_event?: string;
   translated?: boolean;
   original_language?: string;
@@ -149,18 +160,26 @@ export interface MessageMetadata {
 export interface Message {
   id: string;
   meeting_id: string;
-  user_id: string;
+  sender_id: string;
   content: string;
   type: MessageType;
+  recipient_id?: string | null;
+  timestamp: string;
+  edited_at?: string | null;
+  is_deleted: boolean;
+  message_read_by: MessageReadReceipt[];
+  file_id?: string | null;
   metadata: MessageMetadata;
   created_at: string;
 }
 
 export interface MessageInsert {
   meeting_id: string;
-  user_id: string;
+  sender_id: string;
   content: string;
   type?: MessageType;
+  recipient_id?: string | null;
+  file_id?: string | null;
   metadata?: MessageMetadata;
 }
 
@@ -173,6 +192,7 @@ export interface Reaction {
   meeting_id: string;
   user_id: string;
   emoji: string;
+  message_id?: string | null;
   created_at: string;
 }
 
@@ -180,6 +200,7 @@ export interface ReactionInsert {
   meeting_id: string;
   user_id: string;
   emoji: string;
+  message_id?: string | null;
 }
 
 // =============================================================================
@@ -315,7 +336,8 @@ export interface ParticipantWithUser extends Participant {
 }
 
 export interface MessageWithUser extends Message {
-  user: User;
+  sender: User;
+  recipient?: User | null;
 }
 
 export interface ReactionWithUser extends Reaction {

@@ -23,11 +23,16 @@ import { StreamControlBar } from './StreamControlBar';
 import { SelfView } from './SelfView';
 import { ParticipantPanel } from './ParticipantPanel';
 import { WaitingRoomPanel } from './WaitingRoomPanel';
+import { ChatWindow } from './ChatWindow';
+import { MeetingSettingsPanel } from './MeetingSettingsPanel';
 import { cn } from '@/lib/utils';
 import { useViewMode } from '@/hooks/meeting/useViewMode';
 import { useLayoutConfig } from '@/hooks/useLayoutConfig';
 import { useImmersiveMode } from '@/hooks/meeting/useImmersiveMode';
+import { useChat } from '@/hooks/meeting/useChat';
+import { useMeetingSettings } from '@/hooks/meeting/useMeetingSettings';
 import { toast } from 'sonner';
+import type { Participant } from '@meetsolis/shared';
 
 export interface StreamVideoCallManagerV2Props {
   meetingId?: string;
@@ -99,6 +104,24 @@ export function StreamVideoCallManagerV2({
   const [isWaitingRoomPanelOpen, setIsWaitingRoomPanelOpen] = useState(false);
   const [waitingRoomCount, setWaitingRoomCount] = useState(0);
 
+  // Chat state
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatUnreadCount, setChatUnreadCount] = useState(0);
+
+  // Hand raise state
+  const [isHandRaised, setIsHandRaised] = useState(false);
+  const [dbParticipants, setDbParticipants] = useState<Participant[]>([]);
+
+  // Meeting settings state (host only)
+  const [isMeetingSettingsOpen, setIsMeetingSettingsOpen] = useState(false);
+
+  // Real-time meeting settings (with toast notifications)
+  const { settings: meetingSettings, isLoading: settingsLoading } =
+    useMeetingSettings({
+      meetingId: meetingId || '',
+      enabled: !!meetingId,
+    });
+
   // Layout configuration
   const {
     layoutConfig,
@@ -115,6 +138,19 @@ export function StreamVideoCallManagerV2({
 
   // Immersive mode
   const { isImmersive, toggleImmersive, showControls } = useImmersiveMode();
+
+  // Chat hook
+  const {
+    messages,
+    sendMessage,
+    editMessage,
+    deleteMessage,
+    isConnected: isChatConnected,
+  } = useChat({
+    meetingId: meetingId || '',
+    currentUserId: userId || '',
+    enabled: !!meetingId && !!userId,
+  });
 
   // Sync immersive mode with layout config
   useEffect(() => {
@@ -167,7 +203,10 @@ export function StreamVideoCallManagerV2({
 
       const data = await res.json();
       const meeting = data.meeting;
-      const dbParticipants = data.participants || [];
+      const dbParticipantsData = data.participants || [];
+
+      // Store participants for chat
+      setDbParticipants(dbParticipantsData);
 
       // Build roles map using clerk_id (to match Stream SDK user IDs)
       const rolesMap = new Map<string, 'host' | 'co-host' | 'participant'>();
@@ -176,7 +215,7 @@ export function StreamVideoCallManagerV2({
 
       // First, mark host by clerk_id
       // We need to find the host's clerk_id from participants
-      const hostParticipant = dbParticipants.find(
+      const hostParticipant = dbParticipantsData.find(
         (p: any) => p.user_id === meeting?.host_id
       );
       if (hostParticipant?.clerk_id) {
@@ -185,7 +224,7 @@ export function StreamVideoCallManagerV2({
 
       // Get roles from participants table using clerk_id
       // IMPORTANT: Don't overwrite host role
-      dbParticipants.forEach((p: any) => {
+      dbParticipantsData.forEach((p: any) => {
         if (p.clerk_id && p.role) {
           // Build clerk_id → participant_id mapping
           if (p.id) {
@@ -570,6 +609,89 @@ export function StreamVideoCallManagerV2({
   );
 
   /**
+   * Handle toggle chat
+   */
+  const handleToggleChat = useCallback(() => {
+    setIsChatOpen(prev => !prev);
+    if (!isChatOpen) {
+      setChatUnreadCount(0); // Clear unread when opening
+    }
+  }, [isChatOpen]);
+
+  /**
+   * Handle toggle hand raise
+   */
+  const handleToggleHandRaise = useCallback(async () => {
+    if (!meetingId || !userId) return;
+
+    try {
+      const newState = !isHandRaised;
+      const res = await fetch(
+        `/api/meetings/${meetingId}/participants/${userId}/hand-raise`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ hand_raised: newState }),
+        }
+      );
+
+      if (res.ok) {
+        setIsHandRaised(newState);
+        toast.success(newState ? 'Hand raised' : 'Hand lowered');
+      }
+    } catch (error) {
+      console.error(
+        '[StreamVideoCallManagerV2] Failed to toggle hand raise:',
+        error
+      );
+    }
+  }, [meetingId, userId, isHandRaised]);
+
+  /**
+   * Handle toggle meeting settings panel
+   */
+  const handleToggleMeetingSettings = useCallback(() => {
+    setIsMeetingSettingsOpen(prev => !prev);
+  }, []);
+
+  /**
+   * Handle update meeting settings
+   * Note: Settings are automatically updated via useMeetingSettings hook's Realtime subscription
+   */
+  const handleUpdateMeetingSettings = useCallback(
+    async (newSettings: {
+      chat_enabled?: boolean;
+      private_chat_enabled?: boolean;
+      file_uploads_enabled?: boolean;
+    }) => {
+      if (!meetingId) return;
+
+      try {
+        const res = await fetch(`/api/meetings/${meetingId}/settings`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ settings: newSettings }),
+        });
+
+        if (res.ok) {
+          // No need to manually update state - useMeetingSettings hook handles it via Realtime
+          toast.success('Meeting settings updated');
+        } else {
+          throw new Error('Failed to update settings');
+        }
+      } catch (error) {
+        console.error(
+          '[StreamVideoCallManagerV2] Failed to update settings:',
+          error
+        );
+        toast.error('Failed to update meeting settings');
+        throw error;
+      }
+    },
+    [meetingId]
+  );
+
+  /**
    * Handle remove participant
    */
   const handleRemoveParticipant = useCallback(
@@ -662,6 +784,7 @@ export function StreamVideoCallManagerV2({
           <TwoPersonView
             localParticipant={localParticipant}
             remoteParticipant={remoteParticipant}
+            dbParticipants={dbParticipants}
             immersiveMode={isImmersive}
             className="h-full"
           />
@@ -675,6 +798,7 @@ export function StreamVideoCallManagerV2({
       return (
         <SpeakerView
           participants={participants}
+          dbParticipants={dbParticipants}
           spotlightId={layoutConfig.spotlightParticipantId}
           pinnedId={layoutConfig.pinnedParticipantId}
           onParticipantClick={handleParticipantClick}
@@ -687,6 +811,7 @@ export function StreamVideoCallManagerV2({
     return (
       <GalleryView
         participants={participants}
+        dbParticipants={dbParticipants}
         maxTilesVisible={layoutConfig.maxTilesVisible}
         hideNoVideo={layoutConfig.hideNoVideo}
         onParticipantClick={handleParticipantClick}
@@ -733,12 +858,22 @@ export function StreamVideoCallManagerV2({
           participants.length >= 3 ? handleToggleViewMode : undefined
         }
         onToggleImmersiveMode={toggleImmersive}
+        onToggleChat={handleToggleChat}
+        onToggleHandRaise={handleToggleHandRaise}
+        onToggleMeetingSettings={
+          currentUserRole === 'host' ? handleToggleMeetingSettings : undefined
+        }
+        isHost={currentUserRole === 'host'}
         isParticipantPanelOpen={isParticipantPanelOpen}
         isWaitingRoomOpen={isWaitingRoomPanelOpen}
+        isChatOpen={isChatOpen}
+        isHandRaised={isHandRaised}
+        isMeetingSettingsOpen={isMeetingSettingsOpen}
         currentViewMode={viewMode}
         isImmersiveMode={isImmersive}
         showControls={showControls}
         waitingRoomCount={waitingRoomCount}
+        chatUnreadCount={chatUnreadCount}
       />
 
       {/* Participant Panel */}
@@ -764,6 +899,41 @@ export function StreamVideoCallManagerV2({
           isOpen={isWaitingRoomPanelOpen}
           onClose={() => setIsWaitingRoomPanelOpen(false)}
           isHost={currentUserRole === 'host' || currentUserRole === 'co-host'}
+        />
+      )}
+
+      {/* Chat Window */}
+      {meetingId && userId && (
+        <ChatWindow
+          meetingId={meetingId}
+          currentUserId={userId}
+          isHost={currentUserRole === 'host'}
+          participants={dbParticipants}
+          messages={messages}
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+          onSendMessage={sendMessage}
+          onEditMessage={editMessage}
+          onDeleteMessage={deleteMessage}
+          unreadCount={chatUnreadCount}
+          meetingSettings={meetingSettings}
+        />
+      )}
+
+      {/* Meeting Settings Panel (Host Only) */}
+      {meetingId && currentUserRole === 'host' && (
+        <MeetingSettingsPanel
+          meetingId={meetingId}
+          isOpen={isMeetingSettingsOpen}
+          onClose={() => setIsMeetingSettingsOpen(false)}
+          currentSettings={
+            meetingSettings || {
+              chat_enabled: true,
+              private_chat_enabled: true,
+              file_uploads_enabled: true,
+            }
+          }
+          onUpdateSettings={handleUpdateMeetingSettings}
         />
       )}
     </>

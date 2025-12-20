@@ -20,6 +20,9 @@ import {
   Maximize2,
   Grid2x2,
   Presentation,
+  MessageSquare,
+  Hand,
+  Sliders,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -30,12 +33,20 @@ export interface StreamControlBarProps {
   onToggleWaitingRoom?: () => void;
   onToggleViewMode?: () => void;
   onToggleImmersiveMode?: () => void;
+  onToggleChat?: () => void;
+  onToggleHandRaise?: () => void;
+  onToggleMeetingSettings?: () => void;
+  isHost?: boolean;
   isParticipantPanelOpen?: boolean;
   isWaitingRoomOpen?: boolean;
+  isChatOpen?: boolean;
+  isHandRaised?: boolean;
+  isMeetingSettingsOpen?: boolean;
   currentViewMode?: 'speaker' | 'gallery';
   isImmersiveMode?: boolean;
   showControls?: boolean;
   waitingRoomCount?: number;
+  chatUnreadCount?: number;
   className?: string;
 }
 
@@ -50,12 +61,20 @@ export function StreamControlBar({
   onToggleWaitingRoom,
   onToggleViewMode,
   onToggleImmersiveMode,
+  onToggleChat,
+  onToggleHandRaise,
+  onToggleMeetingSettings,
+  isHost = false,
   isParticipantPanelOpen = false,
   isWaitingRoomOpen = false,
+  isChatOpen = false,
+  isHandRaised = false,
+  isMeetingSettingsOpen = false,
   currentViewMode = 'gallery',
   isImmersiveMode = false,
   showControls = true,
   waitingRoomCount = 0,
+  chatUnreadCount = 0,
   className = '',
 }: StreamControlBarProps) {
   const call = useCall();
@@ -206,6 +225,46 @@ export function StreamControlBar({
             </button>
           )}
 
+          {/* Toggle Chat */}
+          {onToggleChat && (
+            <button
+              onClick={onToggleChat}
+              className={cn(
+                'relative flex items-center justify-center w-12 h-12 rounded-full transition-all focus:ring-2 focus:ring-offset-2',
+                isChatOpen
+                  ? 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
+                  : 'bg-gray-700 hover:bg-gray-600 focus:ring-gray-500'
+              )}
+              aria-label={isChatOpen ? 'Close chat' : 'Open chat'}
+              title="Chat"
+            >
+              <MessageSquare className="w-5 h-5 text-white" />
+              {/* Unread message count badge */}
+              {chatUnreadCount > 0 && !isChatOpen && (
+                <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-blue-500 text-white text-xs font-bold rounded-full border-2 border-gray-900">
+                  {chatUnreadCount}
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* Hand Raise */}
+          {onToggleHandRaise && (
+            <button
+              onClick={onToggleHandRaise}
+              className={cn(
+                'flex items-center justify-center w-12 h-12 rounded-full transition-all focus:ring-2 focus:ring-offset-2',
+                isHandRaised
+                  ? 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500'
+                  : 'bg-gray-700 hover:bg-gray-600 focus:ring-gray-500'
+              )}
+              aria-label={isHandRaised ? 'Lower hand' : 'Raise hand'}
+              title={isHandRaised ? 'Lower Hand' : 'Raise Hand'}
+            >
+              <Hand className="w-5 h-5 text-white" />
+            </button>
+          )}
+
           {/* Toggle Waiting Room (host/co-host only) */}
           {onToggleWaitingRoom && (
             <button
@@ -259,6 +318,27 @@ export function StreamControlBar({
               title="Settings"
             >
               <Settings className="w-5 h-5 text-white" />
+            </button>
+          )}
+
+          {/* Meeting Settings (Host Only) */}
+          {isHost && onToggleMeetingSettings && (
+            <button
+              onClick={onToggleMeetingSettings}
+              className={cn(
+                'flex items-center justify-center w-12 h-12 rounded-full transition-all focus:ring-2 focus:ring-offset-2',
+                isMeetingSettingsOpen
+                  ? 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
+                  : 'bg-gray-700 hover:bg-gray-600 focus:ring-gray-500'
+              )}
+              aria-label={
+                isMeetingSettingsOpen
+                  ? 'Close meeting settings'
+                  : 'Open meeting settings'
+              }
+              title="Meeting Settings (Host)"
+            >
+              <Sliders className="w-5 h-5 text-white" />
             </button>
           )}
 
