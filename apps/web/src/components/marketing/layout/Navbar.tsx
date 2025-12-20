@@ -6,10 +6,12 @@ import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useUser } from '@clerk/nextjs';
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isSignedIn } = useUser();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -89,21 +91,35 @@ export function Navbar() {
 
           {/* Actions & Mobile Toggle */}
           <div className="flex items-center justify-end flex-1 gap-4">
-            <Link
-              href="/sign-in"
-              className="text-base font-medium text-muted-foreground hover:text-primary transition-colors hidden sm:block"
-            >
-              Sign In
-            </Link>
-            <Button
-              asChild
-              className={cn(
-                'bg-gradient-to-r from-primary to-accent border-0 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-105 transition-all duration-300 px-6 hidden sm:flex',
-                scrolled ? 'rounded-full' : 'rounded-lg'
-              )}
-            >
-              <Link href="/sign-up">Start Free Meeting</Link>
-            </Button>
+            {isSignedIn ? (
+              <Button
+                asChild
+                className={cn(
+                  'bg-gradient-to-r from-primary to-accent border-0 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-105 transition-all duration-300 px-6 hidden sm:flex',
+                  scrolled ? 'rounded-full' : 'rounded-lg'
+                )}
+              >
+                <Link href="/dashboard">Go to Dashboard</Link>
+              </Button>
+            ) : (
+              <>
+                <Link
+                  href="/sign-in"
+                  className="text-base font-medium text-muted-foreground hover:text-primary transition-colors hidden sm:block"
+                >
+                  Sign In
+                </Link>
+                <Button
+                  asChild
+                  className={cn(
+                    'bg-gradient-to-r from-primary to-accent border-0 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-105 transition-all duration-300 px-6 hidden sm:flex',
+                    scrolled ? 'rounded-full' : 'rounded-lg'
+                  )}
+                >
+                  <Link href="/sign-up">Start Free Meeting</Link>
+                </Button>
+              </>
+            )}
 
             {/* Mobile Menu Button */}
             <button
@@ -150,22 +166,42 @@ export function Navbar() {
                 </Link>
               ))}
               <div className="w-12 h-[1px] bg-border my-4" />
-              <Link
-                href="/sign-in"
-                className="text-xl font-medium text-muted-foreground hover:text-primary transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Sign In
-              </Link>
-              <Button
-                asChild
-                size="lg"
-                className="rounded-full w-full max-w-xs bg-gradient-to-r from-primary to-accent shadow-xl"
-              >
-                <Link href="/sign-up" onClick={() => setMobileMenuOpen(false)}>
-                  Start Free Meeting
-                </Link>
-              </Button>
+              {isSignedIn ? (
+                <Button
+                  asChild
+                  size="lg"
+                  className="rounded-full w-full max-w-xs bg-gradient-to-r from-primary to-accent shadow-xl"
+                >
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Go to Dashboard
+                  </Link>
+                </Button>
+              ) : (
+                <>
+                  <Link
+                    href="/sign-in"
+                    className="text-xl font-medium text-muted-foreground hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Sign In
+                  </Link>
+                  <Button
+                    asChild
+                    size="lg"
+                    className="rounded-full w-full max-w-xs bg-gradient-to-r from-primary to-accent shadow-xl"
+                  >
+                    <Link
+                      href="/sign-up"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Start Free Meeting
+                    </Link>
+                  </Button>
+                </>
+              )}
             </div>
           </motion.div>
         )}

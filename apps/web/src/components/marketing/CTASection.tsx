@@ -6,12 +6,15 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { fadeInUp } from '@/lib/animations/variants';
 import { analytics } from '@/lib/analytics';
+import { useUser } from '@clerk/nextjs';
 
 export function CTASection() {
+  const { isSignedIn } = useUser();
+
   const handleCTAClick = () => {
     analytics.track('landing_page_cta_clicked', {
       cta_location: 'footer_cta',
-      cta_text: 'Start Free Trial',
+      cta_text: isSignedIn ? 'Go to Dashboard' : 'Start Free Trial',
     });
   };
   return (
@@ -32,13 +35,16 @@ export function CTASection() {
             anytime.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/sign-up" onClick={handleCTAClick}>
+            <Link
+              href={isSignedIn ? '/dashboard' : '/sign-up'}
+              onClick={handleCTAClick}
+            >
               <Button
                 size="lg"
                 variant="secondary"
                 className="group bg-white text-primary hover:bg-gray-100"
               >
-                Start Free Trial
+                {isSignedIn ? 'Go to Dashboard' : 'Start Free Trial'}
                 <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
