@@ -11,15 +11,10 @@ import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import sanitizeHtml from 'sanitize-html';
+import { checkRateLimit, RateLimitPresets } from '@/lib/rate-limit';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-// Rate limiting map (in production, use Redis)
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-
-const MESSAGE_RATE_LIMIT = 10; // messages per minute
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 
 // Zod schema for message creation
 const createMessageSchema = z.object({
@@ -149,34 +144,31 @@ export async function POST(
 
     const meetingId = meeting.id; // Use actual UUID
 
-    // Rate limiting
-    const rateLimitKey = `${userId}:${meetingId}`;
-    const now = Date.now();
-    const userRateLimit = rateLimitMap.get(rateLimitKey);
+    // Rate limiting - Production-ready with Redis (SEC-001 fix)
+    const rateLimitKey = `message:${userId}:${meetingId}`;
+    const rateLimitResult = await checkRateLimit(
+      rateLimitKey,
+      RateLimitPresets.MESSAGE
+    );
 
-    if (userRateLimit) {
-      if (now < userRateLimit.resetAt) {
-        if (userRateLimit.count >= MESSAGE_RATE_LIMIT) {
-          return NextResponse.json(
-            {
-              error:
-                'Rate limit exceeded. Please wait before sending more messages.',
-            },
-            { status: 429 }
-          );
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error:
+            'Rate limit exceeded. Please wait before sending more messages.',
+          limit: rateLimitResult.limit,
+          remaining: rateLimitResult.remaining,
+          reset: rateLimitResult.reset,
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+            'X-RateLimit-Reset': rateLimitResult.reset.toString(),
+          },
         }
-        userRateLimit.count++;
-      } else {
-        rateLimitMap.set(rateLimitKey, {
-          count: 1,
-          resetAt: now + RATE_LIMIT_WINDOW,
-        });
-      }
-    } else {
-      rateLimitMap.set(rateLimitKey, {
-        count: 1,
-        resetAt: now + RATE_LIMIT_WINDOW,
-      });
+      );
     }
 
     // Parse and validate request body
