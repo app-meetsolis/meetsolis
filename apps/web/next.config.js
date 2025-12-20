@@ -52,6 +52,11 @@ const sentryWebpackPluginOptions = {
   hideSourceMaps: true,
   disableLogger: true,
   automaticVercelMonitors: true,
+
+  // Don't fail build on Sentry errors (e.g., timeouts)
+  errorHandler: (err, invokeErr, compilation) => {
+    compilation.warnings.push('Sentry CLI Plugin: ' + err.message);
+  },
 };
 
 // Export with Sentry configuration
