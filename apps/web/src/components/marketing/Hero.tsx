@@ -5,8 +5,11 @@ import { Button } from '@/components/ui/button';
 import { AnimatedBackground } from './AnimatedBackground';
 import { LottiePlaceholder } from './LottiePlaceholder';
 import { ArrowRight, PlayCircle } from 'lucide-react';
+import { useUser } from '@clerk/nextjs';
 
 export function Hero() {
+  const { isSignedIn } = useUser();
+
   return (
     <section className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden">
       {/* Background Layer: z-0 */}
@@ -35,15 +38,27 @@ export function Hero() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
-            <Button
-              asChild
-              size="lg"
-              className="h-14 px-8 rounded-full bg-primary hover:bg-primary/90 text-white text-lg font-semibold shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300"
-            >
-              <Link href="/sign-up">
-                Get MeetSolis Free <ArrowRight className="w-5 h-5 ml-2" />
-              </Link>
-            </Button>
+            {isSignedIn ? (
+              <Button
+                asChild
+                size="lg"
+                className="h-14 px-8 rounded-full bg-primary hover:bg-primary/90 text-white text-lg font-semibold shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300"
+              >
+                <Link href="/dashboard">
+                  Go to Dashboard <ArrowRight className="w-5 h-5 ml-2" />
+                </Link>
+              </Button>
+            ) : (
+              <Button
+                asChild
+                size="lg"
+                className="h-14 px-8 rounded-full bg-primary hover:bg-primary/90 text-white text-lg font-semibold shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300"
+              >
+                <Link href="/sign-up">
+                  Get MeetSolis Free <ArrowRight className="w-5 h-5 ml-2" />
+                </Link>
+              </Button>
+            )}
             <Button
               variant="outline"
               size="lg"

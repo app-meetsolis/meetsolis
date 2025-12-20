@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Check } from 'lucide-react';
+import { useUser } from '@clerk/nextjs';
 
 interface PricingCardProps {
   name: string;
@@ -26,6 +27,8 @@ export function PricingCard({
   popular = false,
   delay = 0,
 }: PricingCardProps) {
+  const { isSignedIn } = useUser();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -61,13 +64,13 @@ export function PricingCard({
           ))}
         </ul>
 
-        <Link href="/sign-up" className="block">
+        <Link href={isSignedIn ? '/dashboard' : '/sign-up'} className="block">
           <Button
             size="lg"
             variant={popular ? 'default' : 'outline'}
             className="w-full"
           >
-            {cta}
+            {isSignedIn ? 'Go to Dashboard' : cta}
           </Button>
         </Link>
       </Card>

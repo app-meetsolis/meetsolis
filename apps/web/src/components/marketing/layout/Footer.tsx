@@ -1,7 +1,12 @@
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { useUser } from '@clerk/nextjs';
 
 export function Footer() {
+  const { isSignedIn } = useUser();
+
   return (
     <footer className="relative bg-white pt-24 pb-12 overflow-hidden">
       {/* Background decoration */}
@@ -24,7 +29,11 @@ export function Footer() {
               size="lg"
               className="bg-white text-primary hover:bg-white/90 hover:scale-105 transition-all duration-300 rounded-full px-8 h-14 text-base font-semibold border-0 shadow-xl"
             >
-              <Link href="/sign-up">Create your first Client Card</Link>
+              <Link href={isSignedIn ? '/dashboard' : '/sign-up'}>
+                {isSignedIn
+                  ? 'Go to Dashboard'
+                  : 'Create your first Client Card'}
+              </Link>
             </Button>
           </div>
         </div>
