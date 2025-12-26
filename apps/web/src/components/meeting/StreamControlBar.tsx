@@ -23,8 +23,11 @@ import {
   MessageSquare,
   Hand,
   Sliders,
+  Monitor,
+  MonitorOff,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { canScreenShare, type UserRole } from '@/lib/utils/permissions';
 
 export interface StreamControlBarProps {
   onLeaveMeeting?: () => void;
@@ -48,6 +51,8 @@ export interface StreamControlBarProps {
   waitingRoomCount?: number;
   chatUnreadCount?: number;
   className?: string;
+  userRole?: UserRole;
+  allowParticipantScreenshare?: boolean;
 }
 
 /**
@@ -76,12 +81,18 @@ export function StreamControlBar({
   waitingRoomCount = 0,
   chatUnreadCount = 0,
   className = '',
+  userRole = 'participant',
+  allowParticipantScreenshare = false,
 }: StreamControlBarProps) {
   const call = useCall();
-  const { useMicrophoneState, useCameraState } = useCallStateHooks();
+  const { useMicrophoneState, useCameraState, useScreenShareState } =
+    useCallStateHooks();
 
   const { microphone, isMute: isAudioMuted } = useMicrophoneState();
   const { camera, isMute: isVideoOff } = useCameraState();
+  const { screenShare, status: screenShareStatus } = useScreenShareState();
+
+  const isScreenSharing = screenShareStatus === 'enabled';
 
   /**
    * Toggle microphone
@@ -110,6 +121,33 @@ export function StreamControlBar({
       console.error('[StreamControlBar] Toggle video failed:', error);
     }
   }, [call, isVideoOff]);
+
+  /**
+   * Check if user has permission to screen share
+   */
+  const hasScreenSharePermission = canScreenShare({
+    role: userRole,
+    meetingSettings: {
+      allow_participant_screenshare: allowParticipantScreenshare,
+    },
+  });
+
+  /**
+   * Toggle screen share (Story 2.5 - Permission-based)
+   */
+  const toggleScreenShare = useCallback(async () => {
+    if (!call || !hasScreenSharePermission) {
+      console.log('[StreamControlBar] Screen share not allowed for this user');
+      return;
+    }
+
+    try {
+      await screenShare.toggle();
+      console.log('[StreamControlBar] Screen share toggled:', !isScreenSharing);
+    } catch (error) {
+      console.error('[StreamControlBar] Toggle screen share failed:', error);
+    }
+  }, [call, screenShare, isScreenSharing, hasScreenSharePermission]);
 
   /**
    * Leave meeting
@@ -177,6 +215,40 @@ export function StreamControlBar({
               <VideoOff className="w-5 h-5 text-white" />
             ) : (
               <Video className="w-5 h-5 text-white" />
+            )}
+          </button>
+
+          {/* Screen Share Toggle (Always visible - disabled if no permission) */}
+          <button
+            onClick={toggleScreenShare}
+            disabled={!hasScreenSharePermission}
+            className={cn(
+              'flex items-center justify-center w-12 h-12 md:w-12 md:h-12 rounded-full transition-all focus:ring-2 focus:ring-offset-2',
+              !hasScreenSharePermission
+                ? 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-50'
+                : isScreenSharing
+                  ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
+                  : 'bg-gray-700 hover:bg-gray-600 focus:ring-gray-500'
+            )}
+            aria-label={
+              !hasScreenSharePermission
+                ? 'Screen sharing disabled by host'
+                : isScreenSharing
+                  ? 'Stop sharing screen'
+                  : 'Share screen'
+            }
+            title={
+              !hasScreenSharePermission
+                ? 'Screen sharing disabled by host'
+                : isScreenSharing
+                  ? 'Stop Screen Share'
+                  : 'Share Screen'
+            }
+          >
+            {isScreenSharing ? (
+              <MonitorOff className="w-5 h-5 md:w-5 md:h-5 text-white" />
+            ) : (
+              <Monitor className="w-5 h-5 md:w-5 md:h-5" />
             )}
           </button>
 

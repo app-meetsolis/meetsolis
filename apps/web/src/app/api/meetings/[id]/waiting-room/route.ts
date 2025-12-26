@@ -89,12 +89,12 @@ export async function GET(
       );
     }
 
-    // Authorization: Only host or co-host can view waiting room
-    if (participant.role !== 'host' && participant.role !== 'co-host') {
+    // Authorization: Only host can view waiting room (Story 2.5 AC 3: Simplified to 2 roles)
+    if (participant.role !== 'host') {
       return NextResponse.json(
         {
           error: 'Forbidden',
-          message: 'Only host or co-host can view the waiting room',
+          message: 'Only the host can view the waiting room',
         },
         { status: 403 }
       );
@@ -111,10 +111,21 @@ export async function GET(
       activeParticipants?.map(p => p.user_id) || []
     );
 
-    // Get waiting room participants
+    // Story 2.5 AC 2: Auto-reject participants waiting > 10 minutes
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+
+    // Auto-reject expired participants
+    await supabase
+      .from('waiting_room_participants')
+      .update({ status: 'rejected' })
+      .eq('meeting_id', meetingId)
+      .eq('status', 'waiting')
+      .lt('joined_at', tenMinutesAgo);
+
+    // Get waiting room participants (Story 2.5 AC 2: Include email)
     const { data: waitingParticipants, error: waitingError } = await supabase
       .from('waiting_room_participants')
-      .select('id, user_id, display_name, joined_at, status')
+      .select('id, user_id, display_name, email, joined_at, status')
       .eq('meeting_id', meetingId)
       .eq('status', 'waiting')
       .order('joined_at', { ascending: true });

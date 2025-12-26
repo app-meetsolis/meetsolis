@@ -20,6 +20,7 @@ export interface MeetingSettings {
   chat_enabled?: boolean;
   private_chat_enabled?: boolean;
   file_uploads_enabled?: boolean;
+  allow_participant_screenshare?: boolean; // Story 2.5 AC 6
 }
 
 export interface MeetingSettingsPanelProps {
@@ -55,7 +56,23 @@ export function MeetingSettingsPanel({
     // Auto-save on toggle
     setIsSaving(true);
     try {
-      await onUpdateSettings(newSettings);
+      // Story 2.5 AC 6: Screen share uses dedicated endpoint
+      if (key === 'allow_participant_screenshare') {
+        const response = await fetch(
+          `/api/meetings/${meetingId}/screen-share-settings`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ allowAll: !settings[key] }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to update screen share settings');
+        }
+      } else {
+        await onUpdateSettings(newSettings);
+      }
     } catch (error) {
       console.error('Failed to update settings:', error);
       // Revert on error
@@ -192,6 +209,40 @@ export function MeetingSettingsPanel({
               className={cn(
                 'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
                 settings.file_uploads_enabled && settings.chat_enabled
+                  ? 'translate-x-6'
+                  : 'translate-x-1'
+              )}
+            />
+          </button>
+        </div>
+
+        {/* Screen Share for All - Story 2.5 AC 6 */}
+        <div className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+          <div className="flex-1">
+            <h3 className="text-white font-medium">Participant Screen Share</h3>
+            <p className="text-sm text-gray-400">
+              Allow all participants to share their screen (host can always
+              share)
+            </p>
+          </div>
+          <button
+            onClick={() => handleToggle('allow_participant_screenshare')}
+            disabled={isSaving}
+            className={cn(
+              'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+              settings.allow_participant_screenshare
+                ? 'bg-blue-600'
+                : 'bg-gray-600',
+              isSaving && 'opacity-50 cursor-not-allowed'
+            )}
+            role="switch"
+            aria-checked={settings.allow_participant_screenshare}
+            aria-label="Toggle participant screen sharing"
+          >
+            <span
+              className={cn(
+                'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                settings.allow_participant_screenshare
                   ? 'translate-x-6'
                   : 'translate-x-1'
               )}

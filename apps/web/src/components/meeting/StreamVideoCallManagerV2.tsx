@@ -33,6 +33,7 @@ import { useChat } from '@/hooks/meeting/useChat';
 import { useMeetingSettings } from '@/hooks/meeting/useMeetingSettings';
 import { toast } from 'sonner';
 import type { Participant } from '@meetsolis/shared';
+import { hasScreenShare } from '@stream-io/video-client';
 
 export interface StreamVideoCallManagerV2Props {
   meetingId?: string;
@@ -114,6 +115,7 @@ export function StreamVideoCallManagerV2({
 
   // Meeting settings state (host only)
   const [isMeetingSettingsOpen, setIsMeetingSettingsOpen] = useState(false);
+  const [meetingData, setMeetingData] = useState<any>(null); // Store full meeting object
 
   // Real-time meeting settings (with toast notifications)
   const { settings: meetingSettings, isLoading: settingsLoading } =
@@ -179,6 +181,24 @@ export function StreamVideoCallManagerV2({
   }, [participants, onParticipantCountChange]);
 
   /**
+   * Monitor screen sharing and show toast notifications
+   */
+  useEffect(() => {
+    const screenSharingParticipant = participants.find(p => hasScreenShare(p));
+
+    if (screenSharingParticipant) {
+      const sharerName = screenSharingParticipant.isLocalParticipant
+        ? 'You are'
+        : `${screenSharingParticipant.name || 'Someone'} is`;
+
+      toast.info(`${sharerName} sharing screen`, {
+        duration: 3000,
+        icon: '🖥️',
+      });
+    }
+  }, [participants]);
+
+  /**
    * Log calling state changes
    */
   useEffect(() => {
@@ -193,7 +213,9 @@ export function StreamVideoCallManagerV2({
     if (!meetingId || !userId) return;
 
     try {
-      const res = await fetch(`/api/meetings/${meetingId}`);
+      const res = await fetch(`/api/meetings/${meetingId}`, {
+        credentials: 'include',
+      });
       if (!res.ok) {
         console.error(
           '[StreamVideoCallManagerV2] Failed to fetch meeting data'
@@ -204,6 +226,9 @@ export function StreamVideoCallManagerV2({
       const data = await res.json();
       const meeting = data.meeting;
       const dbParticipantsData = data.participants || [];
+
+      // Store meeting data for screen share permission check
+      setMeetingData(meeting);
 
       // Store participants for chat
       setDbParticipants(dbParticipantsData);
@@ -278,7 +303,9 @@ export function StreamVideoCallManagerV2({
     }
 
     try {
-      const res = await fetch(`/api/meetings/${meetingId}/waiting-room`);
+      const res = await fetch(`/api/meetings/${meetingId}/waiting-room`, {
+        credentials: 'include',
+      });
       if (!res.ok) {
         console.error(
           '[StreamVideoCallManagerV2] Failed to fetch waiting room:',
@@ -344,7 +371,9 @@ export function StreamVideoCallManagerV2({
     // Get meeting UUID for subscription
     async function subscribeToRealtime() {
       try {
-        const res = await fetch(`/api/meetings/${meetingId}`);
+        const res = await fetch(`/api/meetings/${meetingId}`, {
+          credentials: 'include',
+        });
         if (!res.ok) return;
 
         const data = await res.json();
@@ -874,6 +903,10 @@ export function StreamVideoCallManagerV2({
         showControls={showControls}
         waitingRoomCount={waitingRoomCount}
         chatUnreadCount={chatUnreadCount}
+        userRole={currentUserRole === 'host' ? 'host' : 'participant'}
+        allowParticipantScreenshare={
+          meetingData?.allow_participant_screenshare || false
+        }
       />
 
       {/* Participant Panel */}

@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { config } from '@/lib/config/env';
@@ -12,7 +12,7 @@ import { getUserByClerkId } from '@/lib/helpers/user';
 
 const JoinMeetingSchema = z.object({
   role: z
-    .enum(['host', 'co-host', 'participant'])
+    .enum(['host', 'participant']) // Story 2.5 AC 3: Simplified to 2 roles (removed co-host)
     .optional()
     .default('participant'),
 });
@@ -77,6 +77,16 @@ export async function POST(
       );
     }
 
+    // Check if meeting link has expired (Story 2.5 AC 10)
+    if (meeting.expires_at && new Date(meeting.expires_at) < new Date()) {
+      return NextResponse.json(
+        {
+          error: { code: 'LINK_EXPIRED', message: 'Meeting link has expired' },
+        },
+        { status: 403 }
+      );
+    }
+
     // Check if meeting is locked
     if (meeting.locked) {
       return NextResponse.json(
@@ -119,100 +129,115 @@ export async function POST(
         '[join/route] Waiting room enabled, checking participant status'
       );
 
-      // Check if already in waiting room (any status)
-      const { data: existingWaitingParticipant } = await supabase
-        .from('waiting_room_participants')
-        .select('*')
-        .eq('meeting_id', meeting.id)
-        .eq('user_id', user.id)
-        .maybeSingle();
+      // Check whitelist for auto-admit (Story 2.5 AC 2)
+      const clerkUser = await currentUser();
+      const userEmail = clerkUser?.emailAddresses?.[0]?.emailAddress;
+      const whitelist = meeting.waiting_room_whitelist || [];
 
-      if (existingWaitingParticipant) {
-        // Check status
-        if (existingWaitingParticipant.status === 'admitted') {
-          // Participant was admitted, allow them to join normally
-          console.log('[join/route] Participant was admitted, allowing join');
-          // Continue to normal join flow below
-        } else if (existingWaitingParticipant.status === 'waiting') {
-          // Still waiting
+      if (userEmail && whitelist.includes(userEmail)) {
+        console.log('[join/route] User is whitelisted, auto-admitting');
+        // Skip waiting room - allow direct join
+        // Continue to normal join flow below
+      } else {
+        // Check if already in waiting room (any status)
+        const { data: existingWaitingParticipant } = await supabase
+          .from('waiting_room_participants')
+          .select('*')
+          .eq('meeting_id', meeting.id)
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (existingWaitingParticipant) {
+          // Check status
+          if (existingWaitingParticipant.status === 'admitted') {
+            // Participant was admitted, allow them to join normally
+            console.log('[join/route] Participant was admitted, allowing join');
+            // Continue to normal join flow below
+          } else if (existingWaitingParticipant.status === 'waiting') {
+            // Still waiting
+            return NextResponse.json(
+              {
+                waiting_room: true,
+                waiting_room_id: existingWaitingParticipant.id,
+                meeting_id: meeting.id,
+                meeting_title: meeting.title,
+                user_id: user.id,
+                message: 'You are in the waiting room',
+              },
+              { status: 200 }
+            );
+          } else if (existingWaitingParticipant.status === 'rejected') {
+            // Participant was rejected, don't allow rejoin
+            return NextResponse.json(
+              {
+                error: {
+                  code: 'FORBIDDEN',
+                  message: 'You have been denied access to this meeting',
+                },
+              },
+              { status: 403 }
+            );
+          }
+        } else {
+          // Not in waiting room yet, add them
+          const displayName = user.name || user.email?.split('@')[0] || 'Guest';
+
+          // Use upsert to avoid duplicate key errors
+          // This handles cases where old entries exist from previous sessions
+          const { data: waitingRoomEntry, error: waitingRoomError } =
+            await supabase
+              .from('waiting_room_participants')
+              .upsert(
+                {
+                  meeting_id: meeting.id,
+                  user_id: user.id,
+                  display_name: displayName,
+                  email: userEmail, // Story 2.5 AC 2 - for whitelist matching
+                  status: 'waiting',
+                  joined_at: new Date().toISOString(),
+                },
+                {
+                  onConflict: 'meeting_id,user_id',
+                }
+              )
+              .select()
+              .single();
+
+          if (waitingRoomError) {
+            console.error(
+              '[join/route] Failed to add to waiting room:',
+              waitingRoomError
+            );
+            return NextResponse.json(
+              {
+                error: {
+                  code: 'WAITING_ROOM_ERROR',
+                  message: 'Failed to add to waiting room',
+                  details: waitingRoomError.message || String(waitingRoomError),
+                },
+              },
+              { status: 500 }
+            );
+          }
+
+          console.log(
+            '[join/route] Added to waiting room:',
+            waitingRoomEntry.id
+          );
+
           return NextResponse.json(
             {
               waiting_room: true,
-              waiting_room_id: existingWaitingParticipant.id,
+              waiting_room_id: waitingRoomEntry.id,
               meeting_id: meeting.id,
               meeting_title: meeting.title,
               user_id: user.id,
-              message: 'You are in the waiting room',
+              message: 'Waiting for host to admit you',
             },
             { status: 200 }
           );
-        } else if (existingWaitingParticipant.status === 'rejected') {
-          // Participant was rejected, don't allow rejoin
-          return NextResponse.json(
-            {
-              error: {
-                code: 'FORBIDDEN',
-                message: 'You have been denied access to this meeting',
-              },
-            },
-            { status: 403 }
-          );
         }
-      } else {
-        // Not in waiting room yet, add them
-        const displayName = user.name || user.email?.split('@')[0] || 'Guest';
-
-        // Use upsert to avoid duplicate key errors
-        // This handles cases where old entries exist from previous sessions
-        const { data: waitingRoomEntry, error: waitingRoomError } =
-          await supabase
-            .from('waiting_room_participants')
-            .upsert(
-              {
-                meeting_id: meeting.id,
-                user_id: user.id,
-                display_name: displayName,
-                status: 'waiting',
-                joined_at: new Date().toISOString(),
-              },
-              {
-                onConflict: 'meeting_id,user_id',
-              }
-            )
-            .select()
-            .single();
-
-        if (waitingRoomError) {
-          console.error(
-            '[join/route] Failed to add to waiting room:',
-            waitingRoomError
-          );
-          return NextResponse.json(
-            {
-              error: {
-                code: 'WAITING_ROOM_ERROR',
-                message: 'Failed to add to waiting room',
-                details: waitingRoomError.message || String(waitingRoomError),
-              },
-            },
-            { status: 500 }
-          );
-        }
-
-        console.log('[join/route] Added to waiting room:', waitingRoomEntry.id);
-
-        return NextResponse.json(
-          {
-            waiting_room: true,
-            waiting_room_id: waitingRoomEntry.id,
-            meeting_id: meeting.id,
-            meeting_title: meeting.title,
-            user_id: user.id,
-            message: 'Waiting for host to admit you',
-          },
-          { status: 200 }
-        );
-      }
+      } // Close else block for whitelist check
     }
 
     // Check if participant already exists (use meeting.id UUID, not meeting_code)
