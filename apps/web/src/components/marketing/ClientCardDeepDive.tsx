@@ -61,7 +61,10 @@ export function ClientCardDeepDive() {
             <div className="absolute top-10 left-10 -right-10 -bottom-10 bg-primary/20 blur-[60px] -z-10" />
 
             {/* Floating Elements (simulating 3D bubbles or glassy elements) */}
-            <div className="absolute -top-8 -right-8 w-20 h-20 bg-secondary/30 rounded-full blur-xl animate-bounce duration-[3000ms]" />
+            <div
+              className="absolute -top-8 -right-8 w-20 h-20 bg-secondary/30 rounded-full blur-xl animate-bounce"
+              style={{ animationDuration: '3s' }}
+            />
             <div className="absolute -bottom-12 -left-4 w-24 h-24 bg-primary/20 rounded-full blur-xl animate-pulse" />
           </div>
         </div>
