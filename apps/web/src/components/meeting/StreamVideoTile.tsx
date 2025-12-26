@@ -8,7 +8,7 @@
 import React from 'react';
 import { ParticipantView } from '@stream-io/video-react-sdk';
 import type { StreamVideoParticipant } from '@stream-io/video-react-sdk';
-import { hasAudio, hasVideo } from '@stream-io/video-client';
+import { hasAudio, hasVideo, hasScreenShare } from '@stream-io/video-client';
 import { cn } from '@/lib/utils';
 import type { ConnectionQuality } from '../../../../../packages/shared/types/webrtc';
 
@@ -90,6 +90,9 @@ export function StreamVideoTile({
 
   const isSpeaking = participant.isSpeaking || false;
 
+  // Check if this participant is screen sharing
+  const isScreenSharing = hasScreenShare(participant);
+
   /**
    * Get connection quality color
    */
@@ -152,6 +155,7 @@ export function StreamVideoTile({
       >
         <ParticipantView
           participant={participant}
+          trackType={isScreenSharing ? 'screenShareTrack' : 'videoTrack'}
           muteAudio={isLocal} // Mute local audio to prevent echo
           VideoPlaceholder={React.useMemo(() => {
             const Placeholder = React.forwardRef<HTMLDivElement>(

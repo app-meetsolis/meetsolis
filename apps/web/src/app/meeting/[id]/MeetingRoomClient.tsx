@@ -67,7 +67,9 @@ export function MeetingRoomClient({
   useEffect(() => {
     async function fetchMeetingData() {
       try {
-        const res = await fetch(`/api/meetings/${meetingId}`);
+        const res = await fetch(`/api/meetings/${meetingId}`, {
+          credentials: 'include',
+        });
         if (!res.ok) {
           console.error('Failed to fetch meeting data:', res.status);
           return;
@@ -186,6 +188,7 @@ export function MeetingRoomClient({
     try {
       const res = await fetch(`/api/meetings/${meetingId}/leave`, {
         method: 'POST',
+        credentials: 'include',
       });
 
       const data = await res.json();

@@ -28,6 +28,7 @@ interface MeetingFormData {
   title: string;
   description?: string;
   waiting_room_enabled?: boolean;
+  expiresIn?: 'never' | '24h' | '7d' | '30d'; // Story 2.5 AC 10
 }
 
 export function CreateMeetingButton() {
@@ -43,6 +44,7 @@ export function CreateMeetingButton() {
     defaultValues: {
       title: 'Quick Meeting',
       description: '',
+      expiresIn: 'never', // Story 2.5 AC 10: Default to never expire
     },
   });
 
@@ -56,6 +58,7 @@ export function CreateMeetingButton() {
       {
         title: data.title,
         description: data.description || null,
+        expiresIn: data.expiresIn || 'never', // Story 2.5 AC 10
       },
       {
         onSuccess: meeting => {
@@ -118,6 +121,24 @@ export function CreateMeetingButton() {
               placeholder="Add meeting details or agenda..."
               rows={3}
             />
+          </div>
+
+          {/* Story 2.5 AC 10: Link Expiration */}
+          <div className="space-y-2">
+            <Label htmlFor="expiresIn">Link Expiration</Label>
+            <select
+              id="expiresIn"
+              {...register('expiresIn')}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="never">Never expires</option>
+              <option value="24h">24 hours</option>
+              <option value="7d">7 days</option>
+              <option value="30d">30 days</option>
+            </select>
+            <p className="text-xs text-muted-foreground">
+              Meeting link will expire after the selected duration
+            </p>
           </div>
 
           <div className="flex justify-end gap-3">

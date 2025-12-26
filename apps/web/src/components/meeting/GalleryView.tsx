@@ -21,6 +21,10 @@ import type { Participant } from '@meetsolis/shared';
 import { StreamVideoTile } from './StreamVideoTile';
 import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  getScreenShareParticipant,
+  filterRegularParticipants,
+} from '@/lib/utils/screenShareHelpers';
 
 export interface GalleryViewProps {
   /**
@@ -120,16 +124,29 @@ export function GalleryView({
   };
 
   /**
+   * Check for screen share - if present, show speaker-like layout
+   */
+  const screenShareParticipant = useMemo(() => {
+    return getScreenShareParticipant(participants);
+  }, [participants]);
+
+  /**
    * Filter participants if hideNoVideo is enabled
+   * If screen sharing, only show regular participants (not screen share)
    */
   const filteredParticipants = useMemo(() => {
+    // If screen sharing, filter to only regular participants
+    const participantsToFilter = screenShareParticipant
+      ? filterRegularParticipants(participants)
+      : participants;
+
     if (!hideNoVideo) {
-      return participants;
+      return participantsToFilter;
     }
 
     // Filter out participants with video off
     // Note: hasVideo() check happens in StreamVideoTile
-    return participants.filter(p => {
+    return participantsToFilter.filter(p => {
       // Keep local participant always visible
       if (p.isLocalParticipant) {
         return true;
@@ -138,7 +155,7 @@ export function GalleryView({
       // We'll keep all participants for now - filtering can be enhanced later
       return true;
     });
-  }, [participants, hideNoVideo]);
+  }, [participants, hideNoVideo, screenShareParticipant]);
 
   /**
    * Pagination logic
@@ -178,7 +195,7 @@ export function GalleryView({
   };
 
   // Handle empty state
-  if (displayedParticipants.length === 0) {
+  if (displayedParticipants.length === 0 && !screenShareParticipant) {
     return (
       <div
         className={cn(
@@ -191,6 +208,52 @@ export function GalleryView({
     );
   }
 
+  // If screen sharing, show speaker-like layout (large screen share + filmstrip)
+  if (screenShareParticipant) {
+    return (
+      <div className={cn('flex flex-col h-full', className)}>
+        {/* Main screen share area (flex-1) */}
+        <div className="relative flex-1 flex items-center justify-center bg-gray-900 p-4 md:p-6">
+          <div className="w-full h-full max-w-7xl mx-auto rounded-lg overflow-hidden">
+            <StreamVideoTile
+              participant={screenShareParticipant}
+              handRaised={false}
+              className="w-full h-full"
+              isSingleParticipant={filteredParticipants.length === 0}
+              fillContainer
+            />
+          </div>
+        </div>
+
+        {/* Participant thumbnails filmstrip (if any regular participants) */}
+        {filteredParticipants.length > 0 && (
+          <div className="h-36 md:h-40 bg-gray-950 px-4 py-3 flex items-center gap-3 overflow-x-auto">
+            <div className="flex gap-3 mx-auto">
+              {displayedParticipants.map(participant => (
+                <div
+                  key={participant.sessionId}
+                  className="w-48 md:w-56 h-full flex-shrink-0"
+                >
+                  <StreamVideoTile
+                    participant={participant}
+                    handRaised={isHandRaised(participant.userId)}
+                    onVideoClick={
+                      onParticipantClick
+                        ? () => onParticipantClick(participant.userId)
+                        : undefined
+                    }
+                    className="w-full h-full rounded-lg"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Normal gallery grid (no screen share)
   return (
     <div className={cn('relative flex flex-col h-full', className)}>
       {/* Grid container */}

@@ -16,6 +16,10 @@ import type { StreamVideoParticipant } from '@stream-io/video-react-sdk';
 import type { Participant } from '@meetsolis/shared';
 import { StreamVideoTile } from './StreamVideoTile';
 import { cn } from '@/lib/utils';
+import {
+  getScreenShareParticipant,
+  filterRegularParticipants,
+} from '@/lib/utils/screenShareHelpers';
 
 export interface SpeakerViewProps {
   /**
@@ -89,7 +93,7 @@ export function SpeakerView({
 
   /**
    * Determine main speaker based on priority logic
-   * Priority: spotlight > pin > active speaker > first participant
+   * Priority: screen share > spotlight > pin > active speaker > first participant
    */
   const { mainSpeaker, thumbnails } = useMemo(() => {
     if (participants.length === 0) {
@@ -99,28 +103,46 @@ export function SpeakerView({
     let main: StreamVideoParticipant | null = null;
     let thumbs: StreamVideoParticipant[] = [];
 
+    // Priority 0: Screen share (HIGHEST - always show screen shares)
+    const screenShareParticipant = getScreenShareParticipant(participants);
+    console.log('[SpeakerView] Screen share check:', {
+      hasScreenShare: !!screenShareParticipant,
+      participantCount: participants.length,
+      screenShareParticipant,
+    });
+    if (screenShareParticipant) {
+      console.log('[SpeakerView] SCREEN SHARE DETECTED - showing large!');
+      main = screenShareParticipant;
+      // Filter thumbnails to only show regular participants (not screen shares)
+      thumbs = filterRegularParticipants(participants);
+      return { mainSpeaker: main, thumbnails: thumbs };
+    }
+
+    // From here, only consider regular participants (no screen shares)
+    const regularParticipants = filterRegularParticipants(participants);
+
     // Priority 1: Spotlight (host-set, global)
     if (spotlightId) {
-      main = participants.find(p => p.userId === spotlightId) || null;
+      main = regularParticipants.find(p => p.userId === spotlightId) || null;
     }
 
     // Priority 2: Pin (user-set, local)
     if (!main && pinnedId) {
-      main = participants.find(p => p.userId === pinnedId) || null;
+      main = regularParticipants.find(p => p.userId === pinnedId) || null;
     }
 
     // Priority 3: Active speaker (isSpeaking flag from Stream SDK)
     if (!main) {
-      main = participants.find(p => p.isSpeaking) || null;
+      main = regularParticipants.find(p => p.isSpeaking) || null;
     }
 
     // Priority 4: First participant (fallback)
     if (!main) {
-      main = participants[0];
+      main = regularParticipants[0];
     }
 
     // All other participants go to thumbnails
-    thumbs = participants.filter(p => p.userId !== main?.userId);
+    thumbs = regularParticipants.filter(p => p.userId !== main?.userId);
 
     return { mainSpeaker: main, thumbnails: thumbs };
   }, [participants, spotlightId, pinnedId]);

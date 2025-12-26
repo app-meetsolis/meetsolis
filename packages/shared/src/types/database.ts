@@ -44,6 +44,7 @@ export interface MeetingSettings {
   chat_enabled?: boolean;
   private_chat_enabled?: boolean;
   file_uploads_enabled?: boolean;
+  allow_participant_screenshare?: boolean; // Story 2.5 - Screen share permissions
   max_participants?: number;
   enable_waiting_room?: boolean;
   enable_translation?: boolean;
@@ -58,6 +59,10 @@ export interface Meeting {
   status: MeetingStatus;
   settings: MeetingSettings;
   invite_link: string;
+  invite_token?: string; // Story 2.5 - Secure invite token
+  expires_at?: string | null; // Story 2.5 - Link expiration
+  waiting_room_whitelist?: string[]; // Story 2.5 - Auto-admit emails
+  allow_participant_screenshare?: boolean; // Story 2.5 - Screen share permissions
   waiting_room_enabled: boolean;
   locked: boolean;
   max_participants: number;
@@ -74,6 +79,11 @@ export interface MeetingInsert {
   status?: MeetingStatus;
   settings?: MeetingSettings;
   invite_link: string;
+  invite_token?: string; // Story 2.5 - Secure invite token
+  expires_at?: string | null; // Story 2.5 - Link expiration
+  expiresIn?: 'never' | '24h' | '7d' | '30d'; // Story 2.5 - Expiration period (API input)
+  waiting_room_whitelist?: string[]; // Story 2.5 - Auto-admit emails
+  allow_participant_screenshare?: boolean; // Story 2.5 - Screen share permissions
   waiting_room_enabled?: boolean;
   locked?: boolean;
   max_participants?: number;
@@ -84,6 +94,10 @@ export interface MeetingUpdate {
   description?: string | null;
   status?: MeetingStatus;
   settings?: MeetingSettings;
+  invite_token?: string; // Story 2.5 - Secure invite token
+  expires_at?: string | null; // Story 2.5 - Link expiration
+  waiting_room_whitelist?: string[]; // Story 2.5 - Auto-admit emails
+  allow_participant_screenshare?: boolean; // Story 2.5 - Screen share permissions
   waiting_room_enabled?: boolean;
   locked?: boolean;
   max_participants?: number;

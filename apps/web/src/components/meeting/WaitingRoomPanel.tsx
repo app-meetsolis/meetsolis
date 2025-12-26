@@ -19,6 +19,7 @@ interface WaitingParticipant {
   id: string;
   user_id: string;
   display_name: string;
+  email?: string; // Story 2.5 AC 2: Show email for whitelist matching
   joined_at: string;
   status: 'waiting' | 'admitted' | 'rejected';
 }
@@ -74,7 +75,13 @@ export function WaitingRoomPanel({
       const data = await response.json();
       setParticipants(data.data || []);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
+      // Handle both Error objects and fetch response errors
+      let message = 'Unknown error';
+      if (err instanceof Error) {
+        message = err.message;
+      } else if (typeof err === 'object' && err !== null && 'message' in err) {
+        message = String(err.message);
+      }
       setError(message);
       console.error('[WaitingRoomPanel] Fetch error:', err);
     } finally {
@@ -289,6 +296,12 @@ export function WaitingRoomPanel({
                       <p className="text-white font-medium truncate">
                         {participant.display_name}
                       </p>
+                      {/* Story 2.5 AC 2: Show email for host to verify before admitting */}
+                      {participant.email && (
+                        <p className="text-xs text-gray-400 truncate mt-0.5">
+                          {participant.email}
+                        </p>
+                      )}
                       <div className="flex items-center gap-1 text-xs text-gray-400 mt-1">
                         <Clock className="w-3 h-3" />
                         <span>

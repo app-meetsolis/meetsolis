@@ -9,6 +9,7 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { nanoid } from 'nanoid';
+import crypto from 'crypto';
 import { config } from '@/lib/config/env';
 import { getUserByClerkId } from '@/lib/helpers/user';
 import { createUserProfile } from '@/services/auth';
@@ -19,6 +20,7 @@ const CreateMeetingSchema = z.object({
   description: z.string().nullish(), // Allow null, undefined, or string
   scheduled_start: z.string().nullish(),
   waiting_room_enabled: z.boolean().optional().default(true), // Enable by default
+  expiresIn: z.enum(['never', '24h', '7d', '30d']).optional().default('never'), // Link expiration (Story 2.5 AC 10)
   settings: z
     .object({
       allow_screen_share: z.boolean().optional(),
@@ -39,6 +41,32 @@ function generateMeetingCodeAndLink(): { code: string; link: string } {
     code: meetingCode,
     link: `${config.app.url}/meeting/${meetingCode}`,
   };
+}
+
+// Helper function to calculate expiration timestamp (Story 2.5 AC 10)
+function calculateExpiration(
+  expiresIn: '24h' | '7d' | '30d' | 'never'
+): string | null {
+  if (expiresIn === 'never') return null;
+
+  const now = Date.now();
+  let expirationMs: number;
+
+  switch (expiresIn) {
+    case '24h':
+      expirationMs = 24 * 60 * 60 * 1000; // 24 hours
+      break;
+    case '7d':
+      expirationMs = 7 * 24 * 60 * 60 * 1000; // 7 days
+      break;
+    case '30d':
+      expirationMs = 30 * 24 * 60 * 60 * 1000; // 30 days
+      break;
+    default:
+      return null;
+  }
+
+  return new Date(now + expirationMs).toISOString();
 }
 
 // Default meeting settings
@@ -193,6 +221,10 @@ export async function POST(request: NextRequest) {
     // Generate meeting code and invite link
     const { code, link } = generateMeetingCodeAndLink();
 
+    // Generate secure invite token and calculate expiration (Story 2.5 AC 10)
+    const inviteToken = crypto.randomUUID(); // UUID v4 for secure tokens
+    const expiresAt = calculateExpiration(validation.data.expiresIn);
+
     // Insert meeting record
     const { data: meeting, error } = await supabase
       .from('meetings')
@@ -204,8 +236,11 @@ export async function POST(request: NextRequest) {
         scheduled_start: validation.data.scheduled_start,
         meeting_code: code,
         invite_link: link,
+        invite_token: inviteToken,
+        expires_at: expiresAt,
         settings,
         waiting_room_enabled: validation.data.waiting_room_enabled,
+        allow_participant_screenshare: true, // Default ON - everyone can screen share
         locked: false,
         max_participants: 100,
       })

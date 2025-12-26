@@ -16,6 +16,7 @@ import type { Participant } from '@meetsolis/shared';
 import { StreamVideoTile } from './StreamVideoTile';
 import { SelfView } from './SelfView';
 import { cn } from '@/lib/utils';
+import { isScreenShareParticipant } from '@/lib/utils/screenShareHelpers';
 
 export interface TwoPersonViewProps {
   /**
@@ -80,13 +81,19 @@ export function TwoPersonView({
     return dbParticipant?.hand_raised || false;
   };
 
+  // Check if remote participant is screen share
+  const isRemoteScreenShare = isScreenShareParticipant(remoteParticipant);
+
   return (
     <div className={cn('relative h-full w-full bg-gray-900', className)}>
       {/* Remote Participant - Full width/height with minimal padding */}
+      {/* If screen share, hide hand raised indicator */}
       <div className="absolute inset-0 p-2 md:p-3">
         <StreamVideoTile
           participant={remoteParticipant}
-          handRaised={isHandRaised(remoteParticipant.userId)}
+          handRaised={
+            !isRemoteScreenShare && isHandRaised(remoteParticipant.userId)
+          }
           className="w-full h-full rounded-lg overflow-hidden"
           isSingleParticipant={false}
           fillContainer={true}
