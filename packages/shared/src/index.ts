@@ -8,3 +8,6 @@ export * from './types/analytics';
 
 // Constants
 export * from './constants/services';
+
+// Schemas
+export * from './schemas/client';

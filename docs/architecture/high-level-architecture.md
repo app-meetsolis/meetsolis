@@ -1,13 +1,17 @@
 # High Level Architecture
 
+**Version:** 2.0 (Updated for Client Memory Pivot)
+**Last Updated:** January 6, 2026
+
 ### Technical Summary
 
-MeetSolis follows a **Jamstack serverless architecture** deployed on Vercel's free tier with Supabase as the backend-as-a-service. The frontend is a Next.js 14 application using App Router for optimal SSR/SSG performance, while the backend leverages Vercel Edge Functions and Supabase's real-time capabilities. Stream SDK handles real-time video communication with encrypted connections, while Supabase Realtime manages collaborative features like whiteboard synchronization and messaging. AI integrations (OpenAI, DeepL) are proxied through Vercel Edge Functions to maintain security, and the entire system is designed to operate within free tier constraints while supporting up to 1,000 users at ~$185/month operational costs.
+MeetSolis follows a **Jamstack serverless architecture** deployed on Vercel's free tier with Supabase as the backend-as-a-service. The frontend is a Next.js 14 application using App Router for optimal SSR/SSG performance, while the backend leverages Vercel Edge Functions and Supabase PostgreSQL with pgvector extension for RAG-powered AI features. Gladia handles audio transcription from uploaded meeting recordings, OpenAI GPT-4 generates summaries and powers the AI assistant, and all client data remains private within the user's Supabase tenant. The system is designed to operate within free tier constraints while supporting the MVP target of 50-100 users.
 
 ### Platform and Infrastructure Choice
 
 **Platform:** Vercel + Supabase (Free Tiers)
-**Key Services:** Vercel Edge Functions, Supabase PostgreSQL, Supabase Realtime, Supabase Storage, Clerk Authentication
+**Key Services:** Vercel Edge Functions, Supabase PostgreSQL + pgvector, Supabase Storage, Clerk Authentication
+**AI Services:** Gladia (transcription), OpenAI GPT-4 (summaries, RAG, research)
 **Deployment Host and Regions:** Vercel Edge Network (Global), Supabase US-East-1
 
 ### Repository Structure
@@ -34,21 +38,19 @@ graph TB
     subgraph "Supabase Backend"
         AUTH[Clerk Authentication]
         DB[(PostgreSQL + RLS)]
-        REALTIME[Realtime Engine]
+        VECTOR[(pgvector Extension)]
         STORAGE[File Storage]
     end
 
-    subgraph "Stream SDK Video"
-        PEER1[Peer 1]
-        PEER2[Peer 2]
-        PEER3[Peer N...]
+    subgraph "AI Services"
+        GLADIA[Gladia Transcription]
+        OPENAI[OpenAI GPT-4o-mini]
+        EMBEDDINGS[OpenAI Embeddings]
     end
 
-    subgraph "External APIs"
-        OPENAI[OpenAI GPT-4]
-        DEEPL[DeepL Translation]
-        TWILIO[Twilio SMS]
+    subgraph "Optional Integrations (Post-MVP)"
         GCAL[Google Calendar]
+        STRIPE[Stripe Billing]
     end
 
     WEB --> CDN
@@ -57,28 +59,25 @@ graph TB
     NEXTJS --> EDGE
     EDGE --> AUTH
     EDGE --> DB
-    EDGE --> REALTIME
+    EDGE --> VECTOR
     EDGE --> STORAGE
 
-    NEXTJS -.-> PEER1
-    NEXTJS -.-> PEER2
-    NEXTJS -.-> PEER3
-
+    EDGE --> GLADIA
     EDGE --> OPENAI
-    EDGE --> DEEPL
-    EDGE --> TWILIO
-    EDGE --> GCAL
+    EDGE --> EMBEDDINGS
+    EDGE -.-> GCAL
+    EDGE -.-> STRIPE
 
-    REALTIME -.-> WEB
-    REALTIME -.-> MOBILE
+    DB --> VECTOR
 ```
 
 ### Architectural Patterns
 
 - **Jamstack Architecture:** Static site generation with serverless APIs - _Rationale:_ Optimal performance and cost efficiency for free tier constraints
-- **Component-Based UI:** Reusable React components with TypeScript - _Rationale:_ Maintainability and type safety across large video conferencing interface
-- **Backend-for-Frontend (BFF):** Vercel Edge Functions as API layer - _Rationale:_ Abstracts external APIs and enforces security policies
-- **Event-Driven Real-time:** Supabase Realtime for collaborative features - _Rationale:_ Essential for whiteboard, messaging, and participant management
-- **Real-Time Video Communication:** Stream SDK for video streams - _Rationale:_ Managed infrastructure reduces complexity while maintaining performance
-- **Row-Level Security (RLS):** Database-level access control - _Rationale:_ Multi-tenant security without complex authorization logic
+- **Component-Based UI:** Reusable React components with TypeScript - _Rationale:_ Maintainability and type safety across client management interface
+- **Backend-for-Frontend (BFF):** Vercel Edge Functions as API layer - _Rationale:_ Abstracts external APIs (Gladia, OpenAI) and enforces security policies
+- **RAG (Retrieval-Augmented Generation):** pgvector for semantic search - _Rationale:_ AI assistant with full context from client meetings and notes
+- **Async Processing:** Background jobs for transcription/summarization - _Rationale:_ Don't block user while processing large audio files
+- **Row-Level Security (RLS):** Database-level access control - _Rationale:_ Multi-tenant security, each user sees only their clients/meetings
+- **Client-Centric Data Model:** All data organized around client cards - _Rationale:_ Core product value is client context and memory
 

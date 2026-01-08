@@ -1,0 +1,166 @@
+schema: 1
+story: '2.1'
+story_title: 'Client CRUD & Database Schema'
+gate: PASS
+status_reason: 'All critical issues resolved. Implementation is production-ready with excellent code quality (Grade A). Manual testing confirms all CRUD operations functional.'
+reviewer: 'Quinn (Test Architect)'
+updated: '2026-01-08T21:50:00Z'
+
+top_issues:
+  - severity: high
+    category: testing
+    title: 'Jest setup prevents test execution'
+    description: 'NextRequest mock in jest.setup.js:190 incompatible with Next.js 14. Tests are well-written but cannot execute.'
+    refs:
+      - 'apps/web/jest.setup.js:190'
+    suggested_owner: dev
+    status: RESOLVED
+    resolution: 'Fixed using Object.defineProperty for immutable Next.js 14 properties. All 22 unit tests now passing.'
+    resolved_date: '2026-01-08'
+
+  - severity: medium
+    category: requirements
+    title: 'AC #7 scope ambiguous'
+    description: 'AC mentions "soft delete with confirmation dialog" but Story 2.1 is backend-only. Frontend dialog covered in Story 2.8.'
+    refs:
+      - 'docs/stories/2.1.client-crud-database.md:30'
+    suggested_owner: po
+    status: OPEN
+    impact: NON_BLOCKING
+
+waiver:
+  active: false
+
+quality_score: 95
+quality_score_notes: 'Upgraded from 85 after resolving critical test infrastructure issue. Only -5 for non-blocking AC #7 documentation ambiguity.'
+expires: '2026-01-22T00:00:00Z'
+
+evidence:
+  tests_reviewed:
+    count: 25
+    breakdown:
+      schema_tests: 16
+      unit_tests: 9
+      integration_tests: 8
+  risks_identified:
+    count: 2
+    high: 1
+    medium: 1
+    low: 0
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 8]
+    ac_gaps: [7]
+    ac_gap_notes: 'AC #7 partially covered - backend complete, frontend confirmation dialog in Story 2.8'
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'Excellent - Clerk auth, UUID validation, RLS enforcement, duplicate detection, input sanitization, explicit user_id filtering'
+    grade: A
+  performance:
+    status: PASS
+    notes: 'Good with optimization opportunities - proper indexes, efficient queries, <200ms response time expected. Minor optimization opportunities identified for future.'
+    grade: B+
+  reliability:
+    status: PASS
+    notes: 'Comprehensive error handling, graceful degradation, database constraints. Minor: no retry logic for transient errors.'
+    grade: A-
+  maintainability:
+    status: PASS
+    notes: 'Clean code, well-documented, type-safe, consistent patterns, easy to extend'
+    grade: A
+
+recommendations:
+  immediate:
+    - action: 'Fix jest.setup.js NextRequest mock to handle Next.js 14 immutable properties'
+      refs: ['apps/web/jest.setup.js:190']
+      owner: dev
+      priority: CRITICAL
+
+    - action: 'Perform manual API testing with real Supabase instance (Postman/Insomnia)'
+      refs: ['docs/stories/2.1.client-crud-database.md:576-594']
+      owner: dev
+      priority: HIGH
+
+    - action: 'Clarify AC #7 scope (backend-only vs full stack including frontend dialog)'
+      refs: ['docs/stories/2.1.client-crud-database.md:30']
+      owner: po
+      priority: MEDIUM
+
+  future:
+    - action: 'Add rate limiting on client CRUD endpoints'
+      refs: ['apps/web/src/app/api/clients/route.ts', 'apps/web/src/app/api/clients/[id]/route.ts']
+      owner: dev
+      priority: MEDIUM
+      timeline: 'Future story'
+
+    - action: 'Consider caching clerk_id to user_id mapping to reduce repeated lookups'
+      refs: ['apps/web/src/app/api/clients/route.ts:60-74']
+      owner: dev
+      priority: LOW
+      timeline: 'Performance optimization story'
+
+    - action: 'Add audit logging for client CRUD operations (compliance)'
+      refs: ['apps/web/src/app/api/clients/']
+      owner: dev
+      priority: LOW
+      timeline: 'Future compliance epic'
+
+    - action: 'Consider unique partial index for duplicate email detection optimization'
+      refs: ['scripts/migration/migrate-v2.sql']
+      owner: dev
+      priority: LOW
+      timeline: 'Performance optimization story'
+
+code_quality:
+  overall_grade: 'A'
+  strengths:
+    - 'Comprehensive Zod validation with strict mode'
+    - 'Security-first design (auth, RLS, UUID validation, duplicate detection)'
+    - 'Excellent error handling with specific error codes'
+    - 'Clean architecture and separation of concerns'
+    - 'Well-documented code with JSDoc comments'
+    - 'Comprehensive test coverage with all tests passing (22/22 unit tests)'
+    - 'Successful manual verification of all CRUD operations'
+  weaknesses:
+    - 'AC #7 wording ambiguous (non-blocking documentation issue)'
+
+manual_testing_required: false
+manual_testing_completed: true
+manual_testing_date: '2026-01-08'
+manual_testing_result: 'ALL_PASSED'
+manual_testing_checklist:
+  api_endpoints:
+    - '✅ POST /api/clients - Create client with tier limit enforcement'
+    - '✅ GET /api/clients - List user clients'
+    - '✅ GET /api/clients/[id] - Get client details'
+    - '✅ PUT /api/clients/[id] - Update client with duplicate detection'
+    - '✅ DELETE /api/clients/[id] - Delete with CASCADE verification'
+  security:
+    - '✅ Verify User A cannot access User B clients (RLS)'
+    - '✅ Verify tier limits (3 for free, 50 for pro)'
+    - '✅ Verify duplicate email detection (409 error)'
+    - '✅ Verify UUID validation rejects invalid IDs (400 error)'
+  database:
+    - '✅ Run migration and verify schema created'
+    - '✅ Test CASCADE delete (client → meetings, action_items, embeddings)'
+    - '✅ RLS policies active on clients table'
+
+next_actions:
+  - step: 1
+    action: 'Developer fixes jest.setup.js'
+    status: COMPLETED
+    completed_date: '2026-01-08'
+  - step: 2
+    action: 'Developer/QA performs manual testing'
+    status: COMPLETED
+    completed_date: '2026-01-08'
+  - step: 3
+    action: 'PO clarifies AC #7'
+    status: OPEN
+    blocking: false
+  - step: 4
+    action: 'Gate re-evaluated to PASS after manual tests confirm'
+    status: COMPLETED
+    completed_date: '2026-01-08'
+    result: 'Gate upgraded from CONCERNS to PASS'
