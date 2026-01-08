@@ -131,13 +131,13 @@ describe('POST /api/clients', () => {
         };
       }
       if (table === 'clients') {
-        return {
+        const chainable = {
           select: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockResolvedValue({ count: 3, error: null }),
           single: jest.fn(),
           maybeSingle: jest.fn(),
-          count: jest.fn().mockResolvedValue({ count: 3, error: null }),
         };
+        return chainable;
       }
     });
 

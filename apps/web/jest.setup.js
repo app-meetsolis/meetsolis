@@ -187,9 +187,21 @@ afterAll(() => {
 if (typeof Request === 'undefined') {
   global.Request = class Request {
     constructor(input, init) {
-      this.url = typeof input === 'string' ? input : input.url;
-      this.method = init?.method || 'GET';
-      this.headers = new Headers(init?.headers || {});
+      // Use defineProperty for immutable properties (Next.js 14 compatibility)
+      const url = typeof input === 'string' ? input : input.url;
+      const method = init?.method || 'GET';
+      const headers = new Headers(init?.headers || {});
+
+      Object.defineProperty(this, 'url', { value: url, enumerable: true });
+      Object.defineProperty(this, 'method', {
+        value: method,
+        enumerable: true,
+      });
+      Object.defineProperty(this, 'headers', {
+        value: headers,
+        enumerable: true,
+      });
+
       this.body = init?.body;
       this.cache = init?.cache || 'default';
       this.credentials = init?.credentials || 'same-origin';
@@ -349,7 +361,15 @@ if (typeof NextRequest === 'undefined') {
   global.NextRequest = class NextRequest extends global.Request {
     constructor(input, init) {
       super(input, init);
-      this.nextUrl = new URL(typeof input === 'string' ? input : input.url);
+
+      // Define NextRequest-specific properties
+      const url = typeof input === 'string' ? input : input.url;
+      Object.defineProperty(this, 'nextUrl', {
+        value: new URL(url),
+        writable: true,
+        enumerable: true,
+      });
+
       this.cookies = {
         get: jest.fn(),
         set: jest.fn(),

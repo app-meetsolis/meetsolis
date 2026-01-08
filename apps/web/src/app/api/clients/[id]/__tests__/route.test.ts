@@ -458,6 +458,7 @@ describe('DELETE /api/clients/[id]', () => {
   it('should delete client successfully and return 204', async () => {
     mockAuth.mockResolvedValue({ userId: 'clerk-user-123' } as any);
 
+    let clientsCallCount = 0;
     mockSupabase.from.mockImplementation((table: string) => {
       if (table === 'users') {
         return {
@@ -470,22 +471,31 @@ describe('DELETE /api/clients/[id]', () => {
         };
       }
       if (table === 'clients') {
-        return {
-          select: jest.fn().mockReturnThis(),
+        clientsCallCount++;
+        // First call: verify client exists (select query)
+        if (clientsCallCount === 1) {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            maybeSingle: jest.fn().mockResolvedValue({
+              data: { id: 'client-123' },
+              error: null,
+            }),
+          };
+        }
+        // Second call: delete operation (needs to chain two .eq() calls)
+        const deleteChain = {
           delete: jest.fn().mockReturnThis(),
           eq: jest.fn().mockReturnThis(),
-          maybeSingle: jest.fn().mockResolvedValue({
-            data: { id: 'client-123' },
-            error: null,
-          }),
         };
+        // Override the second eq() call to return the result
+        deleteChain.eq = jest
+          .fn()
+          .mockReturnValueOnce(deleteChain)
+          .mockResolvedValueOnce({ error: null });
+        return deleteChain;
       }
     });
-
-    // Mock the delete operation to return no error
-    mockSupabase.from().delete().eq = jest
-      .fn()
-      .mockResolvedValue({ error: null });
 
     const validUUID = '123e4567-e89b-12d3-a456-426614174000';
     const request = new NextRequest(
