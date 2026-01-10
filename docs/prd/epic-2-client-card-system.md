@@ -14,6 +14,8 @@ Build the core client management system with client cards as the central organiz
 
 **Goal:** Enable users to manage up to 50 clients (Pro) or 3 clients (Free) with all essential information accessible at a glance.
 
+**Architecture Note:** Stories 2.1-2.2 implemented with top horizontal navigation for rapid MVP delivery. Reference UI shows left sidebar navigation. Navigation refactor documented in Story 2.9 to align with reference design while maintaining backward compatibility.
+
 ---
 
 ## User Stories
@@ -44,20 +46,22 @@ Build the core client management system with client cards as the central organiz
 
 ### Story 2.2: Client Dashboard UI (Grid View)
 
+**STATUS:** ✅ COMPLETE (with top nav, sidebar refactor in Story 2.9)
+
 **As a** user
 **I want to** see all my clients in a clean grid layout
 **So that** I can quickly find and access client information
 
 **Acceptance Criteria:**
-- [ ] Dashboard page matches reference design (3-column grid)
-- [ ] Client cards display: Name, Role/Company, Last Meeting date, Active Projects count
-- [ ] "+ Add Client" button (top-right)
-- [ ] Empty state: "No clients yet. Add your first client to get started."
-- [ ] Loading state: Skeleton cards (shimmer effect)
-- [ ] Error state: Error message with retry button
-- [ ] Card hover effect: Lift (translateY -4px), shadow increase
-- [ ] Click card → Navigate to client detail page
-- [ ] Responsive: 3 cols (desktop), 2 cols (tablet), 1 col (mobile)
+- [x] Dashboard page matches reference design (3-column grid)
+- [x] Client cards display: Name, Role/Company, Last Meeting date, Active Projects count
+- [x] "+ Add Client" button (top-right)
+- [x] Empty state: "No clients yet. Add your first client to get started."
+- [x] Loading state: Skeleton cards (shimmer effect)
+- [x] Error state: Error message with retry button
+- [x] Card hover effect: Lift (translateY -4px), shadow increase
+- [x] Click card → Navigate to client detail page
+- [x] Responsive: 3 cols (desktop), 2 cols (tablet), 1 col (mobile)
 
 **Design Specs:**
 - Background: #E8E4DD (light beige)
@@ -65,6 +69,9 @@ Build the core client management system with client cards as the central organiz
 - Client name: 20px bold, #1A1A1A
 - Role/Company: 14px regular, #6B7280
 - Badge: #F3F4F6 background, 11px uppercase
+
+**Navigation Architecture Note:**
+Story 2.2 implemented with top horizontal navigation (Dashboard, Clients, Meetings, Settings in header). Reference UI shows left sidebar navigation. This is intentional for rapid MVP delivery. Navigation will be refactored in Story 2.9 to match reference design.
 
 **Estimated Effort:** 1 day
 
@@ -148,29 +155,53 @@ Build the core client management system with client cards as the central organiz
 
 ---
 
-### Story 2.6: Client Detail View (Shell)
+### Story 2.6: Client Detail View (Enhanced)
 
 **As a** user
-**I want to** view detailed client information
-**So that** I can see all context for a specific client
+**I want to** view detailed client information with action items tracking
+**So that** I can see all context and follow-ups for specific client
 
 **Acceptance Criteria:**
 - [ ] Client detail page: `/clients/[id]`
-- [ ] Header: Back button, Client name, Role/Company, Tags
-- [ ] Action buttons: "Prepare for Meeting", "Edit", "Delete" (dropdown menu)
-- [ ] Tabbed interface: Overview, Meetings, Notes, Action Items
-- [ ] Overview tab (initial view): Client info, AI-generated overview (placeholder for Epic 4)
-- [ ] Meetings tab: Empty state ("No meetings yet. Log your first meeting.")
-- [ ] Notes tab: Rich text editor (manual notes)
-- [ ] Action Items tab: Empty state ("No action items yet.")
-- [ ] 404 page if client not found
-- [ ] Access control: User can only view their own clients
+- [ ] Header: Back button, Client name, Role/Company, Tags, Action buttons (Prep for Meeting, Edit, Delete)
+- [ ] **Main Content (Left 2/3):**
+  - [ ] Tabbed interface: Overview | Meeting History | Notes & Decisions
+  - [ ] Overview tab: Client info + AI overview placeholder
+  - [ ] Meeting History tab: Empty state ("No meetings yet")
+  - [ ] Notes & Decisions tab: Rich text editor (Story 2.7)
+- [ ] **Action Items Sidebar (Right 1/3):**
+  - [ ] Title: "Action Items" with count badge
+  - [ ] List with checkboxes (check → strikethrough + gray)
+  - [ ] Each item: Description, due date badge
+  - [ ] Empty state: "No action items yet"
+  - [ ] "+ Add Action Item" button (manual creation)
+- [ ] **Next Steps Section (Below Action Items):**
+  - [ ] Title: "Next Steps"
+  - [ ] Bulleted list (manual entry initially, AI in Epic 4)
+  - [ ] Placeholder: "Next steps will appear after logging meetings"
+- [ ] **Responsive:** Desktop 2-column, tablet/mobile stacked
+- [ ] 404 handling, RLS access control
 
-**Initial Version:**
-- Overview tab shows basic client info (name, company, role, contact details)
-- Other tabs functional but empty (populated in Epic 3 & 4)
+**Layout:**
+```
+┌─────────────────────────────────┬──────────────────┐
+│ ← Back   Client Name            │  ACTION ITEMS (3)│
+│ Tabs: Overview | Meeting        │  [ ] Task 1      │
+│       History | Notes            │  [✓] Task 2      │
+│                                  │  + Add Item      │
+│ [Tab Content]                    ├──────────────────┤
+│                                  │  NEXT STEPS      │
+│                                  │  • Step 1        │
+└──────────────────────────────────┴──────────────────┘
+```
 
-**Estimated Effort:** 1 day
+**Technical Notes:**
+- Action items: Manual CRUD, stored in `action_items` table
+- Next steps: Stored in `clients.next_steps` JSONB field
+- Epic 3 will populate meeting history tab
+- Epic 4 will add AI-generated next steps
+
+**Estimated Effort:** 2 days (up from 1 day)
 
 ---
 
@@ -222,6 +253,47 @@ Build the core client management system with client cards as the central organiz
 - Also delete vector embeddings from pgvector
 
 **Estimated Effort:** 0.5 days
+
+---
+
+### Story 2.9: Navigation Refactor (Left Sidebar)
+
+**As a** user
+**I want** a left sidebar navigation matching reference design
+**So that** navigation is consistent with modern SaaS patterns
+
+**Acceptance Criteria:**
+- [ ] Left sidebar replaces top horizontal nav
+- [ ] Sidebar layout (desktop ≥1024px):
+  - Fixed left, 240px width
+  - MeetSolis logo at top
+  - Vertical nav: Clients, Meetings, Assistant, Settings (icons + labels)
+  - Active state: #001F3F background, white text
+  - User profile at bottom
+- [ ] Mobile (<1024px):
+  - Hamburger menu opens overlay sidebar
+  - Backdrop dismisses overlay
+  - Auto-close on route change
+- [ ] Main content adjusts: `margin-left: 240px` on desktop
+- [ ] Keyboard shortcuts maintained (Ctrl+Shift+C, Ctrl+M, etc)
+- [ ] Smooth transition: No broken states, all pages work
+
+**Migration Strategy:**
+1. Create `LeftSidebar.tsx` component
+2. Update `DashboardLayout.tsx` to use sidebar
+3. Add nav items: Clients, Meetings (Epic 3), Assistant (Epic 4), Settings
+4. Deprecate `Navigation.tsx` (don't delete yet)
+5. Test all pages
+
+**Design Specs:**
+- Width: 240px (desktop), 280px (mobile overlay)
+- Active item: #001F3F bg, 4px left orange accent
+- Icon: 20px, Label: 14px medium
+- Padding: 12px vertical, 16px horizontal
+
+**Estimated Effort:** 1.5 days
+
+**Priority:** P1 (Nice to have, not MVP blocker)
 
 ---
 
@@ -322,13 +394,22 @@ CREATE TRIGGER update_clients_updated_at
 
 ```
 /components/clients/
-  ClientCard.tsx         - Single client card
-  ClientGrid.tsx         - Grid layout of cards
-  ClientAddModal.tsx     - Add/Edit client modal
-  ClientDetail.tsx       - Client detail page layout
-  ClientNotes.tsx        - Rich text notes editor
-  ClientTags.tsx         - Tag management component
-  ClientSearch.tsx       - Search & filter bar
+  ClientCard.tsx                  - Single client card
+  ClientGrid.tsx                  - Grid layout of cards
+  ClientAddModal.tsx              - Add/Edit client modal
+  ClientDetail.tsx                - Client detail page layout
+  ClientDetailLayout.tsx          - 2-column responsive wrapper (Story 2.6)
+  ClientActionItemsSidebar.tsx    - Action items sidebar (Story 2.6)
+  ActionItemCard.tsx              - Individual action item checkbox (Story 2.6)
+  ClientNextSteps.tsx             - Next steps section (Story 2.6)
+  MeetingHistoryTab.tsx           - Meeting history empty state (Story 2.6)
+  ClientNotes.tsx                 - Rich text notes editor
+  ClientTags.tsx                  - Tag management component
+  ClientSearch.tsx                - Search & filter bar
+
+/components/dashboard/
+  Navigation.tsx                  - Top nav (deprecated in Story 2.9)
+  LeftSidebar.tsx                 - Left sidebar nav (Story 2.9)
 ```
 
 ---
@@ -389,6 +470,15 @@ CREATE TRIGGER update_clients_updated_at
 - [ ] Accessibility tested (keyboard nav, screen reader)
 - [ ] Performance acceptable (<500ms dashboard load)
 - [ ] User can complete full client CRUD flow
+
+---
+
+## Change Log
+
+| Date | Version | Description | Author |
+|------|---------|-------------|--------|
+| 2026-01-07 | 1.0 | Initial epic creation | Sarah (PO) |
+| 2026-01-10 | 2.0 | UI/UX alignment with reference screenshots: Added Story 2.9 (sidebar nav), updated Story 2.6 (Action Items sidebar + Next Steps), documented navigation architecture decision | Sarah (PO) |
 
 ---
 

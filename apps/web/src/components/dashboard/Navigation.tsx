@@ -7,7 +7,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { Home, Video, Settings, Menu, X } from 'lucide-react';
+import { Home, Video, Settings, Menu, X, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -29,6 +29,13 @@ const navigationItems = [
     icon: Home,
     shortcut: 'ctrl+d',
     shortcutDisplay: 'Ctrl+D',
+  },
+  {
+    label: 'Clients',
+    href: '/clients',
+    icon: Users,
+    shortcut: 'ctrl+shift+c',
+    shortcutDisplay: 'Ctrl+Shift+C',
   },
   {
     label: 'Meetings',
@@ -53,6 +60,7 @@ export function Navigation({ className }: NavigationProps) {
 
   // Setup keyboard shortcuts
   useHotkeys('ctrl+d', () => router.push('/dashboard'));
+  useHotkeys('ctrl+shift+c', () => router.push('/clients'));
   useHotkeys('ctrl+m', () => router.push('/dashboard/meetings'));
   useHotkeys('ctrl+,', () => router.push('/dashboard/settings'));
 
