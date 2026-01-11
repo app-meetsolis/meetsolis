@@ -15,11 +15,15 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Client, ClientCreate, ClientCreateSchema } from '@meetsolis/shared';
+import { Client, ClientCreateSchema } from '@meetsolis/shared';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import type { z } from 'zod';
+
+// Infer type from schema to ensure exact match
+type ClientFormData = z.infer<typeof ClientCreateSchema>;
 
 interface ClientFormProps {
   mode: 'create' | 'edit';
@@ -46,7 +50,7 @@ export function ClientForm({
     handleSubmit,
     formState: { errors, isValid, isDirty, isSubmitting },
     reset,
-  } = useForm<ClientCreate>({
+  } = useForm<ClientFormData>({
     resolver: zodResolver(ClientCreateSchema),
     mode: 'onChange', // Real-time validation
     defaultValues:
@@ -83,7 +87,7 @@ export function ClientForm({
 
   // Create client mutation
   const createMutation = useMutation({
-    mutationFn: async (data: ClientCreate) => {
+    mutationFn: async (data: ClientFormData) => {
       const response = await fetch('/api/clients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -110,7 +114,7 @@ export function ClientForm({
 
   // Update client mutation
   const updateMutation = useMutation({
-    mutationFn: async (data: ClientCreate) => {
+    mutationFn: async (data: ClientFormData) => {
       const response = await fetch(`/api/clients/${client?.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -135,7 +139,7 @@ export function ClientForm({
   });
 
   // Form submission handler
-  const onSubmit = (data: ClientCreate) => {
+  const onSubmit = (data: ClientFormData) => {
     if (mode === 'create') {
       createMutation.mutate(data);
     } else {
