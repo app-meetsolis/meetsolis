@@ -28,7 +28,7 @@ const UpdateProfileSchema = z.object({
  */
 async function getOrCreateUser(supabase: any, userId: string) {
   // Try to get existing user
-  let user = await getUserByClerkId(supabase, userId);
+  const user = await getUserByClerkId(supabase, userId);
 
   // If user doesn't exist, create them from Clerk data
   if (!user) {
@@ -76,7 +76,9 @@ export async function GET(request: NextRequest) {
     // Fetch full user profile
     const { data: profile, error } = await supabase
       .from('users')
-      .select('id, clerk_id, email, name, display_name, title, bio, timezone, role, onboarding_completed, onboarding_completed_at, created_at, updated_at')
+      .select(
+        'id, clerk_id, email, name, display_name, title, bio, timezone, role, onboarding_completed, onboarding_completed_at, created_at, updated_at'
+      )
       .eq('id', user.id)
       .single();
 

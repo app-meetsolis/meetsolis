@@ -1,7 +1,7 @@
 # Epic 2: Client Card System & Management
 
-**Version:** 2.0
-**Status:** Not Started
+**Version:** 2.1
+**Status:** In Progress (Stories 2.1-2.3 Complete, 2.4 Approved)
 **Priority:** P0 (Critical - MVP Foundation)
 **Target Timeline:** Week 2 (Jan 13-19, 2026)
 **Dependencies:** Epic 1 (Complete)
@@ -22,18 +22,20 @@ Build the core client management system with client cards as the central organiz
 
 ### Story 2.1: Client CRUD & Database Schema
 
+**STATUS:** ✅ COMPLETE
+
 **As a** user
 **I want to** create, view, edit, and delete client profiles
 **So that** I can organize my professional relationships
 
 **Acceptance Criteria:**
-- [ ] Database schema created (clients table with RLS)
-- [ ] API routes: POST /api/clients (create), GET /api/clients (list), GET /api/clients/[id] (detail), PUT /api/clients/[id] (update), DELETE /api/clients/[id] (delete)
-- [ ] Zod validation schemas for client data
-- [ ] Client fields: id, user_id, name, company, role, email, phone, website, linkedin_url, created_at, updated_at
-- [ ] Free tier: max 3 clients enforced, Pro tier: max 50 clients
-- [ ] Soft delete with confirmation dialog
-- [ ] Error handling for duplicate clients (same email)
+- [x] Database schema created (clients table with RLS)
+- [x] API routes: POST /api/clients (create), GET /api/clients (list), GET /api/clients/[id] (detail), PUT /api/clients/[id] (update), DELETE /api/clients/[id] (delete)
+- [x] Zod validation schemas for client data
+- [x] Client fields: id, user_id, name, company, role, email, phone, website, linkedin_url, created_at, updated_at
+- [x] Free tier: max 3 clients enforced, Pro tier: max 50 clients
+- [x] Soft delete with confirmation dialog
+- [x] Error handling for duplicate clients (same email)
 
 **Technical Notes:**
 - Use Supabase RLS: `user_id = auth.uid()`
@@ -79,21 +81,23 @@ Story 2.2 implemented with top horizontal navigation (Dashboard, Clients, Meetin
 
 ### Story 2.3: Add/Edit Client Modal
 
+**STATUS:** ✅ COMPLETE
+
 **As a** user
 **I want to** add new clients and edit existing ones via a simple form
 **So that** I can maintain accurate client information
 
 **Acceptance Criteria:**
-- [ ] "+ Add Client" opens modal with form
-- [ ] Form fields: Name*, Company, Role, Email, Phone, Website, LinkedIn URL (* = required)
-- [ ] Real-time validation (Zod)
-- [ ] Error messages inline (e.g., "Invalid email format")
-- [ ] "Save" button disabled until form valid
-- [ ] Cancel button closes modal (confirm if changes made)
-- [ ] Edit mode: Pre-fill form with existing data
-- [ ] Success toast: "Client added successfully"
-- [ ] Auto-close modal on save
-- [ ] Free tier warning: "You've reached your client limit (3/3). Upgrade to Pro for 50 clients."
+- [x] "+ Add Client" opens modal with form
+- [x] Form fields: Name*, Company, Role, Email, Phone, Website, LinkedIn URL (* = required)
+- [x] Real-time validation (Zod)
+- [x] Error messages inline (e.g., "Invalid email format")
+- [x] "Save" button disabled until form valid
+- [x] Cancel button closes modal (confirm if changes made)
+- [x] Edit mode: Pre-fill form with existing data
+- [x] Success toast: "Client added successfully"
+- [x] Auto-close modal on save
+- [x] Free tier warning: "You've reached your client limit (3/3). Upgrade to Pro for 50 clients."
 
 **Form Validation:**
 - Name: 2-100 characters, required
@@ -479,6 +483,7 @@ CREATE TRIGGER update_clients_updated_at
 |------|---------|-------------|--------|
 | 2026-01-07 | 1.0 | Initial epic creation | Sarah (PO) |
 | 2026-01-10 | 2.0 | UI/UX alignment with reference screenshots: Added Story 2.9 (sidebar nav), updated Story 2.6 (Action Items sidebar + Next Steps), documented navigation architecture decision | Sarah (PO) |
+| 2026-01-11 | 2.1 | Stories 2.1, 2.2, 2.3 marked COMPLETE. Story 2.4 approved for dev (98% acceptance) | Sarah (PO) |
 
 ---
 
