@@ -1,26 +1,31 @@
 /**
  * ClientForm Component
  * Story 2.3: Add/Edit Client Modal - Task 2 & 3
+ * Story 2.5: Client Tags & Labels - Task 4
  *
  * Form for adding/editing clients with:
  * - react-hook-form for state management
  * - Zod validation integration
  * - Real-time validation
  * - Inline error messages
+ * - Tag input with autocomplete
  */
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Client, ClientCreateSchema } from '@meetsolis/shared';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { TagInput } from './TagInput';
+import { getMaxTags } from '@/lib/utils/tierLimits';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import sanitizeHtml from 'sanitize-html';
 
 // Form-specific schema (only validates user-entered fields)
 const ClientFormSchema = z.object({
@@ -50,6 +55,7 @@ const ClientFormSchema = z.object({
     .trim()
     .optional()
     .or(z.literal('')),
+  tags: z.array(z.string()).max(50).default([]),
 });
 
 type ClientFormData = z.infer<typeof ClientFormSchema>;
@@ -73,6 +79,33 @@ export function ClientForm({
 }: ClientFormProps) {
   const queryClient = useQueryClient();
 
+  // Tags state (managed separately from react-hook-form)
+  const [tags, setTags] = useState<string[]>(client?.tags || []);
+
+  // Fetch all clients for tag autocomplete
+  const { data: clients } = useQuery({
+    queryKey: ['clients'],
+    queryFn: async () => {
+      const response = await fetch('/api/clients');
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.clients || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch user preferences for tier limit
+  const { data: userPrefs } = useQuery({
+    queryKey: ['user-preferences'],
+    queryFn: async () => {
+      return { max_clients: 3, tier: 'free' }; // Default for now
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const tier = (userPrefs?.tier || 'free') as 'free' | 'pro';
+  const maxTags = getMaxTags(tier);
+
   // Initialize form with react-hook-form and Zod validation
   const {
     register,
@@ -92,6 +125,7 @@ export function ClientForm({
             phone: client.phone || '',
             website: client.website || '',
             linkedin_url: client.linkedin_url || '',
+            tags: client.tags || [],
           }
         : {
             name: '',
@@ -101,6 +135,7 @@ export function ClientForm({
             phone: '',
             website: '',
             linkedin_url: '',
+            tags: [],
           },
   });
 
@@ -114,15 +149,34 @@ export function ClientForm({
     onSubmittingChange(isSubmitting);
   }, [isSubmitting, onSubmittingChange]);
 
+  // Sanitize tags before submission
+  const sanitizeTags = (tagsToSanitize: string[]): string[] => {
+    return tagsToSanitize
+      .map(tag =>
+        sanitizeHtml(tag.trim(), {
+          allowedTags: [],
+          allowedAttributes: {},
+        })
+      )
+      .filter(tag => tag.length > 0);
+  };
+
   // Create client mutation
   const createMutation = useMutation({
     mutationFn: async (data: ClientFormData) => {
+      const sanitizedTags = sanitizeTags(tags);
+
+      // Validate tier limit
+      if (sanitizedTags.length > maxTags) {
+        throw new Error(`Maximum ${maxTags} tags allowed for ${tier} tier`);
+      }
+
       const response = await fetch('/api/clients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...data,
-          tags: [],
+          tags: sanitizedTags,
           status: 'active',
         }),
       });
@@ -138,6 +192,7 @@ export function ClientForm({
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       toast.success('Client added successfully');
       reset();
+      setTags([]);
       onSuccess();
     },
     onError: (error: Error) => {
@@ -148,12 +203,19 @@ export function ClientForm({
   // Update client mutation
   const updateMutation = useMutation({
     mutationFn: async (data: ClientFormData) => {
+      const sanitizedTags = sanitizeTags(tags);
+
+      // Validate tier limit
+      if (sanitizedTags.length > maxTags) {
+        throw new Error(`Maximum ${maxTags} tags allowed for ${tier} tier`);
+      }
+
       const response = await fetch(`/api/clients/${client?.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...data,
-          tags: client?.tags || [],
+          tags: sanitizedTags,
           status: client?.status || 'active',
         }),
       });
@@ -292,6 +354,17 @@ export function ClientForm({
         {errors.linkedin_url && (
           <p className="text-sm text-red-500">{errors.linkedin_url.message}</p>
         )}
+      </div>
+
+      {/* Tags Field (Optional) - Story 2.5 */}
+      <div className="space-y-2">
+        <TagInput
+          tags={tags}
+          onTagsChange={setTags}
+          clients={clients || []}
+          maxTags={maxTags}
+          tier={tier}
+        />
       </div>
 
       {/* Form Actions */}

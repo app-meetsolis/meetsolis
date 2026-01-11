@@ -2,10 +2,12 @@
  * ClientCard Component
  * Story 2.2: Client Dashboard UI - Task 2: ClientCard Component
  * Story 2.3: Add/Edit Client Modal - Task 8 (Edit button)
+ * Story 2.5: Client Tags & Labels - Task 5
  *
  * Displays individual client information in a card format with:
  * - Client name, role/company, last meeting date
  * - Active projects count badge (meetings in last 30 days)
+ * - Tags with click-to-filter functionality
  * - Hover effect (lift and shadow)
  * - Click to navigate to client detail page
  * - Edit button (Story 2.3)
@@ -18,6 +20,7 @@ import { useRouter } from 'next/navigation';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { TagPill } from './TagPill';
 import { Building2, Calendar, Pencil } from 'lucide-react';
 
 interface ClientCardProps {
@@ -75,6 +78,19 @@ export function ClientCard({ client, onEdit }: ClientCardProps) {
     onEdit?.(client);
   };
 
+  /**
+   * Handle tag click - navigate to filtered clients page
+   * Prevent card navigation when tag is clicked
+   */
+  const handleTagClick = (e: React.MouseEvent, tag: string) => {
+    e.stopPropagation();
+    router.push(`/clients?tags=${encodeURIComponent(tag)}`);
+  };
+
+  // Determine which tags to display (first 3)
+  const displayTags = client.tags?.slice(0, 3) || [];
+  const remainingTagsCount = (client.tags?.length || 0) - displayTags.length;
+
   return (
     <div
       onClick={() => router.push(`/clients/${client.id}`)}
@@ -111,6 +127,27 @@ export function ClientCard({ client, onEdit }: ClientCardProps) {
         <Building2 className="h-4 w-4" />
         <span>{roleCompanyText}</span>
       </div>
+
+      {/* Tags - Story 2.5 */}
+      {displayTags.length > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-1.5">
+          {displayTags.map(tag => (
+            <TagPill
+              key={tag}
+              tag={tag}
+              onClick={e => handleTagClick(e as any, tag)}
+            />
+          ))}
+          {remainingTagsCount > 0 && (
+            <Badge
+              variant="secondary"
+              className="bg-gray-100 text-[11px] text-gray-600"
+            >
+              + {remainingTagsCount} more
+            </Badge>
+          )}
+        </div>
+      )}
 
       {/* Last Meeting Date */}
       <div className="mb-3 flex items-center gap-2 text-sm text-[#6B7280]">
