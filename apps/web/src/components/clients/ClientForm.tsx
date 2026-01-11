@@ -20,10 +20,39 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import type { z } from 'zod';
+import { z } from 'zod';
 
-// Infer type from schema to ensure exact match
-type ClientFormData = z.infer<typeof ClientCreateSchema>;
+// Form-specific schema (only validates user-entered fields)
+const ClientFormSchema = z.object({
+  name: z
+    .string()
+    .min(2, 'Name must be at least 2 characters')
+    .max(100, 'Name must be at most 100 characters')
+    .trim(),
+  company: z.string().trim().optional(),
+  role: z.string().trim().optional(),
+  email: z
+    .string()
+    .email('Invalid email format')
+    .trim()
+    .optional()
+    .or(z.literal('')),
+  phone: z.string().trim().optional(),
+  website: z
+    .string()
+    .url('Invalid URL format')
+    .trim()
+    .optional()
+    .or(z.literal('')),
+  linkedin_url: z
+    .string()
+    .url('Invalid URL format')
+    .trim()
+    .optional()
+    .or(z.literal('')),
+});
+
+type ClientFormData = z.infer<typeof ClientFormSchema>;
 
 interface ClientFormProps {
   mode: 'create' | 'edit';
@@ -51,7 +80,7 @@ export function ClientForm({
     formState: { errors, isValid, isDirty, isSubmitting },
     reset,
   } = useForm<ClientFormData>({
-    resolver: zodResolver(ClientCreateSchema),
+    resolver: zodResolver(ClientFormSchema),
     mode: 'onChange', // Real-time validation
     defaultValues:
       mode === 'edit' && client
@@ -91,7 +120,11 @@ export function ClientForm({
       const response = await fetch('/api/clients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          tags: [],
+          status: 'active',
+        }),
       });
 
       if (!response.ok) {
@@ -118,7 +151,11 @@ export function ClientForm({
       const response = await fetch(`/api/clients/${client?.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          tags: client?.tags || [],
+          status: client?.status || 'active',
+        }),
       });
 
       if (!response.ok) {
