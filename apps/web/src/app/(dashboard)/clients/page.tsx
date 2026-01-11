@@ -14,7 +14,7 @@
 
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { Suspense, useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Client } from '@meetsolis/shared';
@@ -51,7 +51,7 @@ async function fetchClients(): Promise<Client[]> {
   return data.clients;
 }
 
-export default function ClientsPage() {
+function ClientsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -273,5 +273,13 @@ export default function ClientsPage() {
         maxClients={maxClients}
       />
     </div>
+  );
+}
+
+export default function ClientsPage() {
+  return (
+    <Suspense fallback={<ClientGridSkeleton />}>
+      <ClientsPageContent />
+    </Suspense>
   );
 }
