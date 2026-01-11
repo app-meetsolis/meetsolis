@@ -1,31 +1,35 @@
 /**
  * ClientCard Component
  * Story 2.2: Client Dashboard UI - Task 2: ClientCard Component
+ * Story 2.3: Add/Edit Client Modal - Task 8 (Edit button)
  *
  * Displays individual client information in a card format with:
  * - Client name, role/company, last meeting date
  * - Active projects count badge (meetings in last 30 days)
  * - Hover effect (lift and shadow)
  * - Click to navigate to client detail page
+ * - Edit button (Story 2.3)
  */
 
 'use client';
 
 import { Client } from '@meetsolis/shared';
 import { useRouter } from 'next/navigation';
-import { formatDistanceToNow, parseISO, subDays } from 'date-fns';
+import { formatDistanceToNow, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Building2, Calendar, Pencil } from 'lucide-react';
 
 interface ClientCardProps {
   client: Client;
+  onEdit?: (_client: Client) => void;
 }
 
 /**
  * Calculate active projects count (meetings in last 30 days)
  * Note: Placeholder until Epic 3 implements meetings table
  */
-function getActiveProjectsCount(client: Client): number {
+function getActiveProjectsCount(_client: Client): number {
   // TODO: Replace with actual count from meetings table in Epic 3
   // For now, return 0 as meetings table doesn't exist yet
   return 0;
@@ -53,7 +57,7 @@ function formatLastMeeting(
   }
 }
 
-export function ClientCard({ client }: ClientCardProps) {
+export function ClientCard({ client, onEdit }: ClientCardProps) {
   const router = useRouter();
   const activeProjects = getActiveProjectsCount(client);
 
@@ -62,10 +66,19 @@ export function ClientCard({ client }: ClientCardProps) {
     [client.role, client.company].filter(Boolean).join(' at ') ||
     'No role specified';
 
+  /**
+   * Handle edit button click
+   * Prevent card navigation when edit is clicked
+   */
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEdit?.(client);
+  };
+
   return (
     <div
       onClick={() => router.push(`/clients/${client.id}`)}
-      className="group cursor-pointer rounded-lg bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg"
+      className="group relative cursor-pointer rounded-lg bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg"
       role="button"
       tabIndex={0}
       onKeyDown={e => {
@@ -75,6 +88,19 @@ export function ClientCard({ client }: ClientCardProps) {
         }
       }}
     >
+      {/* Edit Button */}
+      {onEdit && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="absolute right-2 top-2 h-8 w-8 p-0 opacity-0 transition-opacity group-hover:opacity-100"
+          onClick={handleEditClick}
+          aria-label="Edit client"
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+      )}
+
       {/* Client Name */}
       <h3 className="mb-2 text-xl font-bold text-[#1A1A1A] group-hover:text-[#001F3F]">
         {client.name}

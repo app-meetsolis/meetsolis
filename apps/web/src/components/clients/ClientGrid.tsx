@@ -1,6 +1,7 @@
 /**
  * ClientGrid Component
  * Story 2.2: Client Dashboard UI - Task 3: ClientGrid Component
+ * Story 2.3: Add/Edit Client Modal - Task 8 (Edit integration)
  *
  * Displays clients in a responsive grid layout:
  * - 3 columns (desktop lg: 1024px+)
@@ -13,13 +14,14 @@ import { ClientCard } from './ClientCard';
 
 interface ClientGridProps {
   clients: Client[];
+  onEditClient?: (_client: Client) => void;
 }
 
-export function ClientGrid({ clients }: ClientGridProps) {
+export function ClientGrid({ clients, onEditClient }: ClientGridProps) {
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       {clients.map(client => (
-        <ClientCard key={client.id} client={client} />
+        <ClientCard key={client.id} client={client} onEdit={onEditClient} />
       ))}
     </div>
   );
