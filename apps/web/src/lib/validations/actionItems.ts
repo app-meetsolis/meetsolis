@@ -19,9 +19,10 @@ export const actionItemCreateSchema = z.object({
     .trim(),
   due_date: z
     .string()
-    .datetime({ message: 'Invalid date format' })
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)')
     .optional()
-    .nullable(),
+    .nullable()
+    .or(z.literal('')),
   completed: z.boolean().default(false).optional(),
 });
 
@@ -37,9 +38,10 @@ export const actionItemUpdateSchema = z.object({
     .optional(),
   due_date: z
     .string()
-    .datetime({ message: 'Invalid date format' })
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)')
     .optional()
-    .nullable(),
+    .nullable()
+    .or(z.literal('')),
   completed: z.boolean().optional(),
 });
 
