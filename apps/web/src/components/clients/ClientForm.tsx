@@ -55,7 +55,6 @@ const ClientFormSchema = z.object({
     .trim()
     .optional()
     .or(z.literal('')),
-  tags: z.array(z.string()).max(50).default([]),
 });
 
 type ClientFormData = z.infer<typeof ClientFormSchema>;
@@ -125,7 +124,6 @@ export function ClientForm({
             phone: client.phone || '',
             website: client.website || '',
             linkedin_url: client.linkedin_url || '',
-            tags: client.tags || [],
           }
         : {
             name: '',
@@ -135,7 +133,6 @@ export function ClientForm({
             phone: '',
             website: '',
             linkedin_url: '',
-            tags: [],
           },
   });
 

@@ -78,15 +78,6 @@ export function ClientCard({ client, onEdit }: ClientCardProps) {
     onEdit?.(client);
   };
 
-  /**
-   * Handle tag click - navigate to filtered clients page
-   * Prevent card navigation when tag is clicked
-   */
-  const handleTagClick = (e: React.MouseEvent, tag: string) => {
-    e.stopPropagation();
-    router.push(`/clients?tags=${encodeURIComponent(tag)}`);
-  };
-
   // Determine which tags to display (first 3)
   const displayTags = client.tags?.slice(0, 3) || [];
   const remainingTagsCount = (client.tags?.length || 0) - displayTags.length;
@@ -135,7 +126,9 @@ export function ClientCard({ client, onEdit }: ClientCardProps) {
             <TagPill
               key={tag}
               tag={tag}
-              onClick={e => handleTagClick(e as any, tag)}
+              onClick={() => {
+                router.push(`/clients?tags=${encodeURIComponent(tag)}`);
+              }}
             />
           ))}
           {remainingTagsCount > 0 && (
