@@ -104,10 +104,11 @@ export default function ClientDetailPage() {
     toast.error('Delete functionality will be implemented in Story 2.8');
   };
 
-  // Handle client modal success
-  const handleClientModalSuccess = async () => {
-    await fetchClient();
+  // Handle client modal close (refetch to get updated data)
+  const handleClientModalClose = () => {
     setIsEditModalOpen(false);
+    // Refetch client data after modal closes (in case it was edited)
+    fetchClient();
   };
 
   // Handle action items change
@@ -199,9 +200,9 @@ export default function ClientDetailPage() {
       {isEditModalOpen && (
         <ClientModal
           isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
+          onClose={handleClientModalClose}
+          mode="edit"
           client={client}
-          onSuccess={handleClientModalSuccess}
         />
       )}
     </div>
