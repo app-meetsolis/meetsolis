@@ -20,6 +20,7 @@ export const ClientSchema = z.object({
   status: z.enum(['active', 'inactive', 'archived']).default('active'),
   overview: z.string().nullable().optional(),
   research_data: z.record(z.any()).nullable().optional(),
+  next_steps: z.array(z.string()).default([]), // Story 2.6: Next steps
   created_at: z.string().datetime().or(z.date()),
   updated_at: z.string().datetime().or(z.date()),
   last_meeting_at: z.string().datetime().or(z.date()).nullable().optional(),

@@ -19,11 +19,13 @@ interface ClientOverviewProps {
 }
 
 export function ClientOverview({ client }: ClientOverviewProps) {
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | Date) => {
     try {
-      return format(new Date(dateString), 'MMM dd, yyyy');
+      const date =
+        typeof dateString === 'string' ? new Date(dateString) : dateString;
+      return format(date, 'MMM dd, yyyy');
     } catch {
-      return dateString;
+      return String(dateString);
     }
   };
 
