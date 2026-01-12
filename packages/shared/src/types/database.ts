@@ -249,6 +249,96 @@ export interface FileUpdate {
 }
 
 // =============================================================================
+// CLIENT TYPES (Story 2.6)
+// =============================================================================
+
+export interface Client {
+  id: string;
+  user_id: string;
+  // Basic Info
+  name: string;
+  company: string | null;
+  role: string | null;
+  email: string | null;
+  phone: string | null;
+  website: string | null;
+  linkedin_url: string | null;
+  // AI-Generated Content
+  overview: string | null;
+  research_data: Record<string, any> | null;
+  // Organization
+  tags: string[];
+  status: 'active' | 'inactive' | 'archived';
+  // Next Steps (Story 2.6)
+  next_steps: string[];
+  // Metadata
+  created_at: string;
+  updated_at: string;
+  last_meeting_at: string | null;
+}
+
+export interface ClientInsert {
+  user_id: string;
+  name: string;
+  company?: string | null;
+  role?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  linkedin_url?: string | null;
+  overview?: string | null;
+  research_data?: Record<string, any> | null;
+  tags?: string[];
+  status?: 'active' | 'inactive' | 'archived';
+  next_steps?: string[];
+}
+
+export interface ClientUpdate {
+  name?: string;
+  company?: string | null;
+  role?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  linkedin_url?: string | null;
+  overview?: string | null;
+  research_data?: Record<string, any> | null;
+  tags?: string[];
+  status?: 'active' | 'inactive' | 'archived';
+  next_steps?: string[];
+  last_meeting_at?: string | null;
+}
+
+// =============================================================================
+// CLIENT ACTION ITEMS (Story 2.6)
+// =============================================================================
+
+export interface ClientActionItem {
+  id: string;
+  client_id: string;
+  user_id: string;
+  description: string;
+  completed: boolean;
+  due_date: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ClientActionItemInsert {
+  client_id: string;
+  user_id: string;
+  description: string;
+  completed?: boolean;
+  due_date?: string | null;
+}
+
+export interface ClientActionItemUpdate {
+  description?: string;
+  completed?: boolean;
+  due_date?: string | null;
+}
+
+// =============================================================================
 // MEETING SUMMARY TYPES
 // =============================================================================
 
