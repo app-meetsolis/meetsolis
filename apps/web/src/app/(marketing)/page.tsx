@@ -1,38 +1,77 @@
 import { Metadata } from 'next';
 import { Hero } from '@/components/marketing/Hero';
-import { SocialProof } from '@/components/marketing/SocialProof';
-import { ClientCardDeepDive } from '@/components/marketing/ClientCardDeepDive';
-import { BentoGrid } from '@/components/marketing/BentoGrid';
-import { WorkflowScroll } from '@/components/marketing/WorkflowScroll';
-import { SecuritySection } from '@/components/marketing/SecuritySection';
-import { TestimonialSection } from '@/components/marketing/TestimonialSection';
+import { ProblemSection } from '@/components/marketing/ProblemSection';
+import { CompatibleAppsSection } from '@/components/marketing/CompatibleAppsSection';
+import { SolutionSection } from '@/components/marketing/SolutionSection';
+import { HowItWorksSection } from '@/components/marketing/HowItWorksSection';
+import { FAQSection } from '@/components/marketing/FAQSection';
+import { FinalCTASection } from '@/components/marketing/FinalCTASection';
+import { OrganizeSection } from '@/components/marketing/OrganizeSection';
+import { ReviewSection } from '@/components/marketing/ReviewSection';
+
+import { SectionAnimation } from '@/components/marketing/layout/SectionAnimation';
+import { GridSeparator } from '@/components/marketing/layout/GridSeparator';
 
 export const metadata: Metadata = {
-  title: 'MeetSolis - Professional Video Meetings for Freelancers & Agencies',
+  title: 'MeetSolis - The AI Client Memory for Freelancers',
   description:
-    'HD video calls, AI summaries, and collaborative tools for freelancers and agencies. Unlimited meetings from $15/month. Zoom alternative built for professionals.',
-  keywords: [
-    'video conferencing',
-    'zoom alternative',
-    'freelancer tools',
-    'agency meetings',
-    'AI meeting summaries',
-    'online meetings',
-    'video calls',
-    'collaborative whiteboard',
-  ],
+    'Never walk into a meeting unprepared. MeetSolis remembers client context, decisions, and action items for you. Join the waitlist.',
 };
 
 export default function LandingPage() {
   return (
     <>
-      <Hero />
-      <SocialProof />
-      <ClientCardDeepDive />
-      <BentoGrid />
-      <WorkflowScroll />
-      <SecuritySection />
-      <TestimonialSection />
+      <div id="hero">
+        <Hero />
+      </div>
+
+      <SectionAnimation>
+        <CompatibleAppsSection />
+      </SectionAnimation>
+
+      <GridSeparator />
+
+      <div id="problem" className="scroll-mt-24">
+        <SectionAnimation>
+          <ProblemSection />
+        </SectionAnimation>
+      </div>
+
+      <GridSeparator />
+
+      <div id="features" className="scroll-mt-24">
+        <SectionAnimation>
+          <SolutionSection />
+        </SectionAnimation>
+      </div>
+
+      <GridSeparator />
+
+      <div id="how-it-works" className="scroll-mt-24">
+        <SectionAnimation>
+          <HowItWorksSection />
+        </SectionAnimation>
+      </div>
+
+      <SectionAnimation>
+        <ReviewSection />
+      </SectionAnimation>
+
+      <div id="faq" className="scroll-mt-24">
+        <SectionAnimation>
+          <FAQSection />
+        </SectionAnimation>
+      </div>
+
+      <SectionAnimation>
+        <OrganizeSection />
+      </SectionAnimation>
+
+      <SectionAnimation>
+        <FinalCTASection />
+      </SectionAnimation>
+
+
     </>
   );
 }

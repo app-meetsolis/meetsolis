@@ -1,173 +1,64 @@
 'use client';
 
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { useUser } from '@clerk/nextjs';
 
 export function Footer() {
-  const { isSignedIn } = useUser();
-
   return (
-    <footer className="relative bg-white pt-24 pb-12 overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+    <footer className="py-20 bg-[#0B0F19] text-slate-400 border-t border-white/5">
+      <div className="container px-4 md:px-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-8 mb-16">
 
-      <div className="container mx-auto px-4 md:px-6">
-        {/* Footer CTA */}
-        <div className="relative rounded-[32px] overflow-hidden bg-gradient-to-br from-primary to-accent p-8 md:p-16 text-center mb-24 shadow-2xl shadow-primary/25">
-          <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay"></div>
-          <div className="relative z-10 max-w-2xl mx-auto space-y-8">
-            <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight">
-              Ready to impress your next client?
-            </h2>
-            <p className="text-primary-foreground/90 text-lg md:text-xl">
-              Join thousands of freelancers who have upgraded their client
-              meetings.
-            </p>
-            <Button
-              asChild
-              size="lg"
-              className="bg-white text-primary hover:bg-white/90 hover:scale-105 transition-all duration-300 rounded-full px-8 h-14 text-base font-semibold border-0 shadow-xl"
-            >
-              <Link href={isSignedIn ? '/dashboard' : '/sign-up'}>
-                {isSignedIn
-                  ? 'Go to Dashboard'
-                  : 'Create your first Client Card'}
-              </Link>
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
-          <div className="col-span-2 md:col-span-1 space-y-4">
-            <span className="text-xl font-bold tracking-tight text-foreground">
-              MeetSolis
-            </span>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              The video conferencing tool built for freelancers. Client-centric,
-              organized, and professional.
+          {/* Brand Column */}
+          <div className="space-y-6">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="w-14 h-14 overflow-hidden flex items-center justify-center">
+                <img src="/logo.jpg" alt="Solis" className="w-full h-full object-contain rounded-xl" />
+              </div>
+              <span className="text-2xl font-bold text-white tracking-tight">MeetSolis</span>
+            </Link>
+            <p className="text-sm leading-relaxed max-w-xs">
+              The AI memory layer for client-facing freelancers. Never miss a detail again.
             </p>
           </div>
 
-          <div className="space-y-4">
-            <h4 className="font-semibold text-foreground">Product</h4>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  href="#"
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Features
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Updates
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Beta
-                </Link>
-              </li>
+          {/* Column 1: Product */}
+          <div className="space-y-6">
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider">Product</h4>
+            <ul className="space-y-4 text-sm">
+              <li><Link href="#features" className="hover:text-white transition-colors">Features</Link></li>
+              <li><Link href="#how-it-works" className="hover:text-white transition-colors">How it Works</Link></li>
+              <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
+              <li><Link href="#faq" className="hover:text-white transition-colors">FAQ</Link></li>
             </ul>
           </div>
 
-          <div className="space-y-4">
-            <h4 className="font-semibold text-foreground">Company</h4>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  href="#"
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Careers
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Contact
-                </Link>
-              </li>
+          {/* Column 2: Resources */}
+          <div className="space-y-6">
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider">Resources</h4>
+            <ul className="space-y-4 text-sm">
+              <li><Link href="#faq" className="hover:text-white transition-colors">Help Center</Link></li>
+              <li><a href="mailto:appmeetsolis@gmail.com" className="hover:text-white transition-colors">Contact Support</a></li>
             </ul>
           </div>
 
-          <div className="space-y-4">
-            <h4 className="font-semibold text-foreground">Legal</h4>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  href="/privacy"
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Privacy
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/terms"
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Terms
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Security
-                </Link>
-              </li>
+          {/* Column 3: Legal */}
+          <div className="space-y-6">
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider">Legal</h4>
+            <ul className="space-y-4 text-sm">
+              <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
             </ul>
           </div>
+
         </div>
 
-        <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-border/50 text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} MeetSolis. All rights reserved.</p>
-          <div className="flex gap-6 mt-4 md:mt-0">
-            <Link href="#" className="hover:text-primary transition-colors">
-              Twitter
-            </Link>
-            <Link href="#" className="hover:text-primary transition-colors">
-              LinkedIn
-            </Link>
-            <Link href="#" className="hover:text-primary transition-colors">
-              Instagram
-            </Link>
+        {/* Bottom Bar */}
+        <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4 text-xs">
+          <p>© {new Date().getFullYear()} Solis Inc. All rights reserved.</p>
+          <div className="flex items-center gap-6">
+            <Link href="https://x.com/SutharHarigopal" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Twitter</Link>
+            <Link href="https://www.linkedin.com/in/harigopal-suthar-6a3372307/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">LinkedIn</Link>
+            <Link href="https://www.instagram.com/harigopalsuthar/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Instagram</Link>
           </div>
         </div>
       </div>

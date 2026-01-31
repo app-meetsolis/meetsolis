@@ -15,46 +15,14 @@ export function initializeSentry(): void {
     return;
   }
 
+  // Sentry is initialized automatically by Next.js via sentry.client.config.ts
+  // We only set additional context here.
+
+  /*
   Sentry.init({
-    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-    environment: process.env.NODE_ENV || 'development',
-    release: process.env.NEXT_PUBLIC_APP_VERSION || 'dev',
-
-    // Performance Monitoring
-    tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
-
-    // Error Sampling (stay within free tier: 5K errors/month)
-    sampleRate: process.env.NODE_ENV === 'production' ? 0.5 : 1.0,
-
-    // Additional options
-    beforeSend(event, hint) {
-      // Add custom error fingerprinting
-      if (event.exception) {
-        const error = hint.originalException;
-        if (error instanceof Error) {
-          // Group similar errors together
-          event.fingerprint = [
-            error.name,
-            error.message.replace(/\d+/g, 'N'), // Replace numbers with N
-          ];
-        }
-      }
-
-      // Filter out noise
-      if (event.message?.includes('ResizeObserver loop')) {
-        return null; // Don't send this common benign error
-      }
-
-      return event;
-    },
-
-    // Integration configuration for browser tracing
-    tracePropagationTargets: [
-      'localhost',
-      /^https:\/\/.*\.vercel\.app/,
-      process.env.NEXT_PUBLIC_APP_URL || '',
-    ],
+    ... moved to sentry.client.config.ts ...
   });
+  */
 
   // Set default context
   Sentry.setContext('application', {

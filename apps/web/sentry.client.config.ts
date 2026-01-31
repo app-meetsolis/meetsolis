@@ -60,8 +60,19 @@ if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
             message.includes('moz-extension://') ||
             message.includes('safari-extension://')
           ) {
-            return null;
           }
+        }
+      }
+
+      // Add custom error fingerprinting (from analytics/sentry.ts)
+      if (event.exception) {
+        const error = hint.originalException;
+        if (error && error instanceof Error) {
+          // Group similar errors together (e.g. "User 123 not found" -> "User N not found")
+          event.fingerprint = [
+            error.name,
+            error.message.replace(/\d+/g, 'N'),
+          ];
         }
       }
 

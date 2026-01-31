@@ -4,87 +4,114 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    /* #FFFFFF - Pure White */
-    --foreground: 222 47% 11%;
-    /* #0F172A - Deep Slate Blue */
+    /* Cal.com inspired theme */
+    --background: 240 5% 96%;
+    /* #F2F2F5 - Light Grey Canvas */
+    --foreground: 240 10% 4%;
+    /* Near Black */
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 240 10% 4%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 240 10% 4%;
 
-    --primary: 221 83% 53%;
-    /* #2563EB - Royal Blue */
-    --primary-foreground: 0 0% 100%;
+    --primary: 240 6% 10%;
+    /* #19191D - Deep Black/Grey */
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 210 40% 96%;
-    /* #F1F5F9 - Light Slate */
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 6% 10%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 240 5% 90%;
+    --muted-foreground: 240 4% 45%;
 
-    --accent: 217 91% 68%;
-    /* #60A5FA - Sky Blue */
-    --accent-foreground: 0 0% 100%;
+    --accent: 240 5% 96%;
+    --accent-foreground: 240 6% 10%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221 83% 53%;
-    /* Royal Blue Ring */
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 240 6% 10%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
+
+    --font-heading: var(--font-outfit);
+    /* Keeping Outfit as it works for modern headings */
+    --font-body: var(--font-dm-sans);
   }
 
   .dark {
-    --background: 222 47% 11%;
-    /* #0F172A - Deep Slate Background */
-    --foreground: 210 40% 98%;
+    --background: 240 10% 4%;
+    --foreground: 0 0% 98%;
 
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
+    --card: 240 10% 4%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 240 10% 4%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 217 91% 60%;
-    /* Lighter Blue for Dark Mode */
-    --primary-foreground: 222 47.1% 11.2%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 6% 10%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 65%;
 
-    --accent: 217 91% 60%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 240 4% 16%;
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 240 5% 84%;
   }
 }
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
   * {
     @apply border-border;
   }
 
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer utilities {
+  .bg-noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+  }
+
+  .glass-border {
+    @apply border border-white/50 shadow-sm;
   }
 }
 
 @layer components {
+
   /* Override Stream SDK constraints for single participant full-screen mode */
   .single-participant-fullscreen .str-video__participant-view {
     max-width: 100% !important;

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Outfit, DM_Sans } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/react';
 import { cn } from '@/lib/utils';
 import { SpeedInsights } from '@vercel/speed-insights/next';
@@ -9,10 +9,20 @@ import { AnalyticsProvider } from '@/components/analytics/AnalyticsProvider';
 import { DebugLoggerInit } from '@/components/debug/DebugLoggerInit';
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin'] });
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-outfit',
+  display: 'swap',
+});
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  variable: '--font-dm-sans',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
-  title: 'MeetSolis - Video Conferencing Platform',
+  title: 'MeetSolis - The AI Client Memory',
   description:
     'Professional video conferencing solution for freelancers and small agencies',
   icons: {
@@ -20,14 +30,17 @@ export const metadata: Metadata = {
   },
 };
 
+import { NoiseOverlay } from '@/components/marketing/layout/NoiseOverlay';
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={cn(inter.className, 'overflow-x-hidden')}>
+    <html lang="en" className={cn(outfit.variable, dmSans.variable)}>
+      <body className={cn(dmSans.className, 'overflow-x-hidden antialiased')}>
+        <NoiseOverlay />
         <DebugLoggerInit />
         <AnalyticsProvider>
           <Providers>{children}</Providers>
