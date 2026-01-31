@@ -52,7 +52,7 @@ export function WaitlistModal({ children, defaultOpen = false }: WaitlistModalPr
             setError(result.error);
         } else if (result.success) {
             setSuccess(true);
-            setMessage(result.message || "You're on the list!");
+            setMessage(result.message || "You&apos;re on the list!");
         }
     }
 
@@ -68,7 +68,7 @@ export function WaitlistModal({ children, defaultOpen = false }: WaitlistModalPr
                             <CheckCircle2 className="w-6 h-6" />
                         </div>
                         <DialogTitle className="text-2xl font-bold text-slate-900 mb-2">
-                            You're on the list!
+                            You&apos;re on the list!
                         </DialogTitle>
                         <DialogDescription className="text-slate-500 max-w-xs mx-auto mb-6">
                             {message}
