@@ -49,10 +49,16 @@ export function WaitlistModal({
     }
   }, [open]);
 
-  async function handleSubmit(formData: FormData) {
+  async function onFormSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setLoading(true);
     setError('');
     setMessage('');
+
+    const formData = new FormData(e.currentTarget);
+
+    // Add artificial delay for better UX (so user sees the loading state)
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     const result = await joinWaitlist(formData);
 
@@ -119,7 +125,7 @@ export function WaitlistModal({
                   Get early access to the memory layer for your client work.
                 </DialogDescription>
               </DialogHeader>
-              <form action={handleSubmit} className="grid gap-4 py-2">
+              <form onSubmit={onFormSubmit} className="grid gap-4 py-2">
                 <div className="grid gap-2">
                   <Label htmlFor="email">Email address</Label>
                   <Input
@@ -173,8 +179,14 @@ export function WaitlistModal({
                   disabled={loading}
                   className="mt-4 bg-slate-900 hover:bg-slate-800 text-white w-full"
                 >
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Join Waitlist
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Joining...
+                    </>
+                  ) : (
+                    'Join Waitlist'
+                  )}
                 </Button>
               </form>
             </motion.div>
