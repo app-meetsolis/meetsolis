@@ -22,7 +22,7 @@ export function Navbar() {
   }, []);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-6 md:pt-8 px-4 pointer-events-none safe-area-top">
+    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-8 md:pt-8 px-4 pointer-events-none safe-area-top">
       <motion.div
         initial={{
           maxWidth: '1200px',
@@ -31,7 +31,7 @@ export function Navbar() {
           backdropFilter: 'blur(0px)',
           border: '1px solid transparent',
           boxShadow: 'none',
-          padding: '1rem 1.25rem',
+          padding: '1.25rem 1.5rem',
         }}
         animate={{
           maxWidth: scrolled ? '800px' : '1200px',
@@ -46,7 +46,7 @@ export function Navbar() {
           boxShadow: scrolled
             ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
             : 'none',
-          padding: scrolled ? '0.75rem 1.5rem' : '1rem 1.25rem',
+          padding: scrolled ? '0.75rem 1.5rem' : '1.25rem 1.5rem',
         }}
         transition={{
           type: 'spring',
