@@ -84,7 +84,7 @@ export function WaitlistModal({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
-              className="flex flex-col items-center justify-center py-6 text-center"
+              className="flex flex-col items-center justify-center py-6 text-center w-full min-h-[250px]"
             >
               <motion.div
                 initial={{ scale: 0 }}
