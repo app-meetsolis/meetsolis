@@ -22,7 +22,7 @@ export function Navbar() {
   }, []);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 md:pt-6 px-4 pointer-events-none safe-area-top">
+    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-6 md:pt-8 px-4 pointer-events-none safe-area-top">
       <motion.div
         initial={{
           maxWidth: '1200px',

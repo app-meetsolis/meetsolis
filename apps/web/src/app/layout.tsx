@@ -44,7 +44,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={cn(outfit.variable, dmSans.variable)}>
+    <html
+      lang="en"
+      className={cn(outfit.variable, dmSans.variable, 'scroll-smooth')}
+    >
       <body className={cn(dmSans.className, 'overflow-x-hidden antialiased')}>
         <NoiseOverlay />
         <DebugLoggerInit />
