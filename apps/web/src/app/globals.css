@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
 @layer base {
   :root {
     /* Cal.com inspired theme */
@@ -85,7 +95,9 @@
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
   }
 
   h1,
@@ -111,7 +123,6 @@
 }
 
 @layer components {
-
   /* Override Stream SDK constraints for single participant full-screen mode */
   .single-participant-fullscreen .str-video__participant-view {
     max-width: 100% !important;

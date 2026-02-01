@@ -22,34 +22,40 @@ export function Navbar() {
   }, []);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-6 px-4 pointer-events-none">
+    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 md:pt-6 px-4 pointer-events-none safe-area-top">
       <motion.div
         initial={{
-          maxWidth: "1200px",
-          borderRadius: "24px",
-          backgroundColor: "rgba(255, 255, 255, 0)",
-          backdropFilter: "blur(0px)",
-          border: "1px solid transparent",
-          boxShadow: "none",
-          padding: "1.5rem 0rem"
+          maxWidth: '1200px',
+          borderRadius: '24px',
+          backgroundColor: 'rgba(255, 255, 255, 0)',
+          backdropFilter: 'blur(0px)',
+          border: '1px solid transparent',
+          boxShadow: 'none',
+          padding: '1rem 1.25rem',
         }}
         animate={{
-          maxWidth: scrolled ? "800px" : "1200px",
-          borderRadius: scrolled ? "9999px" : "24px",
-          backgroundColor: scrolled ? "rgba(255, 255, 255, 0.8)" : "rgba(255, 255, 255, 0)",
-          backdropFilter: scrolled ? "blur(12px)" : "blur(0px)",
-          border: scrolled ? "1px solid rgba(226, 232, 240, 0.6)" : "1px solid transparent",
-          boxShadow: scrolled ? "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)" : "none",
-          padding: scrolled ? "0.75rem 1.5rem" : "1.5rem 0rem"
+          maxWidth: scrolled ? '800px' : '1200px',
+          borderRadius: scrolled ? '9999px' : '24px',
+          backgroundColor: scrolled
+            ? 'rgba(255, 255, 255, 0.95)'
+            : 'rgba(255, 255, 255, 0)',
+          backdropFilter: scrolled ? 'blur(12px)' : 'blur(0px)',
+          border: scrolled
+            ? '1px solid rgba(226, 232, 240, 0.6)'
+            : '1px solid transparent',
+          boxShadow: scrolled
+            ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
+            : 'none',
+          padding: scrolled ? '0.75rem 1.5rem' : '1rem 1.25rem',
         }}
         transition={{
-          type: "spring",
+          type: 'spring',
           stiffness: 260,
-          damping: 20
+          damping: 20,
         }}
         className="pointer-events-auto flex items-center justify-between mx-auto w-full"
         style={{
-          width: "100%"
+          width: '100%',
         }}
       >
         {/* Logo */}
@@ -68,7 +74,11 @@ export function Navbar() {
         <div className="hidden md:flex items-center gap-8 mr-8">
           <NavLink href="#problem" label="Problem" scrolled={scrolled} />
           <NavLink href="#features" label="Features" scrolled={scrolled} />
-          <NavLink href="#how-it-works" label="How it Works" scrolled={scrolled} />
+          <NavLink
+            href="#how-it-works"
+            label="How it Works"
+            scrolled={scrolled}
+          />
           <NavLink href="#faq" label="FAQ" scrolled={scrolled} />
         </div>
 
@@ -98,7 +108,15 @@ export function Navbar() {
   );
 }
 
-function NavLink({ href, label, scrolled }: { href: string, label: string, scrolled: boolean }) {
+function NavLink({
+  href,
+  label,
+  scrolled,
+}: {
+  href: string;
+  label: string;
+  scrolled: boolean;
+}) {
   return (
     <Link
       href={href}
