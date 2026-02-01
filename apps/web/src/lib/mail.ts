@@ -22,7 +22,7 @@ export async function sendWelcomeEmail(email: string, name?: string) {
             <img src="https://meetsolis.vercel.app/logo.jpg" alt="Solis Logo" style="width: 64px; height: 64px; border-radius: 12px; object-fit: cover;" />
           </div>
           <h2 style="margin-bottom: 24px;">You're in. 🚀</h2>
-          <img src="https://via.placeholder.com/600x200?text=Placeholder+Image" alt="Placeholder Image" style="width: 100%; height: auto; margin-bottom: 24px;" />
+
           
           <p style="color: #475569; line-height: 1.6; margin-bottom: 24px;">
             Thanks for joining the Solis 2.0 waitlist, ${firstName}. We're thrilled to have you early on this journey.
