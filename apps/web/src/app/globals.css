@@ -6,6 +6,31 @@
   html {
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
+    overflow-y: scroll; /* Always show scrollbar to prevent layout shift */
+  }
+
+  body {
+    overflow-x: hidden;
+    position: relative;
+    /* Let html handle vertical scrolling to avoid double scrollbars */
+  }
+
+  /* Prevent body scroll when dialog is open - Radix handles this but ensure it works */
+  body[data-scroll-locked],
+  body:has([data-radix-dialog-content]) {
+    overflow: hidden !important;
+  }
+
+  /* Hide scrollbar on mobile for cleaner look, but keep functionality */
+  @media (max-width: 768px) {
+    html {
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE and Edge */
+    }
+
+    html::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Opera */
+    }
   }
 
   * {
@@ -96,10 +121,6 @@
 }
 
 @layer base {
-  html {
-    scroll-behavior: smooth;
-  }
-
   * {
     @apply border-border;
   }

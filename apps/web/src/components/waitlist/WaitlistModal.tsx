@@ -69,7 +69,7 @@ export function WaitlistModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto overscroll-contain rounded-xl">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] rounded-xl">
         <AnimatePresence mode="wait">
           {success ? (
             <motion.div
