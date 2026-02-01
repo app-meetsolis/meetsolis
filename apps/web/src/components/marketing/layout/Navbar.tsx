@@ -22,7 +22,7 @@ export function Navbar() {
   }, []);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-10 md:pt-8 px-4 pointer-events-none safe-area-top">
+    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none pt-[calc(2rem+env(safe-area-inset-top))] md:pt-8">
       <motion.div
         initial={{
           maxWidth: '1200px',
@@ -59,7 +59,7 @@ export function Navbar() {
         }}
       >
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 mr-8 shrink-0">
+        <Link href="/" className="flex items-center gap-3 md:mr-8 shrink-0">
           <img
             src="/logo.jpg"
             alt="MeetSolis Logo"

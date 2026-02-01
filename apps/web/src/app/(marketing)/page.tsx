@@ -48,9 +48,7 @@ export default function LandingPage() {
       <GridSeparator />
 
       <div id="how-it-works" className="scroll-mt-24">
-        <SectionAnimation>
-          <HowItWorksSection />
-        </SectionAnimation>
+        <HowItWorksSection />
       </div>
 
       <SectionAnimation>
@@ -70,8 +68,6 @@ export default function LandingPage() {
       <SectionAnimation>
         <FinalCTASection />
       </SectionAnimation>
-
-
     </>
   );
 }

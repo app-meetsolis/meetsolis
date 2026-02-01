@@ -48,7 +48,7 @@ export default function RootLayout({
       lang="en"
       className={cn(outfit.variable, dmSans.variable, 'scroll-smooth')}
     >
-      <body className={cn(dmSans.className, 'overflow-x-hidden antialiased')}>
+      <body className={cn(dmSans.className, 'antialiased')}>
         <NoiseOverlay />
         <DebugLoggerInit />
         <AnalyticsProvider>
