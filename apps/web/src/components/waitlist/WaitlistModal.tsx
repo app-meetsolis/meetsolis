@@ -64,6 +64,13 @@ export function WaitlistModal({
 
     setLoading(false);
 
+    if (!result) {
+      setError(
+        'Something went wrong. Please check your connection and try again.'
+      );
+      return;
+    }
+
     if (result.error) {
       setError(result.error);
     } else if (result.success) {
