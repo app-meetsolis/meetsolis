@@ -11,6 +11,7 @@ import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import { config } from '@/lib/config/env';
 import { ClientCreateSchema } from '@meetsolis/shared';
+import { checkClientLimit } from '@/lib/billing/checkUsage';
 
 /**
  * POST /api/clients
@@ -73,84 +74,20 @@ export async function POST(request: NextRequest) {
 
     const userId = user.id;
 
-    // Check user tier limit
-    const { data: userPrefs } = await supabase
-      .from('user_preferences')
-      .select('max_clients')
-      .eq('user_id', userId)
-      .single();
-
-    // Default to free tier if no preferences found
-    const maxClients = userPrefs?.max_clients || 3;
-
-    // Count existing clients
-    const { count, error: countError } = await supabase
-      .from('clients')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId);
-
-    if (countError) {
-      console.error('[Clients API] Failed to count clients:', countError);
-      return NextResponse.json(
-        {
-          error: {
-            code: 'INTERNAL_ERROR',
-            message: 'Failed to check client limit',
-          },
-        },
-        { status: 500 }
-      );
-    }
-
-    // Enforce tier limit
-    if (count !== null && count >= maxClients) {
+    // Check tier limit via subscriptions table
+    const limitCheck = await checkClientLimit(clerkUserId, userId);
+    if (!limitCheck.allowed) {
       return NextResponse.json(
         {
           error: {
             code: 'TIER_LIMIT_EXCEEDED',
-            message: `Client limit reached (${count}/${maxClients})`,
-            limit: maxClients,
-            current: count,
+            message: limitCheck.reason,
+            limit: limitCheck.limit,
+            current: limitCheck.current,
           },
         },
         { status: 403 }
       );
-    }
-
-    // Check for duplicate email (if provided and not empty)
-    if (clientData.email && clientData.email.trim() !== '') {
-      const { data: existingClient, error: dupError } = await supabase
-        .from('clients')
-        .select('id, email')
-        .eq('user_id', userId)
-        .eq('email', clientData.email)
-        .maybeSingle();
-
-      if (dupError) {
-        console.error('[Clients API] Duplicate check failed:', dupError);
-        return NextResponse.json(
-          {
-            error: {
-              code: 'INTERNAL_ERROR',
-              message: 'Failed to check for duplicate client',
-            },
-          },
-          { status: 500 }
-        );
-      }
-
-      if (existingClient) {
-        return NextResponse.json(
-          {
-            error: {
-              code: 'DUPLICATE_CLIENT',
-              message: 'A client with this email already exists',
-              existingClientId: existingClient.id,
-            },
-          },
-          { status: 409 }
-        );
-      }
     }
 
     // Insert client
@@ -161,11 +98,9 @@ export async function POST(request: NextRequest) {
         name: clientData.name,
         company: clientData.company || null,
         role: clientData.role || null,
-        email: clientData.email || null,
-        phone: clientData.phone || null,
         website: clientData.website || null,
-        linkedin_url: clientData.linkedin_url || null,
-        tags: clientData.tags || [],
+        goal: clientData.goal || null,
+        start_date: clientData.start_date || null,
         status: clientData.status || 'active',
       })
       .select()

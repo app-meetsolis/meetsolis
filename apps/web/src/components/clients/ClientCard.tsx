@@ -1,86 +1,44 @@
-/**
- * ClientCard Component
- * Story 2.2: Client Dashboard UI - Task 2: ClientCard Component
- * Story 2.3: Add/Edit Client Modal - Task 8 (Edit button)
- * Story 2.5: Client Tags & Labels - Task 5
- *
- * Displays individual client information in a card format with:
- * - Client name, role/company, last meeting date
- * - Active projects count badge (meetings in last 30 days)
- * - Tags with click-to-filter functionality
- * - Hover effect (lift and shadow)
- * - Click to navigate to client detail page
- * - Edit button (Story 2.3)
- */
-
 'use client';
 
 import { Client } from '@meetsolis/shared';
 import { useRouter } from 'next/navigation';
 import { formatDistanceToNow, parseISO } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { TagPill } from './TagPill';
-import { Building2, Calendar, Pencil } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, Pencil, Target, CheckSquare } from 'lucide-react';
 
 interface ClientCardProps {
   client: Client;
   onEdit?: (_client: Client) => void;
+  pendingActionsCount?: number;
 }
 
-/**
- * Calculate active projects count (meetings in last 30 days)
- * Note: Placeholder until Epic 3 implements meetings table
- */
-function getActiveProjectsCount(_client: Client): number {
-  // TODO: Replace with actual count from meetings table in Epic 3
-  // For now, return 0 as meetings table doesn't exist yet
-  return 0;
-}
-
-/**
- * Format last meeting date
- */
-function formatLastMeeting(
+function formatLastSession(
   lastMeetingAt: string | Date | null | undefined
 ): string {
-  if (!lastMeetingAt) {
-    return 'No meetings yet';
-  }
-
+  if (!lastMeetingAt) return 'No sessions yet';
   try {
     const date =
       typeof lastMeetingAt === 'string'
         ? parseISO(lastMeetingAt)
         : lastMeetingAt;
-    return `Last meeting: ${formatDistanceToNow(date, { addSuffix: true })}`;
-  } catch (error) {
-    console.error('Failed to parse last_meeting_at:', error);
-    return 'No meetings yet';
+    return `Last session: ${formatDistanceToNow(date, { addSuffix: true })}`;
+  } catch {
+    return 'No sessions yet';
   }
 }
 
-export function ClientCard({ client, onEdit }: ClientCardProps) {
+export function ClientCard({
+  client,
+  onEdit,
+  pendingActionsCount = 0,
+}: ClientCardProps) {
   const router = useRouter();
-  const activeProjects = getActiveProjectsCount(client);
 
-  // Format role and company display
-  const roleCompanyText =
-    [client.role, client.company].filter(Boolean).join(' at ') ||
-    'No role specified';
-
-  /**
-   * Handle edit button click
-   * Prevent card navigation when edit is clicked
-   */
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onEdit?.(client);
   };
-
-  // Determine which tags to display (first 3)
-  const displayTags = client.tags?.slice(0, 3) || [];
-  const remainingTagsCount = (client.tags?.length || 0) - displayTags.length;
 
   return (
     <div
@@ -109,54 +67,43 @@ export function ClientCard({ client, onEdit }: ClientCardProps) {
       )}
 
       {/* Client Name */}
-      <h3 className="mb-2 text-xl font-bold text-[#1A1A1A] group-hover:text-[#001F3F]">
+      <h3 className="mb-1 text-xl font-bold text-[#1A1A1A] group-hover:text-[#001F3F]">
         {client.name}
       </h3>
 
       {/* Role / Company */}
-      <div className="mb-3 flex items-center gap-2 text-sm text-[#6B7280]">
-        <Building2 className="h-4 w-4" />
-        <span>{roleCompanyText}</span>
-      </div>
+      {(client.role || client.company) && (
+        <p className="mb-3 text-sm text-[#6B7280]">
+          {[client.role, client.company].filter(Boolean).join(' at ')}
+        </p>
+      )}
 
-      {/* Tags - Story 2.5 */}
-      {displayTags.length > 0 && (
-        <div className="mb-3 flex flex-wrap items-center gap-1.5">
-          {displayTags.map(tag => (
-            <TagPill
-              key={tag}
-              tag={tag}
-              onClick={() => {
-                router.push(`/clients?tags=${encodeURIComponent(tag)}`);
-              }}
-            />
-          ))}
-          {remainingTagsCount > 0 && (
-            <Badge
-              variant="secondary"
-              className="bg-gray-100 text-[11px] text-gray-600"
-            >
-              + {remainingTagsCount} more
-            </Badge>
-          )}
+      {/* Coaching Goal */}
+      {client.goal && (
+        <div className="mb-3 flex items-start gap-2 text-sm text-[#1A1A1A]">
+          <Target className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#6B7280]" />
+          <span className="line-clamp-2">{client.goal}</span>
         </div>
       )}
 
-      {/* Last Meeting Date */}
+      {/* Last Session */}
       <div className="mb-3 flex items-center gap-2 text-sm text-[#6B7280]">
         <Calendar className="h-4 w-4" />
-        <span>{formatLastMeeting(client.last_meeting_at)}</span>
+        <span>{formatLastSession(client.last_meeting_at)}</span>
       </div>
 
-      {/* Active Projects Badge */}
-      {activeProjects > 0 && (
-        <Badge
-          variant="secondary"
-          className="bg-[#F3F4F6] text-[11px] uppercase tracking-wide"
-        >
-          {activeProjects} Active{' '}
-          {activeProjects === 1 ? 'Project' : 'Projects'}
-        </Badge>
+      {/* Pending Actions */}
+      {pendingActionsCount > 0 && (
+        <div className="flex items-center gap-2">
+          <CheckSquare className="h-4 w-4 text-[#F59E0B]" />
+          <Badge
+            variant="secondary"
+            className="bg-amber-50 text-amber-700 text-[11px]"
+          >
+            {pendingActionsCount} pending{' '}
+            {pendingActionsCount === 1 ? 'action' : 'actions'}
+          </Badge>
+        </div>
       )}
     </div>
   );

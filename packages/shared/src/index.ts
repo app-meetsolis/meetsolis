@@ -11,3 +11,6 @@ export * from './constants/services';
 
 // Schemas
 export * from './schemas/client';
+export * from './schemas/session';
+export * from './schemas/actionItem';
+export * from './schemas/subscription';

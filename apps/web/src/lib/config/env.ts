@@ -14,7 +14,26 @@ const envSchema = z.object({
 
   // AI Services
   OPENAI_API_KEY: z.string().optional(),
+  ANTHROPIC_API_KEY: z.string().optional(),
   DEEPL_API_KEY: z.string().optional(),
+
+  // Provider Selection
+  AI_PROVIDER: z
+    .enum(['placeholder', 'claude', 'openai'])
+    .default('placeholder'),
+  TRANSCRIPTION_PROVIDER: z
+    .enum(['placeholder', 'deepgram', 'openai-whisper'])
+    .default('placeholder'),
+  BILLING_PROVIDER: z.enum(['placeholder', 'stripe']).default('placeholder'),
+
+  // Transcription
+  DEEPGRAM_API_KEY: z.string().optional(),
+
+  // Billing / Stripe
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  STRIPE_PRICE_MONTHLY: z.string().optional(),
+  STRIPE_PRICE_ANNUAL: z.string().optional(),
 
   // Communication Services
   TWILIO_ACCOUNT_SID: z.string().optional(),
@@ -114,7 +133,22 @@ export const config = {
 
   ai: {
     openaiApiKey: env.OPENAI_API_KEY,
+    anthropicApiKey: env.ANTHROPIC_API_KEY,
     deeplApiKey: env.DEEPL_API_KEY,
+    provider: env.AI_PROVIDER,
+  },
+
+  transcription: {
+    provider: env.TRANSCRIPTION_PROVIDER,
+    deepgramApiKey: env.DEEPGRAM_API_KEY,
+  },
+
+  billing: {
+    provider: env.BILLING_PROVIDER,
+    stripeSecretKey: env.STRIPE_SECRET_KEY,
+    stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
+    stripePriceMonthly: env.STRIPE_PRICE_MONTHLY,
+    stripePriceAnnual: env.STRIPE_PRICE_ANNUAL,
   },
 
   twilio: {

@@ -65,9 +65,7 @@ export function TagInput({
   // Extract all unique tags from user's clients + predefined tags
   const allTags = useMemo(() => {
     const tagSet = new Set<string>(PREDEFINED_TAGS);
-    clients.forEach(client => {
-      client.tags?.forEach(tag => tagSet.add(tag));
-    });
+    // tags field removed in v3
     return Array.from(tagSet).sort();
   }, [clients]);
 

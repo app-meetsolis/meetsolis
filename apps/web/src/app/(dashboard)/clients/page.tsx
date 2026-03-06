@@ -63,10 +63,8 @@ function ClientsPageContent() {
   );
   const [isTierLimitDialogOpen, setIsTierLimitDialogOpen] = useState(false);
 
-  // Search/Filter state - Task 8 (Story 2.4) + Story 2.5
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState<SortOption>('date-added');
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   // React Query for data fetching with automatic refetch on window focus
   const {
@@ -82,31 +80,7 @@ function ClientsPageContent() {
     refetchOnWindowFocus: true, // Override global setting for this query
   });
 
-  // Fetch user preferences for tier limit
-  const { data: userPrefs } = useQuery({
-    queryKey: ['user-preferences'],
-    queryFn: async () => {
-      // Default to free tier max_clients if API doesn't exist yet
-      return { max_clients: 3 };
-    },
-    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
-  });
-
-  const maxClients = userPrefs?.max_clients || 3;
   const clientCount = clients?.length || 0;
-  const canAddClient = clientCount < maxClients;
-
-  /**
-   * Extract unique tags from all clients - Story 2.5
-   */
-  const availableTags = useMemo(() => {
-    if (!clients) return [];
-    const tagSet = new Set<string>();
-    clients.forEach(client => {
-      client.tags?.forEach(tag => tagSet.add(tag));
-    });
-    return Array.from(tagSet).sort();
-  }, [clients]);
 
   /**
    * Filter and sort clients - Tasks 3, 4, 7 (Story 2.4) + Story 2.5 (tags)
@@ -126,27 +100,19 @@ function ClientsPageContent() {
       });
     }
 
-    // Story 2.5: Tag filtering (client matches ANY selected tag)
-    if (selectedTags.length > 0) {
-      filtered = filtered.filter(client =>
-        client.tags?.some(tag => selectedTags.includes(tag))
-      );
-    }
-
-    // Task 4: Sorting
     const sorted = [...filtered].sort((a, b) => {
       switch (sortOption) {
         case 'name-asc':
           return a.name.localeCompare(b.name);
 
-        case 'last-meeting': {
+        case 'last-session': {
           const dateA = a.last_meeting_at
             ? new Date(a.last_meeting_at).getTime()
             : 0;
           const dateB = b.last_meeting_at
             ? new Date(b.last_meeting_at).getTime()
             : 0;
-          return dateB - dateA; // Most recent first
+          return dateB - dateA;
         }
 
         case 'date-added':
@@ -159,18 +125,9 @@ function ClientsPageContent() {
     });
 
     return sorted;
-  }, [clients, searchQuery, selectedTags, sortOption]);
+  }, [clients, searchQuery, sortOption]);
 
-  /**
-   * Handle Add Client button click
-   * Check tier limit before opening modal
-   */
   const handleAddClient = () => {
-    if (!canAddClient) {
-      setIsTierLimitDialogOpen(true);
-      return;
-    }
-
     setModalMode('create');
     setSelectedClient(undefined);
     setIsModalOpen(true);
@@ -201,15 +158,7 @@ function ClientsPageContent() {
   }, []);
 
   /**
-   * Handle tags changes - Story 2.5
-   */
-  const handleTagsChange = useCallback((tags: string[]) => {
-    setSelectedTags(tags);
-  }, []);
-
-  /**
-   * Handle clear search - Task 5 (Story 2.4)
-   * Reset query and URL params
+   * Handle clear search
    */
   const handleClearSearch = useCallback(() => {
     setSearchQuery('');
@@ -218,12 +167,10 @@ function ClientsPageContent() {
     router.push(`/clients?${params.toString()}`, { scroll: false });
   }, [router, searchParams]);
 
-  // Determine if showing search empty state vs no clients state
   const hasSearchQuery = searchQuery.trim().length > 0;
-  const hasActiveFilters = hasSearchQuery || selectedTags.length > 0;
   const showSearchEmpty =
-    hasActiveFilters && filteredAndSortedClients.length === 0;
-  const showNoClients = !hasActiveFilters && clients && clients.length === 0;
+    hasSearchQuery && filteredAndSortedClients.length === 0;
+  const showNoClients = !hasSearchQuery && clients && clients.length === 0;
   const showResults =
     !isLoading && !isError && filteredAndSortedClients.length > 0;
 
@@ -237,9 +184,7 @@ function ClientsPageContent() {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-[#1A1A1A]">Clients</h1>
-            <p className="mt-2 text-sm text-[#6B7280]">
-              Manage your professional relationships
-            </p>
+            <p className="mt-2 text-sm text-[#6B7280]">Your coaching clients</p>
           </div>
           <Button className="flex items-center gap-2" onClick={handleAddClient}>
             <Plus className="h-4 w-4" />
@@ -247,13 +192,10 @@ function ClientsPageContent() {
           </Button>
         </div>
 
-        {/* Search/Filter Bar - Task 8 (Story 2.4) + Story 2.5 */}
         {!isLoading && !isError && clients && clients.length > 0 && (
           <ClientSearch
             onSearchChange={handleSearchChange}
             onSortChange={handleSortChange}
-            availableTags={availableTags}
-            onTagsChange={handleTagsChange}
           />
         )}
 
@@ -300,7 +242,7 @@ function ClientsPageContent() {
         isOpen={isTierLimitDialogOpen}
         onClose={() => setIsTierLimitDialogOpen(false)}
         currentCount={clientCount}
-        maxClients={maxClients}
+        maxClients={1}
       />
     </div>
   );

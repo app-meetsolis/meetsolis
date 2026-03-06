@@ -257,12 +257,12 @@ export interface MeetingSummary {
   meeting_id: string;
   summary: string;
   key_points: string[];
-  action_items: ActionItem[];
+  action_items: MeetingActionItem[];
   ai_model: string;
   created_at: string;
 }
 
-export interface ActionItem {
+export interface MeetingActionItem {
   description: string;
   assigned_to?: string;
   due_date?: string;
@@ -273,7 +273,7 @@ export interface MeetingSummaryInsert {
   meeting_id: string;
   summary: string;
   key_points?: string[];
-  action_items?: ActionItem[];
+  action_items?: MeetingActionItem[];
   ai_model?: string;
 }
 

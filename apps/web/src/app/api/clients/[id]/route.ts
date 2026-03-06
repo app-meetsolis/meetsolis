@@ -229,43 +229,6 @@ export async function PUT(
       );
     }
 
-    // Check for duplicate email (if email is being updated and not empty)
-    if (updateData.email && updateData.email.trim() !== '') {
-      const { data: duplicateClient, error: dupError } = await supabase
-        .from('clients')
-        .select('id, email')
-        .eq('user_id', userId)
-        .eq('email', updateData.email)
-        .neq('id', clientId) // Exclude current client
-        .maybeSingle();
-
-      if (dupError) {
-        console.error('[Clients API] Duplicate check failed:', dupError);
-        return NextResponse.json(
-          {
-            error: {
-              code: 'INTERNAL_ERROR',
-              message: 'Failed to check for duplicate client',
-            },
-          },
-          { status: 500 }
-        );
-      }
-
-      if (duplicateClient) {
-        return NextResponse.json(
-          {
-            error: {
-              code: 'DUPLICATE_CLIENT',
-              message: 'A client with this email already exists',
-              existingClientId: duplicateClient.id,
-            },
-          },
-          { status: 409 }
-        );
-      }
-    }
-
     // Update client (updated_at will be auto-updated by trigger)
     const { data: updatedClient, error: updateError } = await supabase
       .from('clients')
