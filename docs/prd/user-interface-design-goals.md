@@ -34,8 +34,7 @@
 ├──────────────────┤
 │                  │
 │  👥 Clients      │  ← Active state (bg highlight)
-│  📅 Meetings     │
-│  🤖 Assistant    │
+│  🤖 Intelligence │
 │                  │
 │                  │
 │      [space]     │
@@ -96,8 +95,9 @@
 │  Sarah Chen                        │  ← Name (20px, bold)
 │  Product Director at Nexus Design  │  ← Role/Company (14px, gray)
 │                                    │
-│  Last Meeting        2 days ago    │  ← Metadata
-│  [2 ACTIVE PROJECTS]               │  ← Badge (pill style)
+│  Goal: Executive presence dev      │  ← Coaching goal (italic, secondary)
+│  Last Session        2 days ago    │  ← Metadata
+│  [3 PENDING ACTIONS]               │  ← Badge (pill style)
 └────────────────────────────────────┘
 ```
 
@@ -123,13 +123,13 @@
   - Color: Gray (#6B7280)
   - Margin bottom: 16px
 
-- **Last Meeting:**
+- **Last Session:**
   - Label + Value layout (flex space-between)
   - Font size: 13px
   - Color: Gray (#9CA3AF)
   - Margin bottom: 8px
 
-- **Active Projects Badge:**
+- **Pending Actions Badge:**
   - Background: Light gray (#F3F4F6)
   - Color: Dark gray (#374151)
   - Font size: 11px
@@ -241,87 +241,60 @@ Regular:    400  (Body text)
 ├────────────────────────────────────────────────────┤
 │  Sarah Chen                                        │
 │  Product Director at Nexus Design                  │
-│  [VIP] [Active]                                    │  ← Tags
+│  Goal: Executive presence development              │
+│  Coaching since Jan 2025                           │
 ├────────────────────────────────────────────────────┤
-│  ┌─ Overview ──┐ ┌─ Meetings ──┐ ┌─ Notes ──┐    │  ← Tabs
-│  │             │ │              │ │          │    │
-│  │  AI-gen     │ │  Meeting     │ │  Manual  │    │
-│  │  summary    │ │  history     │ │  notes   │    │
-│  │             │ │              │ │          │    │
-│  └─────────────┘ └──────────────┘ └──────────┘    │
+│  Session Timeline (main content)                   │
+│  [Upload Session Transcript]                       │
 │                                                    │
-│  ┌─ Action Items ──────────────────────────────┐  │
-│  │  [ ] Follow up on pricing - Due: Jan 10     │  │
-│  │  [✓] Send proposal - Done                   │  │
-│  └──────────────────────────────────────────────┘  │
+│  ┌─ Session Card (Jan 3, 2026) ───────────────┐   │
+│  │  Q1 Leadership Review                       │   │
+│  │  Summary snippet...                         │   │
+│  │  [leadership] [feedback] | 2 action items   │   │
+│  └─────────────────────────────────────────────┘   │
+│                                                    │
+│  ┌─ Pending Actions ──────────────────────────┐   │
+│  │  [ ] Follow up on 360 feedback              │   │
+│  │  [ ] Send reading list                      │   │
+│  └─────────────────────────────────────────────┘   │
 └────────────────────────────────────────────────────┘
 ```
 
 **Sections:**
-- Back button + Prepare button + Options menu
-- Client name, role, tags
-- Tabbed interface: Overview, Meetings, Notes, Actions
-- Action items always visible at bottom
+- Back button + Ask Solis button + Options menu
+- Client name, role, goal, coaching start date
+- Session timeline (reverse-chronological)
+- Pending actions section
+- "Ask Solis about [Client]" CTA
 
 ---
 
-### 3. Meetings Page
+### 3. Intelligence Page (Solis)
 
 **Layout:**
 ```
 ┌────────────────────────────────────────────────────┐
-│  Meetings                           [+ Log Meeting]│
-│  Your meeting history across all clients.          │
+│  Intelligence                                      │
+│  Ask Solis about any client or session.            │
 ├────────────────────────────────────────────────────┤
 │  ┌──────────────────────────────────────────────┐ │
-│  │  📅 Jan 3, 2026                              │ │
-│  │  Sarah Chen · Product Planning Session       │ │
-│  │  💬 2 key discussions  ✅ 3 tasks  🕐 45 min │ │
+│  │  Ask Solis...                           [Send]│ │
 │  └──────────────────────────────────────────────┘ │
 │                                                    │
-│  ┌──────────────────────────────────────────────┐ │
-│  │  📅 Jan 1, 2026                              │ │
-│  │  Marcus Thorne · Q1 Strategy Review          │ │
-│  │  💬 5 key discussions  ✅ 1 task  🕐 60 min  │ │
-│  └──────────────────────────────────────────────┘ │
-└────────────────────────────────────────────────────┘
-```
-
-**Meeting Card:**
-- Date badge
-- Client name + meeting title
-- Icons + counts: discussions, tasks, duration
-- Click: View meeting detail
-
----
-
-### 4. Assistant Page (AI Chat)
-
-**Layout:**
-```
-┌────────────────────────────────────────────────────┐
-│  Assistant                           [New Chat]    │
-│  Ask anything about your clients and meetings.     │
-├────────────────────────────────────────────────────┤
-│  ┌─ Recent Chats ──┐  ┌─ Chat Window ──────────┐ │
-│  │                  │  │  You:                  │ │
-│  │  Chat 1          │  │  What did I promise... │ │
-│  │  Chat 2          │  │                        │ │
-│  │  Chat 3          │  │  Assistant:            │ │
-│  │                  │  │  In your last meeting..│ │
-│  │                  │  │                        │ │
-│  └──────────────────┘  │  [Your message...]     │ │
-│                        └────────────────────────┘ │
+│  Solis:                                            │
+│  Based on your sessions with Sarah Chen...         │
+│  [session citation: Q1 Leadership Review, Jan 3]   │
+│                                                    │
+│  50 of 50 lifetime queries used. Upgrade to Pro.  │
 └────────────────────────────────────────────────────┘
 ```
 
 **Features:**
-- Chat history sidebar (left)
-- Main chat window (right)
-- ChatGPT-style interface
-- Pre-built question templates (buttons)
-- Typing indicator
-- Source citations (links to meetings)
+- Single-panel query interface (stateless per query)
+- Client scope selector (optional — filter to one client)
+- Response with session citations
+- Usage counter (lifetime free / monthly pro)
+- Upgrade CTA when limit hit
 
 ---
 
@@ -336,10 +309,11 @@ Regular:    400  (Body text)
 
 **New Components Needed:**
 - ClientCard (custom)
-- MeetingCard (custom)
+- SessionCard (custom)
+- SessionTimeline (custom)
 - ActionItemList (custom)
-- ChatInterface (custom)
-- PrepBrief (custom)
+- SolisPanel (custom)
+- SessionUploadModal (custom)
 
 ---
 
@@ -399,7 +373,7 @@ Regular:    400  (Body text)
 
 **Keyboard Shortcuts (Power Users):**
 - `C` - Create new client
-- `M` - Log new meeting
+- `U` - Upload session transcript
 - `/` - Focus search
 - `Esc` - Close modal
 - `Cmd/Ctrl + K` - Command palette
@@ -423,9 +397,19 @@ Regular:    400  (Body text)
 ---
 
 **Implementation Priority:**
-1. **Week 2:** Clients page + client card
-2. **Week 3:** Meetings page + AI assistant
-3. **Week 4:** Polish + responsive + accessibility
+1. **Week 1:** Clients page + client card (v3 fields: goal, start_date)
+2. **Week 2:** Session upload modal + session timeline + action items
+3. **Week 3:** Intelligence page (Solis) + billing
+4. **Week 4:** Onboarding (5-step) + landing page + polish + responsive + accessibility
+
+**Onboarding Flow (5 Steps):**
+1. Welcome — explain MeetSolis value for executive coaches
+2. Add First Client — coached client creation form
+3. Upload Transcript — pre-loaded sample coaching transcript available
+4. View Summary — highlight AI-generated summary, key topics, action items
+5. Try Solis — ask a sample question about the demo session
+
+**Pricing:** $99/month Pro tier. Free tier: 1 client, 3 lifetime sessions, 50 lifetime queries.
 
 ---
 

@@ -1,3 +1,8 @@
+/**
+ * ClientForm Component
+ * v3: Executive coach fields — goal, start_date replace email/phone/linkedin/tags
+ */
+
 'use client';
 
 import { useEffect } from 'react';
@@ -11,20 +16,25 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import sanitizeHtml from 'sanitize-html';
 
+// Form schema — v3 coaching fields only
 const ClientFormSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters').max(100).trim(),
+  name: z
+    .string()
+    .min(2, 'Name must be at least 2 characters')
+    .max(100, 'Name must be at most 100 characters')
+    .trim(),
   company: z.string().trim().optional(),
   role: z.string().trim().optional(),
+  goal: z.string().trim().optional(),
+  start_date: z.string().optional(),
   website: z
     .string()
     .url('Invalid URL format')
     .trim()
     .optional()
     .or(z.literal('')),
-  goal: z.string().trim().optional(),
-  start_date: z.string().optional(),
+  notes: z.string().trim().optional(),
 });
 
 type ClientFormData = z.infer<typeof ClientFormSchema>;
@@ -62,45 +72,36 @@ export function ClientForm({
             name: client.name,
             company: client.company || '',
             role: client.role || '',
-            website: client.website || '',
             goal: client.goal || '',
             start_date: client.start_date || '',
+            website: client.website || '',
+            notes: client.notes || '',
           }
         : {
             name: '',
             company: '',
             role: '',
-            website: '',
             goal: '',
             start_date: '',
+            website: '',
+            notes: '',
           },
   });
 
   useEffect(() => {
     onDirtyChange(isDirty);
   }, [isDirty, onDirtyChange]);
+
   useEffect(() => {
     onSubmittingChange(isSubmitting);
   }, [isSubmitting, onSubmittingChange]);
-
-  function sanitize(val: string): string {
-    return sanitizeHtml(val.trim(), { allowedTags: [], allowedAttributes: {} });
-  }
 
   const createMutation = useMutation({
     mutationFn: async (data: ClientFormData) => {
       const response = await fetch('/api/clients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: sanitize(data.name),
-          company: data.company ? sanitize(data.company) : undefined,
-          role: data.role ? sanitize(data.role) : undefined,
-          website: data.website || undefined,
-          goal: data.goal ? sanitize(data.goal) : undefined,
-          start_date: data.start_date || undefined,
-          status: 'active',
-        }),
+        body: JSON.stringify(data),
       });
       if (!response.ok) {
         const error = await response.json();
@@ -124,15 +125,7 @@ export function ClientForm({
       const response = await fetch(`/api/clients/${client?.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: sanitize(data.name),
-          company: data.company ? sanitize(data.company) : null,
-          role: data.role ? sanitize(data.role) : null,
-          website: data.website || null,
-          goal: data.goal ? sanitize(data.goal) : null,
-          start_date: data.start_date || null,
-          status: 'active',
-        }),
+        body: JSON.stringify(data),
       });
       if (!response.ok) {
         const error = await response.json();
@@ -151,13 +144,16 @@ export function ClientForm({
   });
 
   const onSubmit = (data: ClientFormData) => {
-    if (mode === 'create') createMutation.mutate(data);
-    else updateMutation.mutate(data);
+    if (mode === 'create') {
+      createMutation.mutate(data);
+    } else {
+      updateMutation.mutate(data);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {/* Name */}
+      {/* Name (Required) */}
       <div className="space-y-2">
         <Label htmlFor="name" className="text-sm font-medium text-[#1A1A1A]">
           Name <span className="text-red-500">*</span>
@@ -165,7 +161,7 @@ export function ClientForm({
         <Input
           id="name"
           {...register('name')}
-          placeholder="Jane Smith"
+          placeholder="Sarah Johnson"
           className={errors.name ? 'border-red-500' : ''}
         />
         {errors.name && (
@@ -181,12 +177,25 @@ export function ClientForm({
         <Textarea
           id="goal"
           {...register('goal')}
-          placeholder="e.g. Transition to C-suite leadership role within 18 months"
+          placeholder="e.g. Transition to CTO role, improve executive presence"
           rows={2}
-          className="resize-none"
         />
         {errors.goal && (
           <p className="text-sm text-red-500">{errors.goal.message}</p>
+        )}
+      </div>
+
+      {/* Coaching Start Date */}
+      <div className="space-y-2">
+        <Label
+          htmlFor="start_date"
+          className="text-sm font-medium text-[#1A1A1A]"
+        >
+          Coaching Start Date
+        </Label>
+        <Input id="start_date" type="date" {...register('start_date')} />
+        {errors.start_date && (
+          <p className="text-sm text-red-500">{errors.start_date.message}</p>
         )}
       </div>
 
@@ -203,18 +212,7 @@ export function ClientForm({
         <Label htmlFor="role" className="text-sm font-medium text-[#1A1A1A]">
           Role
         </Label>
-        <Input id="role" {...register('role')} placeholder="VP of Operations" />
-      </div>
-
-      {/* Coaching Start Date */}
-      <div className="space-y-2">
-        <Label
-          htmlFor="start_date"
-          className="text-sm font-medium text-[#1A1A1A]"
-        >
-          Coaching Start Date
-        </Label>
-        <Input id="start_date" type="date" {...register('start_date')} />
+        <Input id="role" {...register('role')} placeholder="CEO" />
       </div>
 
       {/* Website */}
@@ -232,6 +230,19 @@ export function ClientForm({
         {errors.website && (
           <p className="text-sm text-red-500">{errors.website.message}</p>
         )}
+      </div>
+
+      {/* Notes */}
+      <div className="space-y-2">
+        <Label htmlFor="notes" className="text-sm font-medium text-[#1A1A1A]">
+          Notes
+        </Label>
+        <Textarea
+          id="notes"
+          {...register('notes')}
+          placeholder="Any additional context about this client..."
+          rows={3}
+        />
       </div>
 
       {/* Actions */}

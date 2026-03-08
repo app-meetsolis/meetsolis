@@ -12,24 +12,21 @@ const envSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
   SUPABASE_ANON_KEY: z.string().optional(),
 
-  // AI Services
-  OPENAI_API_KEY: z.string().optional(),
-  ANTHROPIC_API_KEY: z.string().optional(),
-  DEEPL_API_KEY: z.string().optional(),
-
-  // Provider Selection
+  // AI Provider (abstracted)
   AI_PROVIDER: z
     .enum(['placeholder', 'claude', 'openai'])
     .default('placeholder'),
+  ANTHROPIC_API_KEY: z.string().optional(),
+  OPENAI_API_KEY: z.string().optional(),
+
+  // Transcription Provider (abstracted)
   TRANSCRIPTION_PROVIDER: z
     .enum(['placeholder', 'deepgram', 'openai-whisper'])
     .default('placeholder'),
-  BILLING_PROVIDER: z.enum(['placeholder', 'stripe']).default('placeholder'),
-
-  // Transcription
   DEEPGRAM_API_KEY: z.string().optional(),
 
-  // Billing / Stripe
+  // Billing Provider (abstracted)
+  BILLING_PROVIDER: z.enum(['placeholder', 'stripe']).default('placeholder'),
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   STRIPE_PRICE_MONTHLY: z.string().optional(),
@@ -132,10 +129,9 @@ export const config = {
   },
 
   ai: {
-    openaiApiKey: env.OPENAI_API_KEY,
-    anthropicApiKey: env.ANTHROPIC_API_KEY,
-    deeplApiKey: env.DEEPL_API_KEY,
     provider: env.AI_PROVIDER,
+    anthropicApiKey: env.ANTHROPIC_API_KEY,
+    openaiApiKey: env.OPENAI_API_KEY,
   },
 
   transcription: {

@@ -1,101 +1,131 @@
+/**
+ * LeftSidebar Component
+ * Story 2.9: Left sidebar nav — Clients, Intelligence, Settings
+ */
+
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useState } from 'react';
-import { UserButton } from '@clerk/nextjs';
-import { Users, Sparkles, Settings, Menu, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { usePathname, useRouter } from 'next/navigation';
+import { useClerk } from '@clerk/nextjs';
+import { Users, Sparkles, Settings, LogOut, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
 
-const NAV_ITEMS = [
-  { href: '/clients', label: 'Clients', icon: Users },
-  { href: '/intelligence', label: 'Solis Intelligence', icon: Sparkles },
-  { href: '/settings', label: 'Settings', icon: Settings },
+const navItems = [
+  { label: 'Clients', href: '/clients', icon: Users },
+  { label: 'Intelligence', href: '/intelligence', icon: Sparkles },
+  { label: 'Settings', href: '/settings', icon: Settings },
 ];
 
-function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
-  const pathname = usePathname();
+interface LeftSidebarProps {
+  isMobileOpen?: boolean;
+  onClose?: () => void;
+}
 
-  return (
-    <div className="flex h-full flex-col">
+export function LeftSidebar({
+  isMobileOpen = false,
+  onClose,
+}: LeftSidebarProps) {
+  const pathname = usePathname();
+  const { signOut } = useClerk();
+  const router = useRouter();
+  const { user } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push('/');
+  };
+
+  const initials = user?.name
+    ? user.name
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    : 'U';
+
+  const sidebarContent = (
+    <div className="flex h-full w-52 flex-col bg-white border-r border-gray-200">
       {/* Logo */}
-      <div className="px-6 py-5">
-        <Link href="/clients" className="text-xl font-bold text-white">
-          MeetSolis
-        </Link>
+      <div className="flex h-16 items-center justify-between px-5 border-b border-gray-100">
+        <span className="text-xl font-bold text-[#001F3F]">MeetSolis</span>
+        {/* Close button — mobile only */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="md:hidden text-[#6B7280] hover:text-[#1A1A1A]"
+            aria-label="Close sidebar"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
       </div>
 
       {/* Nav Items */}
-      <nav className="flex-1 space-y-1 px-3 py-2">
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+      <nav className="flex-1 space-y-1 px-3 py-4">
+        {navItems.map(({ label, href, icon: Icon }) => {
           const isActive = pathname.startsWith(href);
           return (
             <Link
               key={href}
               href={href}
-              onClick={onNavClick}
-              className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
+              onClick={onClose}
+              className={cn(
+                'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
                 isActive
-                  ? 'bg-white/10 text-white'
-                  : 'text-white/70 hover:bg-white/5 hover:text-white'
-              }`}
+                  ? 'bg-[#E8E4DD] text-[#001F3F]'
+                  : 'text-[#6B7280] hover:bg-gray-50 hover:text-[#1A1A1A]'
+              )}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-4 w-4 shrink-0" />
               {label}
             </Link>
           );
         })}
       </nav>
 
-      {/* User */}
-      <div className="border-t border-white/10 px-6 py-4">
-        <UserButton afterSignOutUrl="/" />
+      {/* User Section */}
+      <div className="border-t border-gray-100 p-3">
+        <div className="mb-2 flex items-center gap-3 px-3 py-2">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#001F3F] text-xs font-medium text-white">
+            {initials}
+          </div>
+          {user?.name && (
+            <span className="truncate text-sm font-medium text-[#1A1A1A]">
+              {user.name}
+            </span>
+          )}
+        </div>
+        <button
+          onClick={handleSignOut}
+          className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-[#6B7280] transition-colors hover:bg-gray-50 hover:text-red-600"
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          Sign out
+        </button>
       </div>
     </div>
   );
-}
-
-export function LeftSidebar() {
-  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <>
-      {/* Desktop Sidebar */}
-      <aside className="hidden w-60 flex-shrink-0 bg-[#001F3F] md:flex md:flex-col">
-        <SidebarContent />
-      </aside>
+      {/* Desktop sidebar */}
+      <div className="hidden md:flex md:shrink-0">{sidebarContent}</div>
 
-      {/* Mobile: hamburger button */}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="fixed left-4 top-4 z-50 md:hidden bg-[#001F3F] text-white hover:bg-[#003366]"
-        onClick={() => setMobileOpen(true)}
-        aria-label="Open menu"
-      >
-        <Menu className="h-5 w-5" />
-      </Button>
-
-      {/* Mobile: overlay sidebar */}
-      {mobileOpen && (
-        <>
+      {/* Mobile overlay */}
+      {isMobileOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          {/* Backdrop */}
           <div
-            className="fixed inset-0 z-40 bg-black/40 md:hidden"
-            onClick={() => setMobileOpen(false)}
+            className="absolute inset-0 bg-black/40"
+            onClick={onClose}
+            aria-hidden="true"
           />
-          <aside className="fixed inset-y-0 left-0 z-50 w-60 bg-[#001F3F] md:hidden">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute right-3 top-3 text-white hover:bg-white/10"
-              onClick={() => setMobileOpen(false)}
-              aria-label="Close menu"
-            >
-              <X className="h-5 w-5" />
-            </Button>
-            <SidebarContent onNavClick={() => setMobileOpen(false)} />
-          </aside>
-        </>
+          {/* Sidebar panel */}
+          <div className="relative z-50 h-full">{sidebarContent}</div>
+        </div>
       )}
     </>
   );
