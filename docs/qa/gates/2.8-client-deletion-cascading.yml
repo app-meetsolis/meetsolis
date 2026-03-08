@@ -6,7 +6,12 @@ status_reason: 'All 11 ACs implemented and verified. Clean implementation with c
 reviewer: 'Quinn (Test Architect)'
 updated: '2026-03-08T00:00:00Z'
 
-top_issues: []
+top_issues:
+  - id: 1
+    severity: low
+    description: 'POST /api/clients error response temporarily exposed raw DB error detail (insertError) during debugging. Fixed before final commit.'
+    suggested_owner: dev
+    status: resolved
 
 waiver:
   active: false
