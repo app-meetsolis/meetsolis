@@ -229,43 +229,6 @@ export async function PUT(
       );
     }
 
-    // Check for duplicate email (if email is being updated and not empty)
-    if (updateData.email && updateData.email.trim() !== '') {
-      const { data: duplicateClient, error: dupError } = await supabase
-        .from('clients')
-        .select('id, email')
-        .eq('user_id', userId)
-        .eq('email', updateData.email)
-        .neq('id', clientId) // Exclude current client
-        .maybeSingle();
-
-      if (dupError) {
-        console.error('[Clients API] Duplicate check failed:', dupError);
-        return NextResponse.json(
-          {
-            error: {
-              code: 'INTERNAL_ERROR',
-              message: 'Failed to check for duplicate client',
-            },
-          },
-          { status: 500 }
-        );
-      }
-
-      if (duplicateClient) {
-        return NextResponse.json(
-          {
-            error: {
-              code: 'DUPLICATE_CLIENT',
-              message: 'A client with this email already exists',
-              existingClientId: duplicateClient.id,
-            },
-          },
-          { status: 409 }
-        );
-      }
-    }
-
     // Update client (updated_at will be auto-updated by trigger)
     const { data: updatedClient, error: updateError } = await supabase
       .from('clients')
@@ -389,7 +352,7 @@ export async function DELETE(
       );
     }
 
-    // Delete client (CASCADE will automatically delete related meetings, action_items, embeddings)
+    // Delete client (CASCADE deletes sessions, action_items; solis_queries.client_id set to NULL)
     const { error: deleteError } = await supabase
       .from('clients')
       .delete()
@@ -406,6 +369,25 @@ export async function DELETE(
           },
         },
         { status: 500 }
+      );
+    }
+
+    // Defensive: delete transcript/audio files from Supabase Storage (non-fatal)
+    // Sessions not yet implemented (Story 3.2/3.3) but cleanup runs when they exist
+    try {
+      const { data: files } = await supabase.storage
+        .from('transcripts')
+        .list(`${userId}/${clientId}`);
+      if (files && files.length > 0) {
+        const paths = files.map(
+          (f: { name: string }) => `${userId}/${clientId}/${f.name}`
+        );
+        await supabase.storage.from('transcripts').remove(paths);
+      }
+    } catch (storageErr) {
+      console.warn(
+        '[Clients API] Storage cleanup failed (non-fatal):',
+        storageErr
       );
     }
 

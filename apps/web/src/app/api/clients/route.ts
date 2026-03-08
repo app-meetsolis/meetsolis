@@ -16,8 +16,8 @@ import { ClientCreateSchema } from '@meetsolis/shared';
  * POST /api/clients
  * Create a new client
  *
- * Request body: { name, company?, role?, email?, phone?, website?, linkedin_url? }
- * Response: 201 { client } | 400 | 403 | 409 | 500
+ * Request body: { name, company?, role?, goal?, start_date?, website?, notes? }
+ * Response: 201 { client } | 400 | 403 | 500
  */
 export async function POST(request: NextRequest) {
   try {
@@ -73,87 +73,51 @@ export async function POST(request: NextRequest) {
 
     const userId = user.id;
 
-    // Check user tier limit
-    const { data: userPrefs } = await supabase
-      .from('user_preferences')
-      .select('max_clients')
+    // Check tier limit via subscriptions table (free = 1 client, pro = unlimited)
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('plan')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
-    // Default to free tier if no preferences found
-    const maxClients = userPrefs?.max_clients || 3;
+    const isPro = subscription?.plan === 'pro';
 
-    // Count existing clients
-    const { count, error: countError } = await supabase
-      .from('clients')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId);
-
-    if (countError) {
-      console.error('[Clients API] Failed to count clients:', countError);
-      return NextResponse.json(
-        {
-          error: {
-            code: 'INTERNAL_ERROR',
-            message: 'Failed to check client limit',
-          },
-        },
-        { status: 500 }
-      );
-    }
-
-    // Enforce tier limit
-    if (count !== null && count >= maxClients) {
-      return NextResponse.json(
-        {
-          error: {
-            code: 'TIER_LIMIT_EXCEEDED',
-            message: `Client limit reached (${count}/${maxClients})`,
-            limit: maxClients,
-            current: count,
-          },
-        },
-        { status: 403 }
-      );
-    }
-
-    // Check for duplicate email (if provided and not empty)
-    if (clientData.email && clientData.email.trim() !== '') {
-      const { data: existingClient, error: dupError } = await supabase
+    if (!isPro) {
+      const { count, error: countError } = await supabase
         .from('clients')
-        .select('id, email')
-        .eq('user_id', userId)
-        .eq('email', clientData.email)
-        .maybeSingle();
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
 
-      if (dupError) {
-        console.error('[Clients API] Duplicate check failed:', dupError);
+      if (countError) {
+        console.error('[Clients API] Failed to count clients:', countError);
         return NextResponse.json(
           {
             error: {
               code: 'INTERNAL_ERROR',
-              message: 'Failed to check for duplicate client',
+              message: 'Failed to check client limit',
             },
           },
           { status: 500 }
         );
       }
 
-      if (existingClient) {
+      if (count !== null && count >= 1) {
         return NextResponse.json(
           {
             error: {
-              code: 'DUPLICATE_CLIENT',
-              message: 'A client with this email already exists',
-              existingClientId: existingClient.id,
+              code: 'TIER_LIMIT_EXCEEDED',
+              message:
+                'Free tier is limited to 1 client. Upgrade to Pro for unlimited clients.',
+              limit: 1,
+              current: count,
             },
           },
-          { status: 409 }
+          { status: 403 }
         );
       }
     }
 
-    // Insert client
+    // Insert client with v3 fields
     const { data: newClient, error: insertError } = await supabase
       .from('clients')
       .insert({
@@ -161,12 +125,10 @@ export async function POST(request: NextRequest) {
         name: clientData.name,
         company: clientData.company || null,
         role: clientData.role || null,
-        email: clientData.email || null,
-        phone: clientData.phone || null,
+        goal: clientData.goal || null,
+        start_date: clientData.start_date || null,
         website: clientData.website || null,
-        linkedin_url: clientData.linkedin_url || null,
-        tags: clientData.tags || [],
-        status: clientData.status || 'active',
+        notes: clientData.notes || null,
       })
       .select()
       .single();

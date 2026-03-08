@@ -1,16 +1,6 @@
 /**
  * ClientCard Component
- * Story 2.2: Client Dashboard UI - Task 2: ClientCard Component
- * Story 2.3: Add/Edit Client Modal - Task 8 (Edit button)
- * Story 2.5: Client Tags & Labels - Task 5
- *
- * Displays individual client information in a card format with:
- * - Client name, role/company, last meeting date
- * - Active projects count badge (meetings in last 30 days)
- * - Tags with click-to-filter functionality
- * - Hover effect (lift and shadow)
- * - Click to navigate to client detail page
- * - Edit button (Story 2.3)
+ * v3: Shows goal, last session date — replaces tags/last meeting
  */
 
 'use client';
@@ -18,69 +8,51 @@
 import { Client } from '@meetsolis/shared';
 import { useRouter } from 'next/navigation';
 import { formatDistanceToNow, parseISO } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { TagPill } from './TagPill';
-import { Building2, Calendar, Pencil } from 'lucide-react';
+import {
+  Building2,
+  Calendar,
+  MoreVertical,
+  Pencil,
+  Target,
+  Trash2,
+} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface ClientCardProps {
   client: Client;
   onEdit?: (_client: Client) => void;
+  onDelete?: (_client: Client) => void;
 }
 
-/**
- * Calculate active projects count (meetings in last 30 days)
- * Note: Placeholder until Epic 3 implements meetings table
- */
-function getActiveProjectsCount(_client: Client): number {
-  // TODO: Replace with actual count from meetings table in Epic 3
-  // For now, return 0 as meetings table doesn't exist yet
-  return 0;
-}
-
-/**
- * Format last meeting date
- */
-function formatLastMeeting(
-  lastMeetingAt: string | Date | null | undefined
+function formatLastSession(
+  lastSessionAt: string | Date | null | undefined
 ): string {
-  if (!lastMeetingAt) {
-    return 'No meetings yet';
-  }
-
+  if (!lastSessionAt) return 'No sessions yet';
   try {
     const date =
-      typeof lastMeetingAt === 'string'
-        ? parseISO(lastMeetingAt)
-        : lastMeetingAt;
-    return `Last meeting: ${formatDistanceToNow(date, { addSuffix: true })}`;
-  } catch (error) {
-    console.error('Failed to parse last_meeting_at:', error);
-    return 'No meetings yet';
+      typeof lastSessionAt === 'string'
+        ? parseISO(lastSessionAt)
+        : lastSessionAt;
+    return `Last session: ${formatDistanceToNow(date, { addSuffix: true })}`;
+  } catch {
+    return 'No sessions yet';
   }
 }
 
-export function ClientCard({ client, onEdit }: ClientCardProps) {
+export function ClientCard({ client, onEdit, onDelete }: ClientCardProps) {
   const router = useRouter();
-  const activeProjects = getActiveProjectsCount(client);
 
-  // Format role and company display
   const roleCompanyText =
-    [client.role, client.company].filter(Boolean).join(' at ') ||
-    'No role specified';
+    [client.role, client.company].filter(Boolean).join(' at ') || null;
 
-  /**
-   * Handle edit button click
-   * Prevent card navigation when edit is clicked
-   */
-  const handleEditClick = (e: React.MouseEvent) => {
+  const handleMenuClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onEdit?.(client);
   };
-
-  // Determine which tags to display (first 3)
-  const displayTags = client.tags?.slice(0, 3) || [];
-  const remainingTagsCount = (client.tags?.length || 0) - displayTags.length;
 
   return (
     <div
@@ -95,69 +67,68 @@ export function ClientCard({ client, onEdit }: ClientCardProps) {
         }
       }}
     >
-      {/* Edit Button */}
-      {onEdit && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="absolute right-2 top-2 h-8 w-8 p-0 opacity-0 transition-opacity group-hover:opacity-100"
-          onClick={handleEditClick}
-          aria-label="Edit client"
+      {/* Actions Menu */}
+      {(onEdit || onDelete) && (
+        <div
+          className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100"
+          onClick={handleMenuClick}
         >
-          <Pencil className="h-4 w-4" />
-        </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="flex h-8 w-8 items-center justify-center rounded-md text-[#6B7280] hover:bg-gray-100 hover:text-[#1A1A1A]"
+                aria-label="Client actions"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {onEdit && (
+                <DropdownMenuItem onClick={() => onEdit(client)}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+              )}
+              {onDelete && (
+                <DropdownMenuItem
+                  className="text-red-600 focus:bg-red-50 focus:text-red-600"
+                  onClick={() => onDelete(client)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       )}
 
       {/* Client Name */}
-      <h3 className="mb-2 text-xl font-bold text-[#1A1A1A] group-hover:text-[#001F3F]">
+      <h3 className="mb-1 text-xl font-bold text-[#1A1A1A] group-hover:text-[#001F3F]">
         {client.name}
       </h3>
 
       {/* Role / Company */}
-      <div className="mb-3 flex items-center gap-2 text-sm text-[#6B7280]">
-        <Building2 className="h-4 w-4" />
-        <span>{roleCompanyText}</span>
-      </div>
-
-      {/* Tags - Story 2.5 */}
-      {displayTags.length > 0 && (
-        <div className="mb-3 flex flex-wrap items-center gap-1.5">
-          {displayTags.map(tag => (
-            <TagPill
-              key={tag}
-              tag={tag}
-              onClick={() => {
-                router.push(`/clients?tags=${encodeURIComponent(tag)}`);
-              }}
-            />
-          ))}
-          {remainingTagsCount > 0 && (
-            <Badge
-              variant="secondary"
-              className="bg-gray-100 text-[11px] text-gray-600"
-            >
-              + {remainingTagsCount} more
-            </Badge>
-          )}
+      {roleCompanyText && (
+        <div className="mb-3 flex items-center gap-2 text-sm text-[#6B7280]">
+          <Building2 className="h-4 w-4 shrink-0" />
+          <span>{roleCompanyText}</span>
         </div>
       )}
 
-      {/* Last Meeting Date */}
-      <div className="mb-3 flex items-center gap-2 text-sm text-[#6B7280]">
-        <Calendar className="h-4 w-4" />
-        <span>{formatLastMeeting(client.last_meeting_at)}</span>
-      </div>
-
-      {/* Active Projects Badge */}
-      {activeProjects > 0 && (
-        <Badge
-          variant="secondary"
-          className="bg-[#F3F4F6] text-[11px] uppercase tracking-wide"
-        >
-          {activeProjects} Active{' '}
-          {activeProjects === 1 ? 'Project' : 'Projects'}
-        </Badge>
+      {/* Coaching Goal */}
+      {client.goal && (
+        <div className="mb-3 flex items-start gap-2 text-sm text-[#374151]">
+          <Target className="mt-0.5 h-4 w-4 shrink-0 text-[#6B7280]" />
+          <span className="line-clamp-2">{client.goal}</span>
+        </div>
       )}
+
+      {/* Last Session */}
+      <div className="flex items-center gap-2 text-sm text-[#6B7280]">
+        <Calendar className="h-4 w-4 shrink-0" />
+        <span>{formatLastSession(client.last_session_at)}</span>
+      </div>
     </div>
   );
 }

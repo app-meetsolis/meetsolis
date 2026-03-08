@@ -1,522 +1,389 @@
-# Epic 3: Meeting Memory & Logging
+# Epic 3: Session Memory
 
-**Version:** 2.0
+**Version:** 3.0
 **Status:** Not Started
-**Priority:** P0 (Critical - MVP Core Feature)
-**Target Timeline:** Week 3 (Jan 20-26, 2026)
-**Dependencies:** Epic 1 (Complete), Epic 2 (Client Cards)
+**Priority:** P0 (Critical — MVP Core Feature)
+**Target Timeline:** Week 2 (March 8–14, 2026)
+**Dependencies:** Epic 1 (Complete), Epic 2 (Client Cards — Stories 2.1–2.5 Complete)
+**Last Updated:** March 8, 2026
 
 ---
 
 ## Epic Overview
 
-Build the meeting logging system where users can manually upload transcripts/recordings, and AI generates summaries and extracts action items. Meeting history is organized by client.
+Build the session memory system: coaches upload coaching session transcripts (manually or via auto-transcription), AI generates structured summaries and extracts action items, and sessions are organized in a reverse-chronological timeline per client.
 
-**Goal:** Enable users to log 20 AI-transcribed meetings/month (Pro) or 3 (Free) with unlimited manual uploads.
+**This is the core value loop:** Upload transcript → AI summary → action items extracted → searchable history.
+
+**Goal:** Enable coaches to have a permanent, searchable record of every coaching session, with AI-extracted insights and action items, without changing their existing workflow.
 
 ---
 
-## User Stories
+## Stories
 
-### Story 3.1: Meeting Database Schema & API
+### Story 3.1: Session DB Schema & API
 
-**As a** user
-**I want to** store meeting data securely
-**So that** my meeting history is preserved and searchable
+**Status:** Not Started
+**Priority:** P0
+**Effort:** 0.5 days
+**Dependencies:** Epic 2 (clients table exists)
 
-**Acceptance Criteria:**
-- [ ] Database schema: meetings table with RLS
-- [ ] Fields: id, user_id, client_id, title, date, duration, platform (Google Meet/Zoom/Other), meeting_url, notes (manual), transcript (TEXT), summary (AI-generated), created_at, updated_at
-- [ ] API routes: POST /api/meetings (create), GET /api/meetings (list), GET /api/meetings/[id] (detail), PUT /api/meetings/[id] (update), DELETE /api/meetings/[id] (delete)
-- [ ] Meetings linked to clients (foreign key: client_id)
-- [ ] Cascade delete: If client deleted, meetings deleted
-- [ ] Index on client_id + date for fast queries
+**As a developer, I need the sessions and action_items tables created with proper RLS and API routes, so the rest of Epic 3 can build on a solid data foundation.**
 
-**Database:**
+#### Database Schema
+
 ```sql
-CREATE TABLE meetings (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+-- Sessions table
+CREATE TABLE sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL, -- Clerk user ID
 
+  session_date DATE NOT NULL,
   title TEXT NOT NULL,
-  date DATE NOT NULL DEFAULT CURRENT_DATE,
-  duration_minutes INTEGER,  -- Extracted from recording or manual entry
-  platform TEXT,  -- 'google_meet', 'zoom', 'other'
-  meeting_url TEXT,
 
-  notes TEXT,  -- Manual notes
-  transcript TEXT,  -- From Gladia or manual upload
-  summary JSONB,  -- {overview, key_points[], decisions[], questions[]}
+  transcript_text TEXT,             -- Pasted or extracted from file
+  transcript_file_url TEXT,         -- Supabase Storage URL (.txt/.docx)
+  transcript_audio_url TEXT,        -- Supabase Storage URL (audio/video for auto-transcription)
 
-  -- Files
-  transcript_file_path TEXT,  -- Supabase Storage path
-  recording_file_path TEXT,
+  summary TEXT,                     -- AI-generated summary
+  key_topics TEXT[],                -- AI-extracted topics array
+  embedding vector(1536),           -- pgvector embedding of summary (Solis hybrid RAG)
 
-  -- Metadata
-  ai_processed BOOLEAN DEFAULT FALSE,
-  ai_processed_at TIMESTAMPTZ,
+  status TEXT DEFAULT 'pending',    -- 'pending' | 'processing' | 'complete' | 'error'
 
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
 );
+
+CREATE INDEX idx_client_sessions ON sessions(client_id);
+CREATE INDEX idx_user_sessions ON sessions(user_id);
+CREATE INDEX idx_session_date ON sessions(client_id, session_date DESC);
+CREATE INDEX idx_sessions_embedding ON sessions USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+
+ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "sessions_all" ON sessions FOR ALL USING (true); -- Enforced via user_id filter in API
+
+-- Action Items table
+CREATE TABLE action_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id UUID REFERENCES sessions(id) ON DELETE CASCADE,
+  client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL,
+
+  description TEXT NOT NULL,
+  status TEXT DEFAULT 'pending',    -- 'pending' | 'in_progress' | 'completed' | 'cancelled'
+  assigned_to TEXT,                 -- 'coach' | 'client'
+
+  created_at TIMESTAMP DEFAULT NOW(),
+  completed_at TIMESTAMP            -- Set when status = 'completed'
+);
+
+CREATE INDEX idx_session_actions ON action_items(session_id);
+CREATE INDEX idx_client_actions ON action_items(client_id);
+CREATE INDEX idx_pending_actions ON action_items(user_id, status) WHERE status = 'pending';
+
+ALTER TABLE action_items ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "action_items_all" ON action_items FOR ALL USING (true);
 ```
 
-**Estimated Effort:** 0.5 days
+#### API Routes
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/sessions?client_id=[id]` | List sessions for a client (reverse-chron) |
+| POST | `/api/sessions` | Create session (with transcript upload) |
+| GET | `/api/sessions/[id]` | Get session detail |
+| PUT | `/api/sessions/[id]` | Update session (edit summary, title) |
+| DELETE | `/api/sessions/[id]` | Delete session (cascades action items) |
+| POST | `/api/sessions/[id]/summarize` | Trigger AI summarization |
+| GET | `/api/action-items?client_id=[id]` | List action items for a client |
+| POST | `/api/action-items` | Create manual action item |
+| PUT | `/api/action-items/[id]` | Update status, mark complete |
+
+#### Acceptance Criteria
+
+- [ ] `sessions` table created with all columns and indexes
+- [ ] `action_items` table created with all columns and indexes
+- [ ] RLS enabled on both tables
+- [ ] All API routes implemented with user_id enforcement
+- [ ] Cascade delete: deleting a client removes all sessions and action_items
+- [ ] Cascade delete: deleting a session removes its action_items
 
 ---
 
-### Story 3.2: Manual Meeting Logging UI
+### Story 3.2: Manual Transcript Upload
 
-**As a** user
-**I want to** log meetings manually with basic details
-**So that** I can track meeting history without AI transcription
+**Status:** Not Started
+**Priority:** P0
+**Effort:** 1 day
+**Dependencies:** Story 3.1
 
-**Acceptance Criteria:**
-- [ ] "+ Log Meeting" button (Meetings page, Client detail page)
-- [ ] Log Meeting form:
-  - [ ] Select Client* (dropdown, searchable)
-  - [ ] Meeting Title* (text input)
-  - [ ] Date* (date picker, default: today)
-  - [ ] Platform: Google Meet / Zoom / Other (radio buttons)
-  - [ ] Meeting URL (optional text input)
-  - [ ] Manual Notes (textarea, rich text)
-  - [ ] Upload Transcript (TXT, SRT, VTT files, max 10MB)
-  - [ ] Upload Recording (MP3, MP4, M4A, WAV, max 100MB)
-- [ ] Drag-and-drop file upload
-- [ ] File upload progress bar
-- [ ] Validation: At least one of (Manual Notes OR Transcript OR Recording) required
-- [ ] Save button → Creates meeting, uploads files to Supabase Storage
-- [ ] Success: "Meeting logged successfully. AI summary will be ready in ~1 minute." (if transcript provided)
+**As a coach, I want to upload my session transcript as a text file or docx, or paste it directly, so I can log a coaching session in under 2 minutes.**
 
-**File Upload:**
-- Use Supabase Storage
-- Path: `{user_id}/meetings/{meeting_id}/transcript.txt` or `recording.mp3`
-- Generate signed URL for download
+#### Acceptance Criteria
 
-**Estimated Effort:** 1 day
+- [ ] Accepted file types: `.txt` (direct text read), `.docx` (parsed via `mammoth` library)
+- [ ] Maximum file size: 25MB
+- [ ] Paste/type text option: textarea with 50,000 character limit
+- [ ] Session date picker (required, defaults to today)
+- [ ] Session title input (required, e.g., "Session 5 — Leadership Transition")
+- [ ] Validation: requires at least one of (file upload OR pasted text)
+- [ ] File uploaded to Supabase Storage → URL stored in `sessions.transcript_file_url`
+- [ ] Pasted/extracted text stored in `sessions.transcript_text`
+- [ ] On save: session created with `status = 'pending'`, AI summarization triggered automatically
+- [ ] Error states: file too large, wrong format, upload failed
 
----
+#### Technical Implementation
 
-### Story 3.3: Gladia Transcription Integration
-
-**As a** user
-**I want** recordings auto-transcribed
-**So that** I don't have to manually type transcripts
-
-**Acceptance Criteria:**
-- [ ] Gladia API integration (/api/transcribe/gladia)
-- [ ] Upload recording → Trigger transcription job
-- [ ] Job status: queued, processing, completed, failed
-- [ ] Polling endpoint: GET /api/meetings/[id]/transcription-status
-- [ ] Transcription stored in meetings.transcript
-- [ ] Error handling: If Gladia fails, allow manual transcript upload
-- [ ] Free tier: 3 transcriptions/month enforced
-- [ ] Pro tier: 20 transcriptions/month enforced
-- [ ] Cost tracking: Log Gladia usage in ai_usage_tracking table
-
-**Gladia Flow:**
-1. User uploads recording → Saved to Supabase Storage
-2. Server sends recording URL to Gladia API
-3. Gladia returns transcription (async)
-4. Server polls Gladia for status
-5. When complete, save transcript to DB
-6. Trigger AI summary generation (Story 3.4)
-
-**Estimated Effort:** 1 day
+- `apps/web/src/lib/files/parseTranscript.ts`:
+  - `.txt`: read as UTF-8 string
+  - `.docx`: `mammoth.extractRawText({ buffer })` → plain text string
+  - Returns: `{ text: string, sourceType: 'txt' | 'docx' | 'paste' }`
+- Upload to Supabase Storage bucket `transcripts/[userId]/[sessionId]/[filename]`
+- Use multipart form data for file upload
 
 ---
 
-### Story 3.4: AI Meeting Summary Generation
+### Story 3.3: Auto-Transcription
 
-**As a** user
-**I want** AI to summarize meetings
-**So that** I can quickly review what was discussed
+**Status:** Not Started
+**Priority:** P0
+**Effort:** 1 day
+**Dependencies:** Story 3.1
 
-**Acceptance Criteria:**
-- [ ] AI summary endpoint: POST /api/meetings/[id]/generate-summary
-- [ ] Uses GPT-4o-mini with custom prompt
-- [ ] Summary structure (JSONB):
-  ```json
-  {
-    "overview": "Brief 2-3 sentence summary",
-    "key_points": ["Point 1", "Point 2", ...],
-    "decisions": ["Decision 1", "Decision 2", ...],
-    "questions": ["Question 1", "Question 2", ...],
-    "next_steps": ["Step 1", "Step 2", ...]
-  }
-  ```
-- [ ] Summary generation time: <60 seconds for 1-hour meeting
-- [ ] Loading state: "Generating summary..." (shimmer effect)
-- [ ] Error handling: If AI fails, show error + retry button
-- [ ] Manual edit: User can edit AI-generated summary
-- [ ] Regenerate button: Re-run AI summary
-- [ ] Summary displayed on meeting detail page
+**As a coach, I want to upload the recording of my coaching session and have it automatically transcribed, so I don't have to manually type or copy a transcript.**
 
-**GPT Prompt Template:**
-```
-You are summarizing a client meeting. Be concise, professional, and actionable.
+#### Accepted File Formats
 
-Meeting Transcript:
-{transcript}
+| Format | Extension | Max Size |
+|--------|-----------|---------|
+| MP3 audio | .mp3 | 500MB |
+| MP4 video | .mp4 | 500MB |
+| M4A audio | .m4a | 500MB |
+| WAV audio | .wav | 500MB |
+| WebM audio/video | .webm | 500MB |
 
-Provide:
-1. Overview (2-3 sentences)
-2. Key Discussion Points (3-5 bullet points)
-3. Decisions Made (list explicit decisions)
-4. Questions Raised (unanswered questions)
-5. Next Steps (action items without owner - we'll extract those separately)
+#### Provider Abstraction
 
-Output as JSON.
+Configured via `TRANSCRIPTION_PROVIDER` environment variable:
+
+| Value | Provider | Notes |
+|-------|----------|-------|
+| `placeholder` | Dev stub | Returns instant mock transcript, no API cost. Default for local dev. |
+| `deepgram` | Deepgram Nova-2 | **Production default.** 36% lower WER vs competitors. Built-in speaker diarization (identifies coach vs client). $0.19/session avg. |
+| `openai-whisper` | OpenAI Whisper | Alternative. Good accuracy, no diarization. |
+
+#### Provider Interface
+
+```typescript
+interface TranscriptionProvider {
+  transcribe(audioUrl: string): Promise<TranscriptResult>
+}
+
+interface TranscriptResult {
+  text: string         // Full transcript text
+  speakers?: Speaker[] // Diarization result (Deepgram only)
+  duration?: number    // Audio duration in seconds
+}
 ```
 
-**Estimated Effort:** 1 day
+Files:
+- `apps/web/src/lib/transcription/provider.ts` — interface
+- `apps/web/src/lib/transcription/providers/deepgram.ts` — Deepgram implementation
+- `apps/web/src/lib/transcription/providers/placeholder.ts` — dev stub
+- `apps/web/src/lib/transcription/index.ts` — `getTranscriptionProvider()` reads env var
+
+#### Acceptance Criteria
+
+- [ ] Audio/video file uploaded to Supabase Storage → URL stored in `sessions.transcript_audio_url`
+- [ ] Session `status` set to `'processing'` immediately after upload
+- [ ] Transcription job triggered asynchronously
+- [ ] On transcription complete: `sessions.transcript_text` populated, `status` → `'complete'`, AI summarization triggered
+- [ ] On transcription error: `status` → `'error'`, error message stored
+- [ ] Progress indicator shown in UI while status is `'processing'`
+- [ ] Speaker diarization labels preserved in transcript (when available)
 
 ---
 
-### Story 3.5: Action Item Extraction
+### Story 3.4: AI Summary Generation
 
-**As a** user
-**I want** AI to extract action items from meetings
-**So that** I don't miss follow-ups
+**Status:** Not Started
+**Priority:** P0
+**Effort:** 1 day
+**Dependencies:** Story 3.2 or 3.3 (transcript text available)
 
-**Acceptance Criteria:**
-- [ ] Action items table:
-  ```sql
-  CREATE TABLE action_items (
-    id UUID PRIMARY KEY,
-    user_id UUID REFERENCES auth.users(id),
-    client_id UUID REFERENCES clients(id),
-    meeting_id UUID REFERENCES meetings(id),
-    description TEXT NOT NULL,
-    owner TEXT,  -- 'user', 'client', 'unknown'
-    due_date DATE,
-    status TEXT DEFAULT 'to_prepare',  -- 'to_prepare', 'promised', 'done'
-    created_at TIMESTAMPTZ DEFAULT NOW()
-  );
-  ```
-- [ ] AI extracts action items from transcript
-- [ ] Action items linked to meeting + client
-- [ ] Displayed on client detail page (Action Items tab)
-- [ ] Checkbox to mark done
-- [ ] Edit action item (description, due date, status)
-- [ ] Delete action item
-- [ ] Free tier: 10 action items total, Pro tier: unlimited
+**As a coach, I want an AI-generated summary of my session with key topics and action items extracted, so I spend zero time on post-session documentation.**
 
-**AI Extraction Prompt:**
-```
-Extract action items from this meeting transcript.
+#### Provider Abstraction
 
-For each item, identify:
-- Description (what needs to be done)
-- Owner (user/client/unknown)
-- Due date (if mentioned, else null)
+Configured via `AI_PROVIDER` environment variable:
 
-Output as JSON array.
-```
+| Value | Provider | Notes |
+|-------|----------|-------|
+| `placeholder` | Dev stub | Returns instant mock summary, no API cost. Default for local dev. |
+| `claude` | Claude Sonnet 4.5 | **Production default.** Prompt caching enabled for ICF templates. |
+| `openai` | GPT-4o-mini | Alternative. |
 
-**Estimated Effort:** 1 day
+#### Provider Interface
 
----
+```typescript
+interface AIProvider {
+  summarizeSession(transcript: string, ctx: ClientContext): Promise<SessionSummary>
+  generateEmbedding(text: string): Promise<number[]>
+  queryIntelligence(query: string, sessions: SessionContext[]): Promise<SolisResponse>
+}
 
-### Story 3.6: Meeting History View
-
-**As a** user
-**I want to** view all my meetings in chronological order
-**So that** I can review past conversations
-
-**Acceptance Criteria:**
-- [ ] Meetings page: `/meetings`
-- [ ] List all meetings (newest first)
-- [ ] Meeting card displays:
-  - [ ] Date badge (e.g., "Jan 3, 2026")
-  - [ ] Client name + Meeting title
-  - [ ] Icon + count: 💬 X key points, ✅ X action items, 🕐 X minutes
-- [ ] Click card → Navigate to meeting detail page
-- [ ] Empty state: "No meetings yet. Log your first meeting."
-- [ ] Loading: Skeleton cards
-- [ ] Pagination: 20 meetings per page
-- [ ] Filter by client (dropdown)
-- [ ] Search by meeting title
-
-**Meeting Card Design:**
-- Similar to client card style
-- White background, subtle shadow
-- Badge for date
-- Metadata icons with counts
-
-**Estimated Effort:** 1 day
-
----
-
-### Story 3.7: Meeting Detail View
-
-**As a** user
-**I want to** view full meeting details
-**So that** I can see transcript, summary, action items
-
-**Acceptance Criteria:**
-- [ ] Meeting detail page: `/meetings/[id]`
-- [ ] Header: Back button, Client name, Meeting title, Date, Platform badge
-- [ ] Sections:
-  - [ ] AI Summary (collapsible)
-  - [ ] Full Transcript (collapsible, searchable)
-  - [ ] Manual Notes (editable)
-  - [ ] Action Items (list with checkboxes)
-- [ ] Edit button → Edit meeting form (title, date, notes)
-- [ ] Delete button → Delete meeting (with confirmation)
-- [ ] Download transcript (TXT file)
-- [ ] Download recording (if exists)
-- [ ] Share summary (copy to clipboard)
-
-**Layout:**
-```
-┌─────────────────────────────────────────┐
-│ ← Back   Marcus Thorne · Q1 Strategy   │
-│          Jan 3, 2026  [Zoom]            │
-├─────────────────────────────────────────┤
-│ ▼ AI Summary                            │
-│   "Discussed Q1 goals..."               │
-│   Key Points: ...                       │
-├─────────────────────────────────────────┤
-│ ▼ Full Transcript                       │
-│   [00:00] User: "Let's start with..."   │
-│   [00:15] Marcus: "I think we should..."│
-├─────────────────────────────────────────┤
-│ ▼ Manual Notes                          │
-│   [Rich text editor]                    │
-├─────────────────────────────────────────┤
-│ ▼ Action Items (3)                      │
-│   [ ] Follow up on pricing proposal     │
-│   [✓] Send Q1 roadmap draft             │
-│   [ ] Schedule follow-up meeting        │
-└─────────────────────────────────────────┘
+interface SessionSummary {
+  title: string
+  summary: string
+  key_topics: string[]
+  action_items: { description: string; assigned_to: 'coach' | 'client' }[]
+}
 ```
 
-**Estimated Effort:** 1 day
+Files:
+- `apps/web/src/lib/ai/provider.ts` — interface
+- `apps/web/src/lib/ai/providers/claude.ts` — Claude Sonnet 4.5 implementation
+- `apps/web/src/lib/ai/providers/openai.ts` — GPT-4o-mini implementation
+- `apps/web/src/lib/ai/providers/placeholder.ts` — dev stub
+- `apps/web/src/lib/ai/index.ts` — `getAIProvider()` reads `AI_PROVIDER` env var
+- `apps/web/src/lib/ai/prompts.ts` — ICF-compliant prompt templates
+- `apps/web/src/lib/ai/summarize.ts` — response parser → SessionSummary
+
+#### ICF-Compliant Summary Prompt Guidelines
+
+Prompts must:
+- Use coaching vocabulary (not therapy language)
+- Identify client-stated goals and progress markers
+- Distinguish coach questions from client responses
+- Flag commitments made by coach and client separately
+- Avoid clinical/diagnostic language
+
+#### Acceptance Criteria
+
+- [ ] `POST /api/sessions/[id]/summarize` triggers AI summarization
+- [ ] AI generates: title, summary paragraph, key_topics[], action_items[]
+- [ ] Action items stored as `action_items` records (with assigned_to: 'coach' | 'client')
+- [ ] Embedding generated from summary text → stored in `sessions.embedding` (vector 1536)
+- [ ] Session `status` → `'complete'` on success, `'error'` on failure
+- [ ] Manual edit of summary supported (PUT `/api/sessions/[id]`)
+- [ ] "Regenerate Summary" button triggers re-summarization
+- [ ] Cost target: <$0.05/session
 
 ---
 
-### Story 3.8: Client Detail - Meetings Tab
+### Story 3.5: Session Timeline UI
 
-**As a** user
-**I want to** see all meetings with a client
-**So that** I can review our conversation history
+**Status:** Not Started
+**Priority:** P0
+**Effort:** 1 day
+**Dependencies:** Story 3.1, Story 2.6 (Client Detail page)
 
-**Acceptance Criteria:**
-- [ ] Client detail page → Meetings tab
-- [ ] List all meetings with this client (newest first)
-- [ ] Meeting cards (same design as Meetings page)
-- [ ] "+ Log Meeting" button (pre-fills client)
-- [ ] Empty state: "No meetings yet. Log your first meeting with [Client Name]."
-- [ ] Clicking meeting card → Navigate to meeting detail
-- [ ] Show total meeting count: "5 meetings"
-- [ ] Show last meeting date on client card (computed from meetings)
+**As a coach, I want to see all my sessions for a client in a clear timeline, so I can quickly review session history and upload new sessions.**
 
-**Last Meeting Calculation:**
-- Computed field on client card
-- Query: `SELECT MAX(date) FROM meetings WHERE client_id = ?`
-- Display as "2 days ago", "1 week ago", "Yesterday"
+#### Components
 
-**Estimated Effort:** 0.5 days
+**`apps/web/src/components/sessions/SessionUploadModal.tsx`**
+- 2-tab modal:
+  - **Tab 1: Manual Upload / Paste** — file input (.txt/.docx) + textarea for paste + date picker + title input
+  - **Tab 2: Auto-Transcribe Audio** — file input (audio/video formats) + date picker + title input
+- "Processing..." state while transcription/summarization runs
+- Toast on success/error
+
+**`apps/web/src/components/sessions/SessionTimeline.tsx`**
+- Reverse-chronological list of session cards
+- "Upload Session Transcript" button at top
+- Empty state: "No sessions yet. Upload your first session transcript to get started."
+- Loading skeleton while fetching
+
+**`apps/web/src/components/sessions/SessionCard.tsx`**
+- Collapsed view: date, title, summary snippet (first 150 chars), key topic badges (max 3), action item count badge
+- Expanded view: full summary, all key topics, full action item list, "View Transcript" link
+- Status indicator: processing spinner if `status = 'processing'`
+
+#### Acceptance Criteria
+
+- [ ] SessionTimeline renders on Client Detail page
+- [ ] Sessions displayed reverse-chronological
+- [ ] Each SessionCard shows collapsed/expanded states
+- [ ] Upload modal opens from timeline "Upload Session" button
+- [ ] Processing sessions show spinner/status
+- [ ] Empty state shown when no sessions exist
+- [ ] Mobile responsive
 
 ---
 
-### Story 3.9: Meeting Platform Integration (Links)
+### Story 3.6: Action Item Tracking UI
 
-**As a** user
-**I want to** paste meeting links OR auto-create them
-**So that** I can jump directly to meetings
+**Status:** Not Started
+**Priority:** P0
+**Effort:** 0.5 days
+**Dependencies:** Story 3.4 (action items auto-created), Story 3.5 (session cards)
 
-**Acceptance Criteria:**
-- [ ] Meeting form: "Meeting Link" field (optional)
-- [ ] Supports Google Meet, Zoom URLs
-- [ ] Validate URL format (must be valid URL)
-- [ ] Display platform badge based on URL:
-  - meet.google.com → "Google Meet" badge
-  - zoom.us → "Zoom" badge
-  - Other → "Other" badge
-- [ ] "Join Meeting" button on meeting detail page (if URL exists)
-- [ ] Opens link in new tab
-- [ ] (Future - Post-MVP): OAuth integration to auto-create links
+**As a coach, I want to track action items from coaching sessions, so I can follow up on commitments without relying on memory.**
 
-**URL Validation:**
-- Google Meet: `https://meet.google.com/*`
-- Zoom: `https://zoom.us/*` or `https://*.zoom.us/*`
+#### Components
 
-**Estimated Effort:** 0.5 days
+**`apps/web/src/components/sessions/ActionItemList.tsx`**
+- List of action items with:
+  - Checkbox (quick-complete → sets status to 'completed', records `completed_at`)
+  - Description text
+  - Assignee badge: "Coach" (blue) or "Client" (green)
+  - Status dropdown: Pending | In Progress | Completed | Cancelled
+- "Add Action Item" button → inline input to create manual action item
+- Completed items shown with strikethrough, dimmed
+
+#### Acceptance Criteria
+
+- [ ] Action items displayed within expanded SessionCard
+- [ ] Checkbox marks item complete (PUT `/api/action-items/[id]`)
+- [ ] Status dropdown changes status
+- [ ] Assignee badge (coach/client) displayed
+- [ ] Manual action item creation works (POST `/api/action-items`)
+- [ ] Completed items visually distinct (strikethrough)
+- [ ] Pending action items count shown on Client Detail header
 
 ---
 
 ## Epic Success Criteria
 
-**Functional:**
-- [ ] Users can log meetings manually with notes
-- [ ] Users can upload recordings → AI transcribes → Summary generated
-- [ ] Free tier: 3 AI transcriptions/month enforced
-- [ ] Pro tier: 20 AI transcriptions/month enforced
-- [ ] Action items extracted and linked to meetings
-- [ ] Meeting history visible on client cards and Meetings page
-
-**Technical:**
-- [ ] Gladia integration working (>90% transcription accuracy)
-- [ ] GPT summary generation <60 seconds
-- [ ] File uploads to Supabase Storage working
-- [ ] RLS policies prevent cross-user access
-- [ ] Cascade deletes working (client deleted → meetings deleted)
-
-**User Experience:**
-- [ ] User can log meeting + upload recording in <2 minutes
-- [ ] AI summary feels valuable (not generic)
-- [ ] Clear progress indicators during transcription
-- [ ] No data loss during errors
+- [ ] Coach can upload .txt or .docx transcript and see AI summary in <15 seconds
+- [ ] Coach can upload audio file and see AI summary in <2 minutes (Deepgram async)
+- [ ] Action items extracted automatically from summary
+- [ ] Coach can mark action items complete
+- [ ] Session timeline shows all sessions for a client, reverse-chronological
+- [ ] Free tier: 3 lifetime AI sessions enforced; manual uploads always allowed
+- [ ] Pro tier: 25/month AI sessions enforced
+- [ ] RLS: users can only access their own sessions
+- [ ] No data leakage between coaches
 
 ---
 
 ## Technical Architecture
 
-### File Storage
-
-**Supabase Storage Buckets:**
-- `meetings-transcripts/` - Transcript files (TXT, SRT, VTT)
-- `meetings-recordings/` - Audio/video files (MP3, MP4, M4A, WAV)
-
-**Path Structure:**
-```
-{user_id}/
-  {meeting_id}/
-    transcript.txt
-    recording.mp3
-```
-
-**Access Control:**
-- RLS policies: Users can only access their own files
-- Signed URLs for downloads (expire after 1 hour)
-
----
-
-### AI Processing Pipeline
+### Session Processing Pipeline
 
 ```
-1. User uploads recording
-   ↓
-2. Save to Supabase Storage
-   ↓
-3. Send to Gladia (async transcription)
-   ↓
-4. Poll Gladia for status (every 10 seconds)
-   ↓
-5. Gladia returns transcript
-   ↓
-6. Save transcript to DB
-   ↓
-7. Send transcript to GPT-4o-mini (summary)
-   ↓
-8. GPT returns structured summary
-   ↓
-9. Save summary to DB
-   ↓
-10. Extract action items (GPT-4o-mini)
-    ↓
-11. Save action items to DB
-    ↓
-12. Update meeting: ai_processed = TRUE
+Manual upload (.txt/.docx/paste):
+  User uploads file → Parse to text → Store in Supabase Storage → Create session (status: pending)
+  → POST /api/sessions/[id]/summarize → AI Provider → SessionSummary
+  → Create action_items records → Generate embedding → Update session (status: complete)
+
+Auto-transcription (audio/video):
+  User uploads audio → Store in Supabase Storage → Create session (status: processing)
+  → TranscriptionProvider.transcribe(audioUrl) → transcript text
+  → POST /api/sessions/[id]/summarize → AI Provider → SessionSummary
+  → Create action_items records → Generate embedding → Update session (status: complete)
 ```
 
-**Error Handling:**
-- Gladia fails → Fallback to manual transcript upload
-- GPT fails → Show error, allow retry
-- Timeout (>5 min) → Show error, allow retry
-
----
-
-### API Routes
+### Environment Variables
 
 ```
-/api/meetings
-  GET    - List meetings (with filters, pagination)
-  POST   - Create meeting (with file uploads)
+AI_PROVIDER=placeholder           # 'placeholder' | 'claude' | 'openai'
+ANTHROPIC_API_KEY=                # Required if AI_PROVIDER=claude
+OPENAI_API_KEY=                   # Required if AI_PROVIDER=openai
 
-/api/meetings/[id]
-  GET    - Meeting details
-  PUT    - Update meeting
-  DELETE - Delete meeting
-
-/api/meetings/[id]/transcribe
-  POST   - Trigger Gladia transcription
-
-/api/meetings/[id]/transcription-status
-  GET    - Check transcription status
-
-/api/meetings/[id]/generate-summary
-  POST   - Generate AI summary
-
-/api/action-items
-  GET    - List action items (by client, by status)
-  POST   - Create action item
-  PUT    - Update action item
-  DELETE - Delete action item
+TRANSCRIPTION_PROVIDER=placeholder  # 'placeholder' | 'deepgram' | 'openai-whisper'
+DEEPGRAM_API_KEY=                   # Required if TRANSCRIPTION_PROVIDER=deepgram
 ```
-
----
-
-## Testing Checklist
-
-**Unit Tests:**
-- [ ] Gladia API wrapper (mock API responses)
-- [ ] GPT summary prompt generation
-- [ ] Action item extraction logic
-- [ ] File upload validation (size, type)
-
-**Integration Tests:**
-- [ ] Upload recording → Transcription → Summary → Action items (full flow)
-- [ ] Manual meeting logging (no files)
-- [ ] Edit meeting details
-- [ ] Delete meeting → Cascade deletes action items
-
-**E2E Tests:**
-- [ ] User journey: Log meeting → Upload recording → Wait for summary → View action items
-- [ ] Free tier limit (can't transcribe 4th meeting)
-- [ ] Pro tier (can transcribe 20 meetings)
-
----
-
-## Dependencies
-
-**External:**
-- Gladia API (transcription)
-- OpenAI API (GPT-4o-mini for summaries)
-- Supabase Storage (file uploads)
-
-**Internal:**
-- Epic 2 complete (clients exist)
-- UI components (File upload, Date picker, Rich text editor)
-
----
-
-## Risks & Mitigation
-
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| **Gladia transcription inaccurate** | Medium | Allow manual transcript upload, allow editing |
-| **GPT summary too generic** | Medium | Refine prompts, allow manual edits |
-| **File upload fails (large files)** | Medium | Chunked uploads, progress bars, retry logic |
-| **Transcription takes too long (>5 min)** | Low | Async processing, email notification when done |
-| **Cost overruns (Gladia + OpenAI)** | Medium | Enforce tier limits, monitor usage, alerts |
-
----
-
-## Definition of Done
-
-- [ ] All stories completed and tested
-- [ ] No P0/P1 bugs
-- [ ] Gladia integration working with real recordings
-- [ ] GPT summaries are useful (validated by beta users)
-- [ ] File uploads working (Supabase Storage)
-- [ ] Free/Pro tier limits enforced
-- [ ] Performance acceptable (<2 min for full meeting processing)
-- [ ] User can complete: Log meeting → Upload → View summary → See action items
-
----
-
-**Next Epic:** [Epic 4: AI Intelligence & Automation →](./epic-4-ai-intelligence.md)

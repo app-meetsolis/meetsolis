@@ -12,7 +12,7 @@
 
 Build the core client management system with client cards as the central organizing principle. Users can add clients, view client details, and organize their professional relationships.
 
-**Goal:** Enable users to manage up to 50 clients (Pro) or 3 clients (Free) with all essential information accessible at a glance.
+**Goal:** Enable users to manage up to unlimited clients (Pro) or 1 client (Free) with all essential information accessible at a glance.
 
 **Architecture Note:** Stories 2.1-2.2 implemented with top horizontal navigation for rapid MVP delivery. Reference UI shows left sidebar navigation. Navigation refactor documented in Story 2.9 to align with reference design while maintaining backward compatibility.
 
@@ -43,6 +43,8 @@ Build the core client management system with client cards as the central organiz
 - Store LinkedIn/website URLs for future research feature
 
 **Estimated Effort:** 1 day
+
+> **v3 Schema Update:** Migration 015 adds `goal TEXT` and `start_date DATE`, drops `phone`, `email`, `linkedin_url`, `tags[]`, `status` from clients table. Story implementation complete but schema updated by migration 015.
 
 ---
 
@@ -97,7 +99,7 @@ Story 2.2 implemented with top horizontal navigation (Dashboard, Clients, Meetin
 - [x] Edit mode: Pre-fill form with existing data
 - [x] Success toast: "Client added successfully"
 - [x] Auto-close modal on save
-- [x] Free tier warning: "You've reached your client limit (3/3). Upgrade to Pro for 50 clients."
+- [x] Free tier warning: "You've reached your client limit (1/1). Upgrade to Pro for unlimited clients."
 
 **Form Validation:**
 - Name: 2-100 characters, required
@@ -168,9 +170,51 @@ Story 2.2 implemented with top horizontal navigation (Dashboard, Clients, Meetin
 - Comprehensive testing plan included
 - Task 0 added for database migration verification
 
+> **v3 Deprecation:** Tags feature built and functional but REMOVED from product in v3.0 per ICP pivot to executive coaches. Tag UI should be hidden/disabled. Tag columns dropped in migration 015. Story complete but feature deprecated.
+
 ---
 
-### Story 2.6: Client Detail View (Enhanced)
+### Story 2.6: Client Detail View (v3 — Session Timeline)
+
+**Status:** Not Started
+**Priority:** P0
+**Effort:** 1.5 days
+**Dependencies:** Story 2.1 (complete), Story 3.1 (sessions schema)
+
+**As a coach, I want to see my client's complete session history and pending action items in one view, so I can quickly understand where we are in our coaching journey.**
+
+#### Acceptance Criteria
+
+- [ ] Client detail page at `/dashboard/clients/[id]`
+- [ ] **Header section:**
+  - Client name (h1)
+  - Goal (displayed below name, italic or secondary text)
+  - "Coaching since [start_date]" (if start_date set)
+  - Stats row: Total Sessions | Pending Actions | Last Session date
+- [ ] **Session Timeline (main content):**
+  - Reverse-chronological list of sessions
+  - Each session card shows: date, title, summary snippet (2–3 lines), key topics as badges, action item count
+  - Expandable: click to reveal full summary, key topics, full action item list
+  - "Upload Session Transcript" button at top of timeline
+  - Empty state: "Upload your first session transcript" with upload button
+- [ ] **Pending Actions sidebar (or section):**
+  - List of all incomplete action items for this client
+  - Grouped by session
+  - Quick-complete checkbox
+- [ ] **Solis Integration:**
+  - "Ask Solis about [client name]" button → opens SolisPanel scoped to this client
+- [ ] Mobile responsive layout
+- [ ] Loading skeleton while data fetches
+
+#### Technical Notes
+- Data: `GET /api/clients/[id]` + `GET /api/sessions?client_id=[id]` + `GET /api/action-items?client_id=[id]&status=pending`
+- Use React Query for data fetching with optimistic updates
+
+**Estimated Effort:** 1.5 days
+
+---
+
+### Story 2.6 (ARCHIVED — v2 spec replaced above): Client Detail View (Enhanced)
 
 **As a** user
 **I want to** view detailed client information with action items tracking
@@ -222,9 +266,11 @@ Story 2.2 implemented with top horizontal navigation (Dashboard, Clients, Meetin
 
 ### Story 2.7: Manual Notes (Rich Text)
 
+> **Update:** Remove any references to 'meeting notes' — notes are client-level, not session-specific. Sessions have their own transcript/summary.
+
 **As a** user
 **I want to** add manual notes to client cards
-**So that** I can capture information not from meetings
+**So that** I can capture information not from sessions
 
 **Acceptance Criteria:**
 - [ ] Notes field in clients table (TEXT, nullable)
@@ -255,10 +301,10 @@ Story 2.2 implemented with top horizontal navigation (Dashboard, Clients, Meetin
 
 **Acceptance Criteria:**
 - [ ] Delete button in client detail dropdown menu
-- [ ] Confirmation dialog: "Are you sure? This will delete [Client Name] and all associated meetings, notes, and action items. This action cannot be undone."
+- [ ] Confirmation dialog: "Are you sure? This will delete [Client Name] and all associated sessions, action items, solis queries, and notes. This action cannot be undone."
 - [ ] Checkbox: "I understand this is permanent"
 - [ ] Delete button enabled only after checkbox checked
-- [ ] Cascade delete: meetings, action_items, embeddings (vector data), notes
+- [ ] Cascade delete: sessions, action_items, solis_queries, embeddings (vector data), notes
 - [ ] Success toast: "Client deleted successfully"
 - [ ] Redirect to clients dashboard
 - [ ] Undo option (30-second window before hard delete - future enhancement)
@@ -282,7 +328,7 @@ Story 2.2 implemented with top horizontal navigation (Dashboard, Clients, Meetin
 - [ ] Sidebar layout (desktop ≥1024px):
   - Fixed left, 240px width
   - MeetSolis logo at top
-  - Vertical nav: Clients, Meetings, Assistant, Settings (icons + labels)
+  - Vertical nav: Clients, Intelligence, Settings (icons + labels)
   - Active state: #001F3F background, white text
   - User profile at bottom
 - [ ] Mobile (<1024px):
@@ -296,7 +342,7 @@ Story 2.2 implemented with top horizontal navigation (Dashboard, Clients, Meetin
 **Migration Strategy:**
 1. Create `LeftSidebar.tsx` component
 2. Update `DashboardLayout.tsx` to use sidebar
-3. Add nav items: Clients, Meetings (Epic 3), Assistant (Epic 4), Settings
+3. Add nav items: Clients, Intelligence, Settings
 4. Deprecate `Navigation.tsx` (don't delete yet)
 5. Test all pages
 
@@ -316,8 +362,8 @@ Story 2.2 implemented with top horizontal navigation (Dashboard, Clients, Meetin
 
 **Functional:**
 - [ ] Users can create, view, edit, delete clients
-- [ ] Free tier: 3 clients max enforced
-- [ ] Pro tier: 50 clients max enforced
+- [ ] Free tier: 1 client max enforced
+- [ ] Pro tier: unlimited clients enforced
 - [ ] Client dashboard loads <500ms (50 clients)
 - [ ] Search returns results <200ms
 - [ ] Mobile responsive (works on iPhone/Android)
@@ -440,7 +486,7 @@ CREATE TRIGGER update_clients_updated_at
 - [ ] Create client → appears in list
 - [ ] Edit client → changes saved
 - [ ] Delete client → removed from list
-- [ ] Free tier limit enforced (can't create 4th client)
+- [ ] Free tier limit enforced (can't create 2nd client)
 
 **E2E Tests (Playwright):**
 - [ ] User journey: Sign up → Add client → View client → Edit → Delete

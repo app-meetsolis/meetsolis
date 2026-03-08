@@ -15,13 +15,23 @@ import { ClientCard } from './ClientCard';
 interface ClientGridProps {
   clients: Client[];
   onEditClient?: (_client: Client) => void;
+  onDeleteClient?: (_client: Client) => void;
 }
 
-export function ClientGrid({ clients, onEditClient }: ClientGridProps) {
+export function ClientGrid({
+  clients,
+  onEditClient,
+  onDeleteClient,
+}: ClientGridProps) {
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       {clients.map(client => (
-        <ClientCard key={client.id} client={client} onEdit={onEditClient} />
+        <ClientCard
+          key={client.id}
+          client={client}
+          onEdit={onEditClient}
+          onDelete={onDeleteClient}
+        />
       ))}
     </div>
   );

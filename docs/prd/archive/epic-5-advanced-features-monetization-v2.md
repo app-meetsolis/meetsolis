@@ -1,11 +1,11 @@
 # Epic 5: Advanced Features & Monetization
 
-**Version:** 3.0
+**Version:** 2.0
 **Status:** Not Started
 **Priority:** P0 (Critical - MVP Revenue)
-**Target Timeline:** Week 3–4 (March 15–31, 2026)
+**Target Timeline:** Week 4 (Jan 27-31, 2026)
 **Dependencies:** Epic 1, 2, 3, 4
-**Previous Version:** 2.0 (generic meeting assistant) - See git history
+**Previous Version:** 1.0 (Video conferencing monetization) - See git history
 
 ---
 
@@ -13,7 +13,7 @@
 
 Build billing infrastructure (Stripe), free vs pro tier enforcement, settings, onboarding, and polish features required for MVP launch.
 
-**Goal:** Enable coaches to sign up for free, experience value, and upgrade to Pro ($99/mo or $948/yr).
+**Goal:** Enable users to sign up for free, experience value, and upgrade to Pro ($29/mo or $249/yr).
 
 ---
 
@@ -28,14 +28,14 @@ Build billing infrastructure (Stripe), free vs pro tier enforcement, settings, o
 **Acceptance Criteria:**
 - [ ] Stripe account created and configured
 - [ ] Products created in Stripe:
-  - Pro Monthly: $99/month
-  - Pro Annual: $948/year
+  - Pro Monthly: $29/month
+  - Pro Annual: $249/year
 - [ ] Stripe Checkout integration:
   - User clicks "Upgrade to Pro" → Redirect to Stripe Checkout
   - After payment → Redirect back with session_id
   - Webhook handles checkout.session.completed
-- [ ] Subscription status stored in subscriptions table (tier: 'free' | 'pro', stripe_customer_id, stripe_subscription_id)
-- [ ] Webhook endpoint: POST /api/stripe/webhook
+- [ ] Subscription status stored in users table (tier: 'free' | 'pro', stripe_customer_id, stripe_subscription_id)
+- [ ] Webhook endpoint: POST /api/webhooks/stripe
 - [ ] Handle webhook events:
   - checkout.session.completed → Create subscription
   - customer.subscription.updated → Update status
@@ -43,7 +43,6 @@ Build billing infrastructure (Stripe), free vs pro tier enforcement, settings, o
   - invoice.payment_failed → Send notification
 - [ ] Cancel subscription: Users can cancel via Stripe portal
 - [ ] Stripe Customer Portal integration (manage billing)
-- [ ] `BILLING_PROVIDER` env var abstraction: `stripe` (production) | `placeholder` (local dev, skips all Stripe calls)
 
 **Estimated Effort:** 1 day
 
@@ -57,10 +56,13 @@ Build billing infrastructure (Stripe), free vs pro tier enforcement, settings, o
 
 **Acceptance Criteria:**
 - [ ] Middleware function: `checkTierLimit(feature, userId)`
-- [ ] Limits to enforce:
-  - Clients: Free=1, Pro=unlimited
-  - AI sessions (transcripts): Free=3 lifetime, Pro=25/month
-  - Solis queries: Free=50 lifetime, Pro=2,000/month
+- [ ] Features to enforce:
+  - Clients: Free=3, Pro=50
+  - AI transcriptions: Free=3/month, Pro=20/month
+  - AI queries: Free=100/month, Pro=1000/month
+  - Client research: Free=3/month, Pro=20/month
+  - Tags: Free=3 per client, Pro=unlimited
+  - Storage: Free=100MB, Pro=5GB
 - [ ] Check before allowing action
 - [ ] If limit exceeded: Return 403 error with upgrade message
 - [ ] Frontend: Show upgrade modal/toast
@@ -81,9 +83,8 @@ Build billing infrastructure (Stripe), free vs pro tier enforcement, settings, o
 - [ ] Two tiers: Free, Pro (as per PRD)
 - [ ] Feature comparison table (detailed)
 - [ ] Monthly/Annual toggle (show savings)
-- [ ] FAQ section (no trial FAQ item)
-- [ ] "Start Free (No Credit Card)" and "Upgrade to Pro" CTAs
-- [ ] Prices: $99/month or $948/year
+- [ ] FAQ section
+- [ ] "Start Free" and "Start 14-Day Trial" CTAs
 - [ ] Mobile responsive
 
 **Estimated Effort:** 0.5 days
@@ -100,80 +101,40 @@ Build billing infrastructure (Stripe), free vs pro tier enforcement, settings, o
 - [ ] Settings page: `/settings`
 - [ ] Tabs: Profile, Billing, Preferences
 - [ ] Profile: Name, email, avatar, timezone, delete account
-- [ ] Billing: Current plan ($99/mo or $948/yr), usage, upgrade/cancel buttons
+- [ ] Billing: Current plan, usage, upgrade/cancel buttons
 - [ ] Preferences: Email notifications, theme
 
 **Estimated Effort:** 1 day
 
 ---
 
-### Story 5.5: Onboarding Flow
+### Story 5.5: Onboarding Flow (New Design)
 
 **As a** new user
-**I want** a simple onboarding that shows me MeetSolis's core value
-**So that** I reach my first aha moment in under 5 minutes
+**I want** a simple onboarding
+**So that** I get started quickly
 
 **Acceptance Criteria:**
-- [ ] 5 steps:
-  - Step 1: Welcome — "Welcome to MeetSolis — your AI memory for coaching sessions"
-  - Step 2: Add First Client — coached form: name, goal, start date
-  - Step 3: Upload First Transcript — offer sample demo transcript download; file upload or paste
-  - Step 4: View Summary — highlight the AI-generated summary, key topics, action items
-  - Step 5: Try Solis — "Ask Solis something about this session" — pre-filled suggested question
-- [ ] Goal: <5 minutes to first aha moment
+- [ ] 3 steps: Welcome → Add First Client → Quick Tour
 - [ ] Skip button on each step
 - [ ] Onboarding completion stored
 
-**Estimated Effort:** 1 day
+**Estimated Effort:** 0.5 days
 
 ---
 
-> **Story 5.6 (Free Trial) — Removed in v3.** Free tier provides genuine value with 1 client, 3 sessions, 50 queries. No trial needed.
+### Story 5.6: Free Trial Implementation (14 Days)
 
----
+**As a** user
+**I want to** try Pro for 14 days free
+**So that** I can test before paying
 
-### Story 5.6: Landing Page (Executive Coach Positioning)
+**Acceptance Criteria:**
+- [ ] Stripe Checkout with trial_period_days=14
+- [ ] Email reminders (day 7, 13, 14)
+- [ ] Cancel anytime during trial
 
-**Status:** Not Started
-**Priority:** P1
-**Effort:** 1 day
-
-**As a potential customer (executive coach), I want the landing page to immediately speak to my specific situation, so I know this tool is built for me.**
-
-#### Page Structure
-
-**Hero:**
-- H1: "Never forget a client's breakthrough moment again."
-- Subheadline: "Solis Intelligence gives executive coaches perfect recall across every client's journey — so you walk into every session fully prepared."
-- CTA: "Start Free — No Credit Card Required"
-- Secondary CTA: "See How It Works"
-
-**How It Works (3 steps):**
-1. Upload your session transcript (text, docx, or audio)
-2. AI generates your structured summary and action items in seconds
-3. Ask Solis anything about any client — get cited answers instantly
-
-**Features Section:**
-- Session Memory (every session, searchable forever)
-- Solis Intelligence (Q&A with citation)
-- Action Item Tracking (coach and client commitments)
-- Auto-Transcription (Deepgram Nova-2 speaker diarization)
-
-**Pricing Section:**
-- Free: 1 client, 3 sessions, 50 queries
-- Pro: $99/month — unlimited clients, 25 sessions/month, 2,000 queries/month
-
-**Trust Signals:**
-- "ICF-aligned documentation standards"
-- "Your data is never used to train AI models"
-- "Built exclusively for executive coaches"
-
-#### Acceptance Criteria
-- [ ] All 4 sections render correctly
-- [ ] "Start Free" CTA links to sign-up
-- [ ] Pricing section matches current pricing exactly
-- [ ] Mobile responsive
-- [ ] Page load <2 seconds
+**Estimated Effort:** 0.5 days
 
 ---
 
@@ -186,7 +147,6 @@ Build billing infrastructure (Stripe), free vs pro tier enforcement, settings, o
 **Acceptance Criteria:**
 - [ ] Prompts when hitting limits
 - [ ] Upgrade modals with clear CTAs
-- [ ] Pro pricing: $99/month
 - [ ] Track conversion from prompts
 
 **Estimated Effort:** 0.5 days
@@ -202,6 +162,7 @@ Build billing infrastructure (Stripe), free vs pro tier enforcement, settings, o
 **Acceptance Criteria:**
 - [ ] Welcome email
 - [ ] Payment receipts
+- [ ] Trial reminders
 - [ ] Payment failed alerts
 
 **Estimated Effort:** 0.5 days
@@ -217,7 +178,6 @@ Build billing infrastructure (Stripe), free vs pro tier enforcement, settings, o
 **Acceptance Criteria:**
 - [ ] Export all data as ZIP (CSV + PDF)
 - [ ] Download link expires after 7 days
-- [ ] Includes all sessions and action items
 
 **Estimated Effort:** 1 day
 
@@ -279,8 +239,7 @@ Build billing infrastructure (Stripe), free vs pro tier enforcement, settings, o
 - [ ] No P0/P1 bugs
 - [ ] Smoke testing passed
 - [ ] Privacy policy published
-- [ ] Anthropic/OpenAI DPA signed
-- [ ] Pro pricing confirmed: $99/month, $948/year
+- [ ] OpenAI DPA signed
 
 **Estimated Effort:** 1 day
 
@@ -288,11 +247,11 @@ Build billing infrastructure (Stripe), free vs pro tier enforcement, settings, o
 
 ## Epic Success Criteria
 
-- [ ] Users can upgrade to Pro via Stripe ($99/mo or $948/yr)
+- [ ] Users can upgrade to Pro via Stripe
 - [ ] Free/Pro tier limits enforced
 - [ ] GDPR compliant (export + delete)
 - [ ] Performance >90 Lighthouse
-- [ ] 10+ beta coaches, 5+ upgrades
+- [ ] 10+ beta users, 5+ upgrades
 
 ---
 
@@ -300,9 +259,9 @@ Build billing infrastructure (Stripe), free vs pro tier enforcement, settings, o
 
 - [ ] Stripe integration working (live mode)
 - [ ] Free/Pro tiers enforced
-- [ ] Onboarding smooth (<5 min to first aha moment)
+- [ ] Onboarding smooth
 - [ ] Performance acceptable
-- [ ] Ready for MVP launch (March 31, 2026)
+- [ ] Ready for MVP launch (Jan 31, 2026)
 
 ---
 

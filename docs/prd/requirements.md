@@ -1,314 +1,142 @@
-# Requirements
+# Functional Requirements
 
-**Version:** 2.0 (Major Pivot)
-**Last Updated:** January 5, 2026
-**Previous Version:** 1.0 (Video Conferencing Requirements) - See git history
-
----
-
-## Functional Requirements
-
-### Client Management (FR1-FR5)
-
-**FR1: Client Card Creation & Management**
-- System shall allow users to create client profiles in <30 seconds
-- Fields: Name, company, role, email, phone (optional), website, LinkedIn (optional)
-- Support manual info entry OR automated research via public website scraping
-- Maximum 50 clients per Pro user, 3 clients per Free user
-
-**FR2: AI-Powered Client Overview**
-- System shall generate AI summary of client from provided data (website, social links, manual notes)
-- AI overview shall include: Company description, likely priorities, suggested talking points
-- Users can manually edit/override AI-generated content
-- Generation time: <30 seconds per client
-
-**FR3: Client Search & Filtering**
-- System shall provide search by: client name, company name, tags
-- Filter by: tags (VIP, High Priority, On Hold), recent activity, upcoming meetings
-- Sort by: name (A-Z), last meeting date, next meeting date, date added
-
-**FR4: Client Data Export**
-- Users can export individual client data (PDF format)
-- Export includes: overview, meeting history, notes, action items
-- Pro users can bulk export all clients (CSV format)
-
-**FR5: Client Tags & Labels**
-- Users can add custom tags to clients (e.g., "VIP", "High Priority", "On Hold")
-- Free plan: 3 tags max, Pro plan: unlimited tags
-- Tag-based filtering and organization
+**Version:** 3.0
+**Last Updated:** March 8, 2026
+**Status:** Approved — MVP Locked
 
 ---
 
-### Meeting Memory (FR6-FR10)
+## FR1: Authentication & User Management
 
-**FR6: Manual Meeting Logging**
-- Users can log meetings with: date, client, title, meeting platform (Google Meet, Zoom, Other)
-- Support manual notes entry (unlimited length)
-- Upload transcript files (TXT, SRT, VTT formats, max 10MB)
-- Upload recording files (MP3, MP4, M4A, WAV, max 100MB)
-- Tag meetings with custom labels
-
-**FR7: Meeting Link Integration**
-- Users can paste meeting links (Google Meet, Zoom URLs)
-- OR system can auto-generate Google Meet/Zoom links via OAuth (Pro only)
-- Meeting links stored with meeting record
-- One-click launch to meeting platform
-
-**FR8: AI Meeting Summaries**
-- System shall transcribe uploaded recordings using Gladia API (<$0.04/hour)
-- AI generates structured summary: key discussion points, decisions made, questions raised
-- Summary generation time: <60 seconds for 1-hour meeting
-- Users can edit/regenerate summaries
-- Free: 3 AI summaries/month, Pro: 20 AI summaries/month
-
-**FR9: Action Item Extraction**
-- AI automatically extracts action items from meeting transcripts
-- Action items include: task description, owner (user/client), due date (if mentioned)
-- Users can manually add/edit action items
-- Status tracking: To Prepare, Promised (to client), Done
-- Email/in-app notifications for overdue items (Pro only)
-
-**FR10: Meeting History**
-- Client card displays chronological meeting history
-- Meeting cards show: date, title, platform, summary snippet, # action items (open/total)
-- Free users: 30-day history retention, Pro users: unlimited history
-- Search within meeting notes and summaries
+- **FR1.1:** User signup via email/password or Google OAuth (via Clerk)
+- **FR1.2:** Login/logout with session management
+- **FR1.3:** Password reset via email
+- **FR1.4:** User profile: name, email, timezone
+- **FR1.5:** GDPR-compliant data deletion (right to erasure)
 
 ---
 
-### Meeting Preparation (FR11-FR13)
+## FR2: Client Cards
 
-**FR11: Meeting Prep Intelligence**
-- "Prepare for Meeting" button on client card
-- AI generates prep brief using past meeting context
-- Prep brief includes: client overview, last meeting summary, open action items, suggested talking points, things to avoid
-- If no past meetings: prep uses client overview only
-- Generation time: <10 seconds
-
-**FR12: Private Meeting Assist Panel**
-- During-meeting panel (web interface, not visible to client)
-- Displays: client summary, talking points from prep, open action items, live note field
-- Notes auto-save every 30 seconds
-- Panel accessible on mobile (responsive design)
-
-**FR13: Suggested Talking Points**
-- AI analyzes past meetings and client context
-- Generates 3-5 talking points based on: unresolved topics, follow-ups needed, recent client activity
-- Manual "Suggest" button (not automatic)
-- Pro users: unlimited suggestions, Free users: 1 suggestion per client
+- **FR2.1:** Create client with fields: Name (required), Goal, Company, Role, Start Date, Notes, Website
+- **FR2.2:** Edit and delete client records
+- **FR2.3:** Client card displays: name, goal, coaching start date, total sessions count, pending action items count, last session date
+- **FR2.4:** Search clients by name (real-time, client-side filter)
+- **FR2.5:** Free tier: 1 active client maximum; Pro: unlimited
+- **FR2.6:** Upgrade CTA shown when free user attempts to add second client
+- **FR2.7:** Client deletion cascades to all sessions, action items, and solis queries
 
 ---
 
-### AI Assistant (FR14-FR16)
+## FR3: Session Memory — Manual Upload
 
-**FR14: RAG-Powered Q&A**
-- Chat interface for asking questions about clients
-- AI searches user's client data using vector embeddings (Supabase pgvector)
-- Answers questions like: "What did I promise Client X?", "Summarize last meeting with Y", "What's the status of Z project?"
-- Multi-turn conversations with context preserved
-- Pro: 1000 queries/month, Free: 100 queries/month
-
-**FR15: Chat History & Pinning**
-- Chat history auto-deleted after 30 days
-- Users can "pin" important conversations → saved permanently
-- Search within chat history
-- Export chat conversation (TXT format)
-
-**FR16: Pre-built Question Templates**
-- System provides common question templates:
-  - "What did I promise [client]?"
-  - "Summarize all meetings with [client]"
-  - "What action items are overdue for [client]?"
-  - "What should I prepare for next meeting?"
-- Free: 5 templates, Pro: 20+ templates
+- **FR3.1:** Upload session transcript as .txt file (max 25MB)
+- **FR3.2:** Upload session transcript as .docx file (max 25MB, parsed via mammoth)
+- **FR3.3:** Paste session transcript as plain text (max 50,000 characters)
+- **FR3.4:** User sets session date (date picker) and session title when uploading
+- **FR3.5:** Validation: at least one of (file upload OR pasted text) required
+- **FR3.6:** File stored in Supabase Storage; URL saved in `sessions.transcript_file_url`
 
 ---
 
-### Client Research (FR17-FR18)
+## FR4: Session Memory — Auto-Transcription
 
-**FR18: Public Website Scraping (MVP)**
-- "Research" button on client card
-- System scrapes public website URL provided by user
-- Extracts: company description, services, team info, blog/news
-- AI generates client overview from scraped data
-- Processing time: <30 seconds per website
-- Free plan: 3 research requests/month, Pro plan: 20 requests/month
-
-**FR18: Manual Data Entry**
-- Users can manually add any client information
-- Fields: company description, key contacts, project details, preferences, notes
-- Rich text editor for notes (bold, italic, lists, links)
+- **FR4.1:** Upload audio/video file for automatic transcription
+- **FR4.2:** Accepted formats: .mp3, .mp4, .m4a, .wav, .webm (max 500MB)
+- **FR4.3:** Default provider: Deepgram Nova-2 (36% lower WER, built-in speaker diarization)
+- **FR4.4:** Alternative provider: OpenAI Whisper (via `TRANSCRIPTION_PROVIDER` env var)
+- **FR4.5:** Dev placeholder: instant mock transcript (no API cost)
+- **FR4.6:** Async processing: session `status` transitions: pending → processing → complete/error
+- **FR4.7:** Progress indicator displayed during processing
+- **FR4.8:** Audio file stored in Supabase Storage; URL saved in `sessions.transcript_audio_url`
 
 ---
 
-### Data Management (FR19-FR22)
+## FR5: AI Summary Generation
 
-**FR19: Data Storage Limits**
-- Free plan: 100MB total storage (transcripts + recordings)
-- Pro plan: 5GB total storage
-- System warns at 80% capacity
-- Auto-delete oldest recordings when limit reached (with user confirmation)
+- **FR5.1:** AI automatically generates summary from session transcript after upload
+- **FR5.2:** Provider-agnostic: default Claude Sonnet 4.5, alternative GPT-4o-mini (via `AI_PROVIDER` env var)
+- **FR5.3:** Dev placeholder: instant mock summary (no API cost)
+- **FR5.4:** Extracted fields: session title, summary paragraph, key_topics[] array, action_items[] (description + assigned_to)
+- **FR5.5:** Action items auto-created as `action_items` records (assigned to 'coach' or 'client')
+- **FR5.6:** Session embedding auto-generated from summary text and stored in `sessions.embedding` (vector 1536)
+- **FR5.7:** Manual editing of generated summary supported
+- **FR5.8:** Regenerate summary option available
+- **FR5.9:** Free tier: 3 lifetime AI sessions; Pro: 25/month. Manual uploads without AI processing are always unlimited.
 
-**FR20: Data Export (GDPR)**
-- Users can request full data export (PDF + CSV bundle)
-- Export includes: all clients, meetings, notes, action items, chat history
-- Export generation time: <5 minutes
-- Download link expires after 7 days
+---
 
-**FR21: Data Deletion**
-- Users can delete individual clients/meetings
-- "Delete Account" option removes all data within 30 days
-- Hard delete from database (not soft delete for user data)
-- Confirmation required for destructive actions
+## FR6: Session Timeline UI
 
-**FR22: Data Backup**
-- System auto-backs up user data daily
-- Point-in-time recovery within 30 days (admin function)
-- Pro users can manually trigger backup (1x per week)
+- **FR6.1:** Client detail page shows reverse-chronological session timeline
+- **FR6.2:** Each session card shows: date, title, summary snippet, key topics, action item count
+- **FR6.3:** Session cards are expandable (show full summary, transcript, action items)
+- **FR6.4:** Empty state: "Upload your first session transcript" with upload button
+- **FR6.5:** Session upload via 2-tab modal: Tab 1 (Manual Upload/Paste) | Tab 2 (Auto-Transcribe Audio)
+
+---
+
+## FR7: Action Item Tracking
+
+- **FR7.1:** Action items auto-extracted from AI summary and created as records
+- **FR7.2:** Each action item has: description, status (pending/in_progress/completed/cancelled), assigned_to (coach/client)
+- **FR7.3:** Manual action item creation (add without a session)
+- **FR7.4:** Mark action item complete with checkbox; `completed_at` timestamp recorded
+- **FR7.5:** Status dropdown: pending → in_progress → completed/cancelled
+- **FR7.6:** Assignee badge (coach/client) displayed
+
+---
+
+## FR8: Solis Intelligence
+
+- **FR8.1:** Coach can ask natural language questions about any client's history
+- **FR8.2:** Hybrid RAG query flow: embed query → pgvector top-3 relevant sessions → always include 3 most recent sessions (deduplicate, max 6 total) → AI generates answer with citations
+- **FR8.3:** Response includes: answer text + citation list [{session_date, title}]
+- **FR8.4:** Client-specific mode: "Ask Solis about [Client Name]" (scoped to that client)
+- **FR8.5:** Global mode: cross-client queries on `/dashboard/intelligence` page
+- **FR8.6:** Query and response stored in `solis_queries` table
+- **FR8.7:** Usage counter displayed: "X of 50 lifetime queries used" (free) or "X of 2,000 monthly queries" (pro)
+- **FR8.8:** Free tier: 50 lifetime queries; Pro: 2,000/month. Upgrade CTA on limit hit.
+
+---
+
+## FR9: Usage Limits & Billing
+
+- **FR9.1:** Free tier limits enforced at API level: 1 client, 3 lifetime AI sessions, 50 lifetime Solis queries
+- **FR9.2:** Pro tier limits enforced: unlimited clients, 25 AI sessions/month, 2,000 Solis queries/month
+- **FR9.3:** Monthly reset via `transcript_reset_at` and `query_reset_at` timestamps in `usage_tracking` table
+- **FR9.4:** Upgrade prompt modal shown when any limit is hit
+- **FR9.5:** Stripe Checkout for Pro upgrade ($99/mo or $948/yr)
+- **FR9.6:** Webhook events handled: checkout.session.completed, invoice.paid, subscription.updated, subscription.deleted
+- **FR9.7:** Settings page shows current plan, usage stats, and manage subscription button
+
+---
+
+## FR10: Onboarding
+
+- **FR10.1:** 5-step onboarding flow for new users
+- **FR10.2:** Step 1 — Welcome: explain MeetSolis value for executive coaches
+- **FR10.3:** Step 2 — Add First Client: coached client creation form
+- **FR10.4:** Step 3 — Upload Transcript: pre-loaded sample coaching transcript available
+- **FR10.5:** Step 4 — View Summary: highlight AI-generated summary, key topics, action items
+- **FR10.6:** Step 5 — Try Solis: ask a sample question about the demo session
+- **FR10.7:** Target: coach reaches first "aha moment" in under 5 minutes
+
+---
+
+## FR11: Navigation & Layout
+
+- **FR11.1:** Left sidebar navigation: Clients, Intelligence, Settings
+- **FR11.2:** Mobile responsive: sidebar collapses to hamburger overlay on mobile
+- **FR11.3:** Active nav state highlighted
 
 ---
 
 ## Non-Functional Requirements
 
-### Performance (NFR1-NFR4)
-
-**NFR1: API Response Times**
-- Client list load: <500ms
-- Meeting summary generation: <60 seconds (1-hour meeting)
-- AI Q&A response: <3 seconds
-- Client research (web scraping): <30 seconds
-
-**NFR2: Transcription Accuracy**
-- Gladia transcription accuracy: >90% for clear audio
-- Support for accents (US, UK, Indian English)
-- Fallback to manual upload if transcription fails
-
-**NFR3: Application Load Time**
-- Initial page load: <2 seconds (on 10Mbps connection)
-- Dashboard render: <1 second
-- Lazy load meeting history (paginated, 20 items per page)
-
-**NFR4: Scalability**
-- Support 500 concurrent users on free tier infrastructure
-- Database query time: <200ms for 95th percentile
-- Vector search (RAG): <500ms for semantic queries
-
----
-
-### Security & Privacy (NFR5-NFR9)
-
-**NFR5: Data Encryption**
-- Encryption at rest: AES-256 (Supabase handles)
-- Encryption in transit: TLS 1.3 (HTTPS everywhere)
-- Environment variables: never committed to git, use Vercel env vars
-
-**NFR6: Authentication & Authorization**
-- Clerk JWT validation on all protected routes
-- Row-Level Security (RLS) enforced in Supabase
-- Users can only access their own data (no cross-user leakage)
-- Session timeout: 30 minutes of inactivity
-
-**NFR7: AI Data Privacy**
-- User data NEVER used for AI model training
-- OpenAI API: zero_data_retention flag enabled
-- 30-day retention window (then deleted from OpenAI)
-- Sign Data Processing Agreement (DPA) with OpenAI
-
-**NFR8: GDPR Compliance**
-- Privacy policy clearly states data usage
-- Cookie consent banner (if using analytics)
-- Right to export data (FR20)
-- Right to deletion (FR21)
-- Data residency: multi-region (US, EU support)
-
-**NFR9: Input Validation**
-- All user inputs sanitized with `sanitize-html`
-- Zod schema validation on API inputs
-- File upload validation: type, size, malware scanning (ClamAV)
-- Rate limiting: 100 requests/minute per user (Upstash Redis)
-
----
-
-### Reliability (NFR10-NFR12)
-
-**NFR10: Uptime & Availability**
-- Target uptime: 99.5% (excluding planned maintenance)
-- Planned maintenance: <2 hours/month, off-peak hours
-- Health check endpoint: `/api/health` (monitored by UptimeRobot)
-
-**NFR11: Error Handling**
-- All errors logged to Sentry
-- User-friendly error messages (no stack traces exposed)
-- Graceful degradation: if AI fails, allow manual entry
-- Circuit breaker pattern for external APIs (OpenAI, Gladia)
-
-**NFR12: Data Integrity**
-- Database transactions for multi-step operations
-- Optimistic locking for concurrent edits
-- Automatic retry for transient failures (3 attempts, exponential backoff)
-
----
-
-### Usability (NFR13-NFR15)
-
-**NFR13: User Experience**
-- New users can add first client in <1 minute
-- Dashboard loading state: skeleton screens (no blank pages)
-- Inline help tooltips for complex features
-- Keyboard shortcuts for power users (e.g., "C" to create client)
-
-**NFR14: Mobile Responsiveness**
-- Fully responsive design (mobile-first approach)
-- Touch-friendly UI elements (min 44px tap targets)
-- Mobile-optimized meeting assist panel
-- Offline support: none (MVP requires internet)
-
-**NFR15: Accessibility**
-- WCAG 2.1 AA compliance
-- Keyboard navigation support
-- Screen reader friendly (ARIA labels)
-- Color contrast ratio: 4.5:1 minimum
-
----
-
-### Cost Efficiency (NFR16-NFR17)
-
-**NFR16: Infrastructure Costs**
-- Free tier infrastructure for 0-100 users (Supabase, Vercel, Clerk)
-- Target cost: <$1/user/month at scale (500+ users)
-- Monitor AI costs: alert if monthly OpenAI bill > $500
-
-**NFR17: AI Cost Optimization**
-- Use GPT-4o-mini (4x cheaper than GPT-4)
-- Fallback to GPT-3.5-turbo if user exceeds quota
-- Cache AI responses for repeated queries (Redis, 1-hour TTL)
-- Limit free tier AI usage to prevent abuse
-
----
-
-## Success Metrics
-
-### Engagement Metrics
-- **Daily Active Users (DAU):** 40%+ of paid users
-- **Weekly Active Users (WAU):** 70%+ of paid users
-- **Sessions per week:** 3+ (users prep before meetings)
-
-### Retention Metrics
-- **Free-to-Paid Conversion:** 3-5%
-- **Monthly Churn:** <5%
-- **90-Day Retention:** >60%
-
-### Quality Metrics
-- **AI Summary NPS:** >7/10 (users find summaries useful)
-- **Overall NPS:** >50
-- **Support tickets:** <2% of users/month
-
-### Revenue Metrics
-- **MRR Growth:** 20%+ month-over-month (first 6 months)
-- **Average Revenue Per User (ARPU):** $29 (Pro plan)
-- **Customer Acquisition Cost (CAC):** <$50 (organic + paid)
-- **Lifetime Value (LTV):** >$300 (12+ month retention)
-
----
-
-**Next:** [Technical Requirements →](./technical-requirements.md)
+- **NFR1:** Solis Intelligence response time: <5 seconds
+- **NFR2:** AI summary generation: <15 seconds for typical 45-min session transcript
+- **NFR3:** Client list load time: <500ms (up to 50 clients)
+- **NFR4:** Mobile responsive (all core flows)
+- **NFR5:** RLS enforced — zero cross-user data access
+- **NFR6:** No training on user data (privacy-first)
