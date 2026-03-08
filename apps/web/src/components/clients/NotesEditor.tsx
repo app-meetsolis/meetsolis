@@ -122,7 +122,6 @@ export function NotesEditor({ clientId, initialNotes }: NotesEditorProps) {
   }
 
   // ── Edit mode ──────────────────────────────────────────────────────────────
-  const charsLeft = MAX_CHARS - content.length;
   const isAtLimit = content.length >= MAX_CHARS;
 
   return (
