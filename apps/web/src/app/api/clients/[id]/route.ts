@@ -352,7 +352,7 @@ export async function DELETE(
       );
     }
 
-    // Delete client (CASCADE will automatically delete related meetings, action_items, embeddings)
+    // Delete client (CASCADE deletes sessions, action_items; solis_queries.client_id set to NULL)
     const { error: deleteError } = await supabase
       .from('clients')
       .delete()
@@ -369,6 +369,25 @@ export async function DELETE(
           },
         },
         { status: 500 }
+      );
+    }
+
+    // Defensive: delete transcript/audio files from Supabase Storage (non-fatal)
+    // Sessions not yet implemented (Story 3.2/3.3) but cleanup runs when they exist
+    try {
+      const { data: files } = await supabase.storage
+        .from('transcripts')
+        .list(`${userId}/${clientId}`);
+      if (files && files.length > 0) {
+        const paths = files.map(
+          (f: { name: string }) => `${userId}/${clientId}/${f.name}`
+        );
+        await supabase.storage.from('transcripts').remove(paths);
+      }
+    } catch (storageErr) {
+      console.warn(
+        '[Clients API] Storage cleanup failed (non-fatal):',
+        storageErr
       );
     }
 

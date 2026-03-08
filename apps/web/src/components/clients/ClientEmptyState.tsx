@@ -9,7 +9,11 @@
 import { Button } from '@/components/ui/button';
 import { Users, Plus } from 'lucide-react';
 
-export function ClientEmptyState() {
+interface ClientEmptyStateProps {
+  onAddClient?: () => void;
+}
+
+export function ClientEmptyState({ onAddClient }: ClientEmptyStateProps) {
   return (
     <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white p-12 text-center">
       {/* Icon */}
@@ -27,13 +31,7 @@ export function ClientEmptyState() {
       </p>
 
       {/* Add Client Button */}
-      <Button
-        className="flex items-center gap-2"
-        onClick={() => {
-          // TODO: Open add client modal (Story 2.3)
-          console.log('Add client clicked');
-        }}
-      >
+      <Button className="flex items-center gap-2" onClick={onAddClient}>
         <Plus className="h-4 w-4" />
         Add Client
       </Button>

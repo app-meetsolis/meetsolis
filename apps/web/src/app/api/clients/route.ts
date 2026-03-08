@@ -11,14 +11,13 @@ import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import { config } from '@/lib/config/env';
 import { ClientCreateSchema } from '@meetsolis/shared';
-import { checkClientLimit } from '@/lib/billing/checkUsage';
 
 /**
  * POST /api/clients
  * Create a new client
  *
- * Request body: { name, company?, role?, email?, phone?, website?, linkedin_url? }
- * Response: 201 { client } | 400 | 403 | 409 | 500
+ * Request body: { name, company?, role?, goal?, start_date?, website?, notes? }
+ * Response: 201 { client } | 400 | 403 | 500
  */
 export async function POST(request: NextRequest) {
   try {
@@ -74,23 +73,51 @@ export async function POST(request: NextRequest) {
 
     const userId = user.id;
 
-    // Check tier limit via subscriptions table
-    const limitCheck = await checkClientLimit(clerkUserId, userId);
-    if (!limitCheck.allowed) {
-      return NextResponse.json(
-        {
-          error: {
-            code: 'TIER_LIMIT_EXCEEDED',
-            message: limitCheck.reason,
-            limit: limitCheck.limit,
-            current: limitCheck.current,
+    // Check tier limit via subscriptions table (free = 1 client, pro = unlimited)
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('plan')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    const isPro = subscription?.plan === 'pro';
+
+    if (!isPro) {
+      const { count, error: countError } = await supabase
+        .from('clients')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+
+      if (countError) {
+        console.error('[Clients API] Failed to count clients:', countError);
+        return NextResponse.json(
+          {
+            error: {
+              code: 'INTERNAL_ERROR',
+              message: 'Failed to check client limit',
+            },
           },
-        },
-        { status: 403 }
-      );
+          { status: 500 }
+        );
+      }
+
+      if (count !== null && count >= 1) {
+        return NextResponse.json(
+          {
+            error: {
+              code: 'TIER_LIMIT_EXCEEDED',
+              message:
+                'Free tier is limited to 1 client. Upgrade to Pro for unlimited clients.',
+              limit: 1,
+              current: count,
+            },
+          },
+          { status: 403 }
+        );
+      }
     }
 
-    // Insert client
+    // Insert client with v3 fields
     const { data: newClient, error: insertError } = await supabase
       .from('clients')
       .insert({
@@ -98,10 +125,10 @@ export async function POST(request: NextRequest) {
         name: clientData.name,
         company: clientData.company || null,
         role: clientData.role || null,
-        website: clientData.website || null,
         goal: clientData.goal || null,
         start_date: clientData.start_date || null,
-        status: clientData.status || 'active',
+        website: clientData.website || null,
+        notes: clientData.notes || null,
       })
       .select()
       .single();
@@ -112,7 +139,8 @@ export async function POST(request: NextRequest) {
         {
           error: {
             code: 'INTERNAL_ERROR',
-            message: 'Failed to create client',
+            message: insertError?.message || 'Failed to create client',
+            details: insertError,
           },
         },
         { status: 500 }

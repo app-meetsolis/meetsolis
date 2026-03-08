@@ -1,43 +1,57 @@
+/**
+ * ClientCard Component
+ * v3: Shows goal, last session date — replaces tags/last meeting
+ */
+
 'use client';
 
 import { Client } from '@meetsolis/shared';
 import { useRouter } from 'next/navigation';
 import { formatDistanceToNow, parseISO } from 'date-fns';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Calendar, Pencil, Target, CheckSquare } from 'lucide-react';
+import {
+  Building2,
+  Calendar,
+  MoreVertical,
+  Pencil,
+  Target,
+  Trash2,
+} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface ClientCardProps {
   client: Client;
   onEdit?: (_client: Client) => void;
-  pendingActionsCount?: number;
+  onDelete?: (_client: Client) => void;
 }
 
 function formatLastSession(
-  lastMeetingAt: string | Date | null | undefined
+  lastSessionAt: string | Date | null | undefined
 ): string {
-  if (!lastMeetingAt) return 'No sessions yet';
+  if (!lastSessionAt) return 'No sessions yet';
   try {
     const date =
-      typeof lastMeetingAt === 'string'
-        ? parseISO(lastMeetingAt)
-        : lastMeetingAt;
+      typeof lastSessionAt === 'string'
+        ? parseISO(lastSessionAt)
+        : lastSessionAt;
     return `Last session: ${formatDistanceToNow(date, { addSuffix: true })}`;
   } catch {
     return 'No sessions yet';
   }
 }
 
-export function ClientCard({
-  client,
-  onEdit,
-  pendingActionsCount = 0,
-}: ClientCardProps) {
+export function ClientCard({ client, onEdit, onDelete }: ClientCardProps) {
   const router = useRouter();
 
-  const handleEditClick = (e: React.MouseEvent) => {
+  const roleCompanyText =
+    [client.role, client.company].filter(Boolean).join(' at ') || null;
+
+  const handleMenuClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onEdit?.(client);
   };
 
   return (
@@ -53,17 +67,40 @@ export function ClientCard({
         }
       }}
     >
-      {/* Edit Button */}
-      {onEdit && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="absolute right-2 top-2 h-8 w-8 p-0 opacity-0 transition-opacity group-hover:opacity-100"
-          onClick={handleEditClick}
-          aria-label="Edit client"
+      {/* Actions Menu */}
+      {(onEdit || onDelete) && (
+        <div
+          className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100"
+          onClick={handleMenuClick}
         >
-          <Pencil className="h-4 w-4" />
-        </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="flex h-8 w-8 items-center justify-center rounded-md text-[#6B7280] hover:bg-gray-100 hover:text-[#1A1A1A]"
+                aria-label="Client actions"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {onEdit && (
+                <DropdownMenuItem onClick={() => onEdit(client)}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+              )}
+              {onDelete && (
+                <DropdownMenuItem
+                  className="text-red-600 focus:bg-red-50 focus:text-red-600"
+                  onClick={() => onDelete(client)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       )}
 
       {/* Client Name */}
@@ -72,39 +109,26 @@ export function ClientCard({
       </h3>
 
       {/* Role / Company */}
-      {(client.role || client.company) && (
-        <p className="mb-3 text-sm text-[#6B7280]">
-          {[client.role, client.company].filter(Boolean).join(' at ')}
-        </p>
+      {roleCompanyText && (
+        <div className="mb-3 flex items-center gap-2 text-sm text-[#6B7280]">
+          <Building2 className="h-4 w-4 shrink-0" />
+          <span>{roleCompanyText}</span>
+        </div>
       )}
 
       {/* Coaching Goal */}
       {client.goal && (
-        <div className="mb-3 flex items-start gap-2 text-sm text-[#1A1A1A]">
-          <Target className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#6B7280]" />
+        <div className="mb-3 flex items-start gap-2 text-sm text-[#374151]">
+          <Target className="mt-0.5 h-4 w-4 shrink-0 text-[#6B7280]" />
           <span className="line-clamp-2">{client.goal}</span>
         </div>
       )}
 
       {/* Last Session */}
-      <div className="mb-3 flex items-center gap-2 text-sm text-[#6B7280]">
-        <Calendar className="h-4 w-4" />
-        <span>{formatLastSession(client.last_meeting_at)}</span>
+      <div className="flex items-center gap-2 text-sm text-[#6B7280]">
+        <Calendar className="h-4 w-4 shrink-0" />
+        <span>{formatLastSession(client.last_session_at)}</span>
       </div>
-
-      {/* Pending Actions */}
-      {pendingActionsCount > 0 && (
-        <div className="flex items-center gap-2">
-          <CheckSquare className="h-4 w-4 text-[#F59E0B]" />
-          <Badge
-            variant="secondary"
-            className="bg-amber-50 text-amber-700 text-[11px]"
-          >
-            {pendingActionsCount} pending{' '}
-            {pendingActionsCount === 1 ? 'action' : 'actions'}
-          </Badge>
-        </div>
-      )}
     </div>
   );
 }

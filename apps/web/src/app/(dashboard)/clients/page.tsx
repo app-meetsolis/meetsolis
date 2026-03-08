@@ -1,15 +1,6 @@
 /**
  * Clients Dashboard Page
- * Story 2.2: Client Dashboard UI (Grid View)
- * Story 2.3: Add/Edit Client Modal - Task 8 (Integration)
- * Story 2.4: Client Search & Filter - Task 8 (Integration)
- *
- * Displays all clients in a responsive grid layout with:
- * - 3 columns (desktop), 2 columns (tablet), 1 column (mobile)
- * - Loading, empty, and error states
- * - Client cards with hover effects
- * - Add/Edit client modal integration
- * - Search/filter/sort functionality
+ * v3: Executive coach pivot — 1 free client, no tags, session-aware sort
  */
 
 'use client';
@@ -26,27 +17,20 @@ import { ClientEmptyState } from '@/components/clients/ClientEmptyState';
 import { ClientErrorState } from '@/components/clients/ClientErrorState';
 import { ClientModal } from '@/components/clients/ClientModal';
 import { TierLimitDialog } from '@/components/clients/TierLimitDialog';
+import { DeleteClientDialog } from '@/components/clients/DeleteClientDialog';
 import { ClientSearch, SortOption } from '@/components/clients/ClientSearch';
 import { ClientSearchEmpty } from '@/components/clients/ClientSearchEmpty';
 import { Toaster } from 'sonner';
 
-/**
- * Fetch clients from API
- * @returns Array of clients for authenticated user
- */
 async function fetchClients(): Promise<Client[]> {
   const response = await fetch('/api/clients', {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
   });
-
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.error?.message || 'Failed to fetch clients');
   }
-
   const data = await response.json();
   return data.clients;
 }
@@ -55,18 +39,16 @@ function ClientsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [selectedClient, setSelectedClient] = useState<Client | undefined>(
     undefined
   );
   const [isTierLimitDialogOpen, setIsTierLimitDialogOpen] = useState(false);
-
+  const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState<SortOption>('date-added');
 
-  // React Query for data fetching with automatic refetch on window focus
   const {
     data: clients,
     isLoading,
@@ -76,20 +58,18 @@ function ClientsPageContent() {
   } = useQuery({
     queryKey: ['clients'],
     queryFn: fetchClients,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    refetchOnWindowFocus: true, // Override global setting for this query
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
   });
 
+  // Free tier: 1 client max. Pro: unlimited (API enforces this too)
+  const maxClients = 1;
   const clientCount = clients?.length || 0;
+  const canAddClient = clientCount < maxClients;
 
-  /**
-   * Filter and sort clients - Tasks 3, 4, 7 (Story 2.4) + Story 2.5 (tags)
-   * Memoized for performance optimization
-   */
   const filteredAndSortedClients = useMemo(() => {
     if (!clients) return [];
 
-    // Task 3: Search filtering (case-insensitive, name OR company)
     let filtered = clients;
     if (searchQuery) {
       const queryLower = searchQuery.toLowerCase();
@@ -100,66 +80,58 @@ function ClientsPageContent() {
       });
     }
 
-    const sorted = [...filtered].sort((a, b) => {
+    return [...filtered].sort((a, b) => {
       switch (sortOption) {
         case 'name-asc':
           return a.name.localeCompare(b.name);
-
         case 'last-session': {
-          const dateA = a.last_meeting_at
-            ? new Date(a.last_meeting_at).getTime()
+          const dateA = a.last_session_at
+            ? new Date(a.last_session_at).getTime()
             : 0;
-          const dateB = b.last_meeting_at
-            ? new Date(b.last_meeting_at).getTime()
+          const dateB = b.last_session_at
+            ? new Date(b.last_session_at).getTime()
             : 0;
           return dateB - dateA;
         }
-
         case 'date-added':
         default: {
-          const dateA = new Date(a.created_at).getTime();
-          const dateB = new Date(b.created_at).getTime();
-          return dateB - dateA; // Newest first
+          return (
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
         }
       }
     });
-
-    return sorted;
   }, [clients, searchQuery, sortOption]);
 
   const handleAddClient = () => {
+    if (!canAddClient) {
+      setIsTierLimitDialogOpen(true);
+      return;
+    }
     setModalMode('create');
     setSelectedClient(undefined);
     setIsModalOpen(true);
   };
 
-  /**
-   * Handle Edit Client
-   * Open modal in edit mode with client data
-   */
   const handleEditClient = (client: Client) => {
     setModalMode('edit');
     setSelectedClient(client);
     setIsModalOpen(true);
   };
 
-  /**
-   * Handle search query changes - Task 8 (Story 2.4)
-   */
-  const handleSearchChange = useCallback((query: string) => {
-    setSearchQuery(query);
-  }, []);
+  const handleDeleteClient = (client: Client) => {
+    setClientToDelete(client);
+  };
 
-  /**
-   * Handle sort option changes - Task 8 (Story 2.4)
-   */
-  const handleSortChange = useCallback((sort: SortOption) => {
-    setSortOption(sort);
-  }, []);
+  const handleSearchChange = useCallback(
+    (query: string) => setSearchQuery(query),
+    []
+  );
+  const handleSortChange = useCallback(
+    (sort: SortOption) => setSortOption(sort),
+    []
+  );
 
-  /**
-   * Handle clear search
-   */
   const handleClearSearch = useCallback(() => {
     setSearchQuery('');
     const params = new URLSearchParams(searchParams.toString());
@@ -176,10 +148,8 @@ function ClientsPageContent() {
 
   return (
     <div className="min-h-screen bg-[#E8E4DD]">
-      {/* Sonner Toast Notifications */}
       <Toaster position="top-right" duration={3000} />
 
-      {/* Header */}
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 flex items-center justify-between">
           <div>
@@ -199,7 +169,6 @@ function ClientsPageContent() {
           />
         )}
 
-        {/* Content States */}
         {isLoading && <ClientGridSkeleton />}
 
         {isError && (
@@ -209,10 +178,8 @@ function ClientsPageContent() {
           />
         )}
 
-        {/* No clients state (no search query) */}
-        {showNoClients && <ClientEmptyState />}
+        {showNoClients && <ClientEmptyState onAddClient={handleAddClient} />}
 
-        {/* Empty search results state */}
         {showSearchEmpty && (
           <ClientSearchEmpty
             query={searchQuery}
@@ -220,16 +187,15 @@ function ClientsPageContent() {
           />
         )}
 
-        {/* Filtered and sorted results */}
         {showResults && (
           <ClientGrid
             clients={filteredAndSortedClients}
             onEditClient={handleEditClient}
+            onDeleteClient={handleDeleteClient}
           />
         )}
       </div>
 
-      {/* Client Modal */}
       <ClientModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -237,12 +203,17 @@ function ClientsPageContent() {
         client={selectedClient}
       />
 
-      {/* Tier Limit Dialog */}
       <TierLimitDialog
         isOpen={isTierLimitDialogOpen}
         onClose={() => setIsTierLimitDialogOpen(false)}
         currentCount={clientCount}
-        maxClients={1}
+        maxClients={maxClients}
+      />
+
+      <DeleteClientDialog
+        client={clientToDelete}
+        isOpen={clientToDelete !== null}
+        onClose={() => setClientToDelete(null)}
       />
     </div>
   );
