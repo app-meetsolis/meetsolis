@@ -29,7 +29,7 @@ export const ClientCreateSchema = z.object({
   goal: z.string().trim().optional(),
   start_date: z.string().optional(), // ISO date string e.g. "2026-01-15"
   website: z.string().url('Invalid URL format').trim().optional().or(z.literal('')),
-  notes: z.string().trim().optional(),
+  notes: z.string().trim().max(10000, 'Notes must be at most 10,000 characters').optional(),
 }).strict();
 
 // Schema for updating an existing client
@@ -40,7 +40,7 @@ export const ClientUpdateSchema = z.object({
   goal: z.string().trim().nullable().optional(),
   start_date: z.string().nullable().optional(),
   website: z.string().url('Invalid URL format').trim().nullable().optional().or(z.literal('')),
-  notes: z.string().trim().nullable().optional(),
+  notes: z.string().trim().max(10000, 'Notes must be at most 10,000 characters').nullable().optional(),
 }).strict();
 
 // Type exports

@@ -1,0 +1,43 @@
+schema: 1
+story: '2.7'
+story_title: 'Manual Notes Editor'
+gate: PASS
+status_reason: 'All 11 ACs verified manually and in code review. Two minor issues found and fixed during QA (unused variable, missing typography plugin). No blocking defects.'
+reviewer: 'Quinn (Test Architect)'
+updated: '2026-03-09T00:00:00Z'
+
+top_issues: []
+waiver:
+  active: false
+
+quality_score: 90
+expires: '2026-03-23T00:00:00Z'
+
+evidence:
+  tests_reviewed: 0
+  risks_identified: 2
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    ac_gaps: []
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'ReactMarkdown is XSS-safe by default. API enforces Zod validation + max(10000) on notes field.'
+  performance:
+    status: PASS
+    notes: '2s debounce prevents save spam. React Query caches with 2min stale time.'
+  reliability:
+    status: PASS
+    notes: 'Error handled gracefully — toast on failure, save skipped if content unchanged.'
+  maintainability:
+    status: PASS
+    notes: 'Clean component separation, well-commented, follows existing project patterns.'
+
+recommendations:
+  immediate: []
+  future:
+    - action: 'Add unit tests for NotesEditor — auto-save debounce, char limit enforcement, empty state'
+      refs: ['apps/web/src/components/clients/NotesEditor.tsx']
+    - action: 'Add aria-label to empty-state button for accessibility'
+      refs: ['apps/web/src/components/clients/NotesEditor.tsx']
