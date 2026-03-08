@@ -139,8 +139,7 @@ export async function POST(request: NextRequest) {
         {
           error: {
             code: 'INTERNAL_ERROR',
-            message: insertError?.message || 'Failed to create client',
-            details: insertError,
+            message: 'Failed to create client',
           },
         },
         { status: 500 }
