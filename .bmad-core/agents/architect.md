@@ -83,3 +83,11 @@ dependencies:
     - front-end-architecture-tmpl.yaml
     - fullstack-architecture-tmpl.yaml
 ```
+
+## Subagent Strategy
+When spawning subagents or delegating research tasks:
+- Always include a clear "WHY" — what specific outcome you need — not just what to find
+- Example: instead of "research WebRTC libraries", say "research WebRTC libraries to determine which best supports our mesh topology constraint with <10 participants so I can make a final tech selection"
+- The WHY helps the subagent filter signal from noise and return targeted results
+- Defer to subagents: online research, docs lookup, codebase exploration, log analysis
+- For complex problems you're going in circles on: spawn a fresh subagent with full context for a new perspective

@@ -1,3 +1,6 @@
+---
+model: claude-sonnet-4-6
+---
 <!-- Powered by BMAD™ Core -->
 
 # Create Brownfield Story Task

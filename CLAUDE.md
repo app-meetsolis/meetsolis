@@ -1,5 +1,26 @@
 In all interactions and commit messages, be extremely concise and sacrifice grammar for the sake of consision.
 
+# File Size Rule
+No file should exceed 500 lines. If a file approaches this, split it by concern before adding more code.
+
+# Context Window Target
+Optimal context: 0-50%. Above 50% — start new session. Above 70% — agent quality degrades significantly.
+
+# Subagent Strategy
+- Always and aggressively offload online research (eg, docs), codebase exploration, and log analysis to subagents.
+- When you're about to check logs, defer that to a haiku subagent.
+- For complex problems you're going around in circles with, get a fresh perspective by asking subagents.
+- When spawning a subagent, include a "Why" in the subagent's system prompt because it will help it filter the signal from the noise.|
+  
+
+# Context Awareness
+Your context window will be automatically compacted as it approaches its limit, allowing you to
+continue working indefinitely from where you left off. Therefore, do not stop tasks early due to token
+budget concerns. As you approach your token budget limit, save your current progress and state to
+memory before the context window refreshes. Always be as persistent and autonomous as possible and
+complete tasks fully, even if the end of your budget is approaching. Never artificially stop any task
+early regardless of the context remaining.
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -50,34 +71,7 @@ The project has comprehensive architecture documentation in `docs/`:
 - **Frontend Spec**: `docs/front-end-spec.md` - UI/UX specifications
 - **Tech Stack**: `docs/architecture/tech-stack.md` - Detailed technology decisions
 
-## Development Commands
-
-Since this is a **greenfield project** (no package.json yet), standard development commands are not yet established. Based on the architecture plan:
-
-**When the project is initialized, these commands will be available:**
-```bash
-# Development
-npm run dev              # Start development server
-npm run dev:web         # Start frontend only
-
-# Testing
-npm run test            # Run all tests
-npm run test:unit       # Unit tests only
-npm run test:e2e        # End-to-end tests
-
-# Code Quality
-npm run lint            # ESLint check
-npm run lint:fix        # Fix ESLint issues
-npm run format          # Prettier formatting
-npm run type-check      # TypeScript checking
-
-# Database (Supabase)
-npm run db:migrate      # Run database migrations
-npm run db:seed         # Seed test data
-npm run db:reset        # Reset database
-```
-
-## Project Structure (Planned)
+## Project Structure
 
 ```
 meetsolis/
@@ -161,12 +155,5 @@ When working with this codebase:
 3. **For requirements clarification**: Check `docs/prd.md`
 4. **For UI/UX guidance**: Reference `docs/front-end-spec.md`
 
-## Current Status
-
-This is a **greenfield project** in the planning phase. Before implementing:
-1. Ensure all architecture documents are reviewed
-2. Set up the Next.js project structure as defined in the architecture
-3. Configure Supabase, Clerk, and other external services
-4. Follow the BMad Method workflow for systematic development
 - In all interactions and commit messages, be extremely concise and sacrifice grammar for the sake of consision
 - At the end of each plan, give me a list of unresolved questions to answer, if any. Make the questions extremely concise. Sacrifice grammar for the sake of concision
