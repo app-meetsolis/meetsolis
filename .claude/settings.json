@@ -1,7 +1,7 @@
 {
   "statusLine": {
     "type": "command",
-    "command": "npx ccstatusline@latest"
+    "command": "bash /c/Users/harig/.claude/statusline-command.sh"
   },
   "alwaysThinkingEnabled": true,
   "permissions": {

@@ -1,3 +1,6 @@
+---
+disable_model_invocation: true
+---
 <!-- Powered by BMAD™ Core -->
 
 # Document an Existing Project

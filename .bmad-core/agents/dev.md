@@ -79,3 +79,11 @@ dependencies:
     - execute-checklist.md
     - validate-next-story.md
 ```
+
+## Subagent Strategy
+When spawning subagents or delegating research tasks:
+- Always include a clear "WHY" — what specific outcome you need — not just what to find
+- Example: instead of "research the clients table", say "research the clients table schema to understand what columns are available so I can write the correct INSERT query"
+- The WHY helps the subagent filter signal from noise and return targeted results
+- Defer to subagents: online research, docs lookup, codebase exploration, log analysis
+- For complex problems you're going in circles on: spawn a fresh subagent with full context for a new perspective

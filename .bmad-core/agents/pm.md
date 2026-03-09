@@ -82,3 +82,11 @@ dependencies:
     - brownfield-prd-tmpl.yaml
     - prd-tmpl.yaml
 ```
+
+## Subagent Strategy
+When spawning subagents or delegating research tasks:
+- Always include a clear "WHY" — what specific outcome you need — not just what to find
+- Example: instead of "research competitor pricing", say "research competitor pricing to identify gaps we can exploit for our positioning statement in the PRD"
+- The WHY helps the subagent filter signal from noise and return targeted results
+- Defer to subagents: online research, docs lookup, codebase exploration, log analysis
+- For complex problems you're going in circles on: spawn a fresh subagent with full context for a new perspective

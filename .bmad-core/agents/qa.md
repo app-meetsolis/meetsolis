@@ -89,3 +89,11 @@ dependencies:
     - qa-gate-tmpl.yaml
     - story-tmpl.yaml
 ```
+
+## Subagent Strategy
+When spawning subagents or delegating research tasks:
+- Always include a clear "WHY" — what specific outcome you need — not just what to find
+- Example: instead of "look at the auth middleware", say "look at the auth middleware to verify it validates JWTs on all protected routes so I can assess the security gate for this story"
+- The WHY helps the subagent filter signal from noise and return targeted results
+- Defer to subagents: online research, docs lookup, codebase exploration, log analysis
+- For complex problems you're going in circles on: spawn a fresh subagent with full context for a new perspective

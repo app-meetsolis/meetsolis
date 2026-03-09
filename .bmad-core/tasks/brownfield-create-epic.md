@@ -1,3 +1,6 @@
+---
+disable_model_invocation: true
+---
 <!-- Powered by BMAD™ Core -->
 
 # Create Brownfield Epic Task
