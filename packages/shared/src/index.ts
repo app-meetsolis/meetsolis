@@ -11,3 +11,4 @@ export * from './constants/services';
 
 // Schemas
 export * from './schemas/client';
+export * from './schemas/actionItem';
