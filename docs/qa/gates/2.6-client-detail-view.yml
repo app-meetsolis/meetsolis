@@ -1,0 +1,48 @@
+schema: 1
+story: '2.6'
+story_title: 'Client Detail View (Full — v3)'
+gate: PASS
+status_reason: 'All 20 ACs implemented and manually verified. One sync bug (stats row pending count) found and refactored. Build clean, auth/ownership checks correct.'
+reviewer: 'Quinn (Test Architect)'
+updated: '2026-03-10T00:00:00Z'
+
+top_issues: []
+waiver:
+  active: false
+
+quality_score: 90
+
+expires: '2026-03-24T00:00:00Z'
+
+evidence:
+  tests_reviewed: 0
+  risks_identified: 3
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+    ac_gaps: []
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'Clerk JWT on all routes, ownership checks on GET/PUT/DELETE, Zod input validation, FK bug (auth.users vs public.users) found and fixed via migration 017'
+  performance:
+    status: PASS
+    notes: 'Single deduped fetch for action items (shared React Query key after refactor), appropriate staleTime values, no N+1 queries'
+  reliability:
+    status: PASS
+    notes: 'Optimistic updates with rollback on error, graceful per-section error states, loading skeletons on all data-fetched sections'
+  maintainability:
+    status: PASS
+    notes: 'Clean component separation, consistent with project patterns, stubs clearly marked for future stories (3.2, 3.5, 4.3)'
+
+recommendations:
+  immediate: []
+  future:
+    - action: 'Add client name to Ask Solis button text ("Ask Solis about [name]") per AC 3'
+      refs: ['apps/web/src/app/(dashboard)/clients/[id]/page.tsx']
+    - action: 'Add UUID validation for params.id in PUT/DELETE routes (return 400 not 500 on invalid UUID)'
+      refs: ['apps/web/src/app/api/action-items/[id]/route.ts']
+    - action: 'Extract getSupabase()/getInternalUserId() to shared helper when third action-items route is needed'
+      refs: ['apps/web/src/app/api/action-items/route.ts', 'apps/web/src/app/api/action-items/[id]/route.ts']
+    - action: 'Add click-outside-to-close on ClientActionItemModal'
+      refs: ['apps/web/src/components/clients/ClientActionItemModal.tsx']

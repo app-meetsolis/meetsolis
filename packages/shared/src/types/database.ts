@@ -334,6 +334,42 @@ export interface UsageAlertUpdate {
 }
 
 // =============================================================================
+// CLIENT ACTION ITEM TYPES (Story 2.6)
+// =============================================================================
+
+export type ActionItemStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+export type ActionItemAssignee = 'coach' | 'client';
+
+export interface ClientActionItem {
+  id: string;
+  session_id: string | null;
+  client_id: string;
+  user_id: string;
+  description: string;
+  status: ActionItemStatus;
+  assignee: ActionItemAssignee | null;
+  completed: boolean;
+  completed_at: string | null;
+  due_date: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ClientActionItemInsert {
+  client_id: string;
+  description: string;
+  assignee?: ActionItemAssignee | null;
+  status?: ActionItemStatus;
+}
+
+export interface ClientActionItemUpdate {
+  description?: string;
+  status?: ActionItemStatus;
+  assignee?: ActionItemAssignee | null;
+  completed_at?: string | null;
+}
+
+// =============================================================================
 // COMPOSITE TYPES (WITH RELATIONS)
 // =============================================================================
 
