@@ -397,3 +397,51 @@ export interface ReactionWithUser extends Reaction {
 export interface FileWithUser extends File {
   user: User;
 }
+
+// =============================================================================
+// SESSION TYPES (Story 3.1)
+// =============================================================================
+
+export type SessionStatus = 'pending' | 'processing' | 'complete' | 'error';
+
+export interface Session {
+  id: string;
+  user_id: string;
+  client_id: string;
+  title: string;
+  session_date: string;
+  transcript_text: string | null;
+  transcript_file_url: string | null;
+  transcript_audio_url: string | null;
+  summary: string | null;
+  key_topics: string[];
+  embedding: number[] | null;
+  status: SessionStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SessionInsert {
+  client_id: string;
+  user_id: string;
+  title: string;
+  session_date: string;
+  transcript_text?: string | null;
+  transcript_file_url?: string | null;
+  transcript_audio_url?: string | null;
+  summary?: string | null;
+  key_topics?: string[];
+  status?: SessionStatus;
+}
+
+export interface SessionUpdate {
+  title?: string;
+  session_date?: string;
+  transcript_text?: string | null;
+  transcript_file_url?: string | null;
+  transcript_audio_url?: string | null;
+  summary?: string | null;
+  key_topics?: string[];
+  status?: SessionStatus;
+  updated_at?: string;
+}
