@@ -206,7 +206,7 @@ export default function ClientDetailPage() {
 
           {/* Sections */}
           <div className="space-y-4">
-            <SessionTimelineStub />
+            <SessionTimelineStub clientId={client.id} />
             <PendingActionsSection clientId={client.id} />
 
             <section>

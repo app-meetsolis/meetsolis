@@ -1,6 +1,20 @@
-import { Button } from '@/components/ui/button';
+'use client';
 
-export function SessionTimelineStub() {
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { SessionUploadModal } from '@/components/sessions/SessionUploadModal';
+
+interface SessionTimelineStubProps {
+  clientId: string;
+  onSessionUploaded?: () => void;
+}
+
+export function SessionTimelineStub({
+  clientId,
+  onSessionUploaded,
+}: SessionTimelineStubProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <section className="rounded-lg border border-gray-200 bg-white">
       <div className="border-b border-gray-100 px-4 py-3">
@@ -14,13 +28,21 @@ export function SessionTimelineStub() {
         <Button
           variant="outline"
           size="sm"
-          disabled
           className="mt-4"
-          title="Coming in Story 3.2"
+          onClick={() => setIsModalOpen(true)}
         >
           Upload Session Transcript
         </Button>
       </div>
+
+      <SessionUploadModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        clientId={clientId}
+        onSuccess={() => {
+          onSessionUploaded?.();
+        }}
+      />
     </section>
   );
 }

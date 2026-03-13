@@ -1,0 +1,44 @@
+schema: 1
+story: '3.2'
+story_title: 'Manual Transcript Upload'
+gate: PASS
+status_reason: 'All critical ACs met. Three minor issues fixed during review. AC12 session card display intentionally deferred to Story 3.3+ per stub architecture decision.'
+reviewer: 'Quinn (Test Architect)'
+updated: '2026-03-13T00:00:00Z'
+
+top_issues: []
+waiver: { active: false }
+
+quality_score: 90
+expires: '2026-03-27T00:00:00Z'
+
+evidence:
+  tests_reviewed: 9
+  risks_identified: 4
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13]
+    ac_gaps: [12]  # Session card "Processing..." state deferred to Story 3.3+
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'Auth + ownership chain intact. Server-side file size guard added during review. MIME type validation is filename-only (acceptable — content stored, not executed).'
+  performance:
+    status: PASS
+    notes: 'Full file loaded to memory (acceptable ≤25MB). Two DB ops per upload — minor inefficiency, not worth optimising at current scale.'
+  reliability:
+    status: PASS
+    notes: 'Graceful degradation on Storage failure (session created without file URL). Fire-and-forget summarize trigger with error logging. Non-fatal .docx parse errors handled.'
+  maintainability:
+    status: PASS
+    notes: 'Clean separation: parseTranscript (client), transcriptQuota (stubs), SessionUploadModal (UI), route.ts extensions (API). Well-commented. Quota stubs clearly marked for Story 4.4.'
+
+recommendations:
+  immediate: []
+  future:
+    - action: 'Add timestamp/UUID prefix to Storage filename to prevent collision on duplicate uploads'
+      refs: ['apps/web/src/app/api/sessions/route.ts:166']
+    - action: 'Add Escape key handler to close modal'
+      refs: ['apps/web/src/components/sessions/SessionUploadModal.tsx']
+    - action: 'Replace SessionTimelineStub with real session list showing Processing cards (completes AC12)'
+      refs: ['apps/web/src/components/clients/SessionTimelineStub.tsx']
