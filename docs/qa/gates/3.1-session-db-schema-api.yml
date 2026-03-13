@@ -1,0 +1,47 @@
+schema: 1
+story: '3.1'
+story_title: 'Session DB Schema & API'
+gate: PASS
+status_reason: 'All 11 ACs verified. Manual API tests passed. Cascade delete confirmed via DB. Regression clean. No blocking issues.'
+reviewer: 'Quinn (Test Architect)'
+updated: '2026-03-13T00:00:00.000Z'
+
+top_issues: []
+waiver:
+  active: false
+
+quality_score: 88
+expires: '2026-03-27T00:00:00.000Z'
+
+evidence:
+  tests_reviewed: 7  # manual curl tests + 2 SQL cascade tests
+  risks_identified: 3
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    ac_gaps: []
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'Auth check on every route. Ownership verified before all DB mutations. UUID regex validates path params. Service role key pattern consistent with existing routes.'
+  performance:
+    status: PASS
+    notes: 'Max 3 sequential DB queries per request (user lookup + ownership + operation). Acceptable for current scale. Indexes on client_id, user_id, session_date in place.'
+  reliability:
+    status: PASS
+    notes: 'try/catch wraps all handlers. Consistent error codes (UNAUTHORIZED, VALIDATION_ERROR, USER_NOT_FOUND, NOT_FOUND, INTERNAL_ERROR). Console logging on all error paths.'
+  maintainability:
+    status: PASS
+    notes: 'Consistent patterns with action-items routes. Clear file structure. Stub clearly documented for Story 3.4. Minor: getSupabase/getInternalUserId duplicated across 3 files — intentional per project pattern.'
+
+recommendations:
+  immediate: []
+  future:
+    - action: 'Add date format validation to session_date field in SessionCreateSchema (e.g. z.string().regex(/^\d{4}-\d{2}-\d{2}$/))'
+      refs: ['packages/shared/src/schemas/session.ts']
+    - action: 'Validate client_id as UUID in GET /api/sessions query param (currently only string check)'
+      refs: ['apps/web/src/app/api/sessions/route.ts']
+    - action: 'Consider extracting getSupabase/getInternalUserId to shared lib when a 4th route needs them'
+      refs: ['apps/web/src/app/api/sessions/route.ts', 'apps/web/src/app/api/sessions/[id]/route.ts', 'apps/web/src/app/api/sessions/[id]/summarize/route.ts']
+    - action: 'Add integration tests for session API routes when testing infrastructure is established'
+      refs: ['apps/web/tests/']
