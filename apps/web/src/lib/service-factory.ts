@@ -7,6 +7,7 @@ import {
   AnalyticsService,
 } from '@meetsolis/shared';
 import { serviceConfig } from './config/services';
+import { config } from './config/env';
 
 // Mock services
 import { MockAuthService } from './services/mock/mock-auth-service';
@@ -15,6 +16,10 @@ import { MockAIService } from './services/mock/mock-ai-service';
 import { MockTranslationService } from './services/mock/mock-translation-service';
 import { MockSMSService } from './services/mock/mock-sms-service';
 import { MockAnalyticsService } from './services/mock/mock-analytics-service';
+
+// Real AI services
+import { OpenAIAIService } from './services/ai/openai-ai-service';
+import { ClaudeAIService } from './services/ai/claude-ai-service';
 
 // Real services will be imported when implemented
 // import { ClerkAuthService } from './services/real/clerk-auth-service';
@@ -65,16 +70,31 @@ export class ServiceFactory {
 
   static createAIService(): AIService {
     if (!this.instances.has('ai')) {
-      const config = serviceConfig.getConfig();
+      const svcConfig = serviceConfig.getConfig();
 
-      if (config.useMockServices) {
+      if (svcConfig.useMockServices) {
         this.instances.set('ai', new MockAIService());
       } else {
-        // Real OpenAI service would be created here
-        // this.instances.set('ai', new OpenAIService());
-        throw new Error(
-          'Real OpenAI service not yet implemented. Set USE_MOCK_SERVICES=true'
-        );
+        const provider = config.ai.provider;
+        if (provider === 'openai') {
+          if (!config.ai.openaiApiKey)
+            throw new Error(
+              'OPENAI_API_KEY is required when AI_PROVIDER=openai'
+            );
+          this.instances.set('ai', new OpenAIAIService(config.ai.openaiApiKey));
+        } else if (provider === 'claude') {
+          if (!config.ai.anthropicApiKey)
+            throw new Error(
+              'ANTHROPIC_API_KEY is required when AI_PROVIDER=claude'
+            );
+          this.instances.set(
+            'ai',
+            new ClaudeAIService(config.ai.anthropicApiKey)
+          );
+        } else {
+          // AI_PROVIDER=placeholder — use mock even in non-mock mode
+          this.instances.set('ai', new MockAIService());
+        }
       }
     }
 

@@ -1,0 +1,50 @@
+schema: 1
+story: "3.4"
+story_title: "AI Summary Generation"
+gate: PASS
+status_reason: "All 15 ACs met, 14 tests passing, build clean, manually verified with both placeholder and real OpenAI key. One medium issue (route response not reflecting AI failure) found and fixed during review."
+reviewer: "Quinn (Test Architect)"
+updated: "2026-03-14T00:00:00Z"
+
+waiver: { active: false }
+
+top_issues: []
+
+risk_summary:
+  totals: { critical: 0, high: 0, medium: 1, low: 1 }
+  recommendations:
+    must_fix: []
+    monitor:
+      - "Transcript length not validated — long transcripts could exceed embedding token limit (8192 for text-embedding-3-small)"
+      - "Embedding generated from summary text only, not full transcript — limits semantic search richness"
+
+quality_score: 90
+
+evidence:
+  tests_reviewed: 14
+  risks_identified: 2
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    ac_gaps: []
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: "Clerk auth + ownership check on HTTP endpoint. Service role key server-side only. API keys via config.ai.*, not process.env."
+  performance:
+    status: PASS
+    notes: "GPT-4o-mini + max_tokens=1000. Well under $0.05/session target. Claude provider uses prompt caching."
+  reliability:
+    status: PASS
+    notes: "try/catch sets status=error on failure. Status machine (pending→processing→complete|error) fully implemented. Idempotent regenerate via DELETE before INSERT."
+  maintainability:
+    status: PASS
+    notes: "Clean separation: shared types, prompt layer, parser, service implementations, summarize-session.ts, route handler. runSummarize() extracted to lib/sessions/ for reuse."
+
+recommendations:
+  immediate: []
+  future:
+    - action: "Add transcript length validation before embedding (guard against >8192 token inputs)"
+      refs: ["apps/web/src/lib/sessions/summarize-session.ts"]
+    - action: "Consider embedding full transcript (not just summary) for richer semantic search in Story 5.x"
+      refs: ["apps/web/src/lib/sessions/summarize-session.ts:48"]

@@ -17,6 +17,7 @@ import {
   checkTranscriptLimit,
   incrementTranscriptCount,
 } from '@/lib/quota/transcriptQuota';
+import { runSummarize } from '@/lib/sessions/summarize-session';
 
 function getSupabase() {
   return createClient(config.supabase.url!, config.supabase.serviceRoleKey!);
@@ -332,11 +333,8 @@ export async function POST(request: NextRequest) {
     // Increment transcript count (stub in Story 3.2)
     await incrementTranscriptCount(userId);
 
-    // Fire-and-forget summarization trigger
-    const appUrl = config.app.url;
-    fetch(`${appUrl}/api/sessions/${newSession.id}/summarize`, {
-      method: 'POST',
-    }).catch(err =>
+    // Fire-and-forget summarization — call directly (no HTTP, no auth issues)
+    runSummarize(newSession.id, userId).catch(err =>
       console.error('[Sessions API] Summarize trigger failed:', err)
     );
 
