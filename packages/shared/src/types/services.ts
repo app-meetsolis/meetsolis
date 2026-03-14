@@ -33,9 +33,29 @@ export interface DatabaseService extends ExternalService {
   delete(table: string, id: string): Promise<any>;
 }
 
+export interface ClientContext {
+  name: string;
+  goal?: string | null;
+  coaching_since?: string | null;
+}
+
+export interface SessionSummaryItem {
+  description: string;
+  assigned_to: 'coach' | 'client';
+}
+
+export interface SessionSummary {
+  title: string;
+  summary: string;
+  key_topics: string[];
+  action_items: SessionSummaryItem[];
+}
+
 export interface AIService extends ExternalService {
   generateSummary(text: string): Promise<string>;
   analyzeText(text: string): Promise<any>;
+  summarizeSession(transcript: string, ctx: ClientContext): Promise<SessionSummary>;
+  generateEmbedding(text: string): Promise<number[]>;
 }
 
 export interface TranslationService extends ExternalService {

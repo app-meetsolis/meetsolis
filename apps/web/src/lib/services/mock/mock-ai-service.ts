@@ -1,4 +1,10 @@
-import { AIService, ServiceStatus, ServiceInfo } from '@meetsolis/shared';
+import {
+  AIService,
+  ClientContext,
+  SessionSummary,
+  ServiceStatus,
+  ServiceInfo,
+} from '@meetsolis/shared';
 import { BaseService } from '../base-service';
 
 export class MockAIService extends BaseService implements AIService {
@@ -230,6 +236,43 @@ export class MockAIService extends BaseService implements AIService {
     });
 
     return identifiedTopics.length > 0 ? identifiedTopics : ['general'];
+  }
+
+  async summarizeSession(
+    _transcript: string,
+    ctx: ClientContext
+  ): Promise<SessionSummary> {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return {
+      title: `Session — Leadership Transition`,
+      summary: `${ctx.name} explored challenges with delegating authority during organizational restructuring. Discussed fear of losing control and strategies for trusting team members. Identified pattern of micromanagement stemming from past project failures.`,
+      key_topics: [
+        'delegation',
+        'leadership transition',
+        'trust',
+        'organizational change',
+      ],
+      action_items: [
+        {
+          description:
+            'Schedule 1:1s with three direct reports to clarify expectations',
+          assigned_to: 'client',
+        },
+        {
+          description: 'Send delegation framework resource from last session',
+          assigned_to: 'coach',
+        },
+        {
+          description:
+            'Journal about one delegation success before next session',
+          assigned_to: 'client',
+        },
+      ],
+    };
+  }
+
+  async generateEmbedding(_text: string): Promise<number[]> {
+    return Array(1536).fill(0);
   }
 
   // Mock-specific methods

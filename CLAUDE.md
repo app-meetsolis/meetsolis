@@ -157,3 +157,33 @@ When working with this codebase:
 
 - In all interactions and commit messages, be extremely concise and sacrifice grammar for the sake of consision
 - At the end of each plan, give me a list of unresolved questions to answer, if any. Make the questions extremely concise. Sacrifice grammar for the sake of concision
+
+## Notion Logging (Proactive — via MCP)
+
+When a bug is found and fixed → say: "Want me to log this to Notion Bugs DB?"
+When an architectural/product decision is made → say: "Should I log this decision to Notion?"
+When a story is completed → say: "Should I mark story [X] as Done in Notion?"
+When starting a story → offer to update status to In Progress.
+
+### Notion MCP — Direct IDs (use these, never search from scratch)
+
+**MeetSolis project page:** `2dfdc800-c36f-805b-b6ad-fab510f60527`
+
+| DB | Database ID | Data Source ID (use for create/query) |
+|----|-------------|---------------------------------------|
+| Stories | `320dc800-c36f-8195-8b9b-fc520800ac79` | `320dc800-c36f-81b6-973f-000bfad86009` |
+| Bugs | `320dc800-c36f-81fd-b9b6-d5108ffe3fa1` | `320dc800-c36f-819c-bdcf-000b3403c0ff` |
+| Decisions | `320dc800-c36f-8188-88d5-dd1a32629bc5` | `320dc800-c36f-816b-b986-000b3dfa297d` |
+
+**CRITICAL — MCP tool rules:**
+- Use `mcp__claude_ai_Notion__*` tools ONLY — `mcp__notion__*` tools return 401 (wrong token)
+- To **create** a story/bug/decision: use `notion-create-pages` with `parent.data_source_id` = the Data Source ID above
+- To **update** a page: use `notion-update-page` with the page's UUID (from create result or prior fetch)
+- To **search**: use `notion-search` — but if not found, the page likely doesn't exist yet → create it
+- Never use `notion-fetch` on the DB to find rows — it returns schema only, not rows
+
+**Stories schema fields:** `Story ID` (title), `Status` (Backlog/In Progress/QA/Done), `Epic` (Epic 1–5), `Branch`, `PR Link`, `Notes`, `Files Touched`, `Completed Date`
+
+Log format — Bug: title, severity (Critical/High/Medium/Low), root cause, solution applied, story reference
+Log format — Decision: what was decided, why, alternatives considered, impact area (Architecture/UX/Performance/Security/Product)
+Log format — Story: story ID (e.g. "2.6"), status update, completed date if Done
