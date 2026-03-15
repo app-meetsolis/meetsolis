@@ -1,0 +1,63 @@
+schema: 1
+story: '3.5'
+story_title: 'Session Timeline UI'
+gate: PASS
+status_reason: 'All 19 ACs verified and implemented. Two low-severity issues found and fixed during review (a→Link, pre font). No security or data-loss risks. Build passes cleanly.'
+reviewer: 'Quinn (Test Architect)'
+updated: '2026-03-15T19:45:00Z'
+
+top_issues:
+  - id: 'LINK-01'
+    severity: low
+    description: '<a href> used for transcript nav instead of Next.js <Link> — causes full page reload'
+    file: 'apps/web/src/components/sessions/SessionCard.tsx'
+    status: FIXED
+    suggested_owner: dev
+  - id: 'FONT-01'
+    severity: low
+    description: '<pre> tag missing font-sans — renders transcript in monospace instead of app font'
+    file: 'apps/web/src/app/(dashboard)/clients/[id]/sessions/[sessionId]/page.tsx'
+    status: FIXED
+    suggested_owner: dev
+  - id: 'TEST-01'
+    severity: low
+    description: 'No unit tests for SessionCard toggle/badge logic or SessionTimeline polling. Story did not require them.'
+    status: DEFERRED
+    suggested_owner: dev
+
+waiver: { active: false }
+
+quality_score: 90
+
+expires: '2026-03-29T00:00:00Z'
+
+evidence:
+  tests_reviewed: 5
+  risks_identified: 3
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+    ac_gaps: []
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'All API routes authenticated via Clerk. Service role key used (bypasses RLS correctly). No direct process.env access. No XSS vectors — all user content rendered as text nodes.'
+  performance:
+    status: PASS
+    notes: 'Conditional polling (5s only when processing sessions, disabled otherwise). No N+1 queries — action_items fetched via nested select in single API call. Skeleton loading prevents layout shift.'
+  reliability:
+    status: PASS
+    notes: 'Processing/error states handled explicitly. Retry mechanism wired to summarize endpoint. Query invalidation on upload success. Silent catch on retry fetch (query refreshes regardless).'
+  maintainability:
+    status: PASS
+    notes: 'All files under 500 lines (SessionCard 164, SessionTimeline 111, detail page 85). Clear component separation. ActionItemList slot marked with TODO comment for Story 3.6.'
+
+recommendations:
+  immediate: []
+  future:
+    - action: 'Add unit tests for SessionCard (expand/collapse, badge color logic, processing/error states)'
+      refs: ['apps/web/src/components/sessions/SessionCard.tsx']
+    - action: 'Add unit test for SessionTimeline refetchInterval logic'
+      refs: ['apps/web/src/components/sessions/SessionTimeline.tsx']
+    - action: 'Verify Supabase action_items nested select works in staging (RLS is bypassed by service role but worth a smoke test)'
+      refs: ['apps/web/src/app/api/sessions/route.ts']

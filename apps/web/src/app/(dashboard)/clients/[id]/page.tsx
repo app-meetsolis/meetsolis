@@ -28,7 +28,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Toaster } from 'sonner';
 import { NotesEditor } from '@/components/clients/NotesEditor';
 import { ClientModal } from '@/components/clients/ClientModal';
-import { SessionTimelineStub } from '@/components/clients/SessionTimelineStub';
+import { SessionTimeline } from '@/components/sessions/SessionTimeline';
 import { PendingActionsSection } from '@/components/clients/PendingActionsSection';
 
 const UUID_REGEX =
@@ -75,6 +75,19 @@ export default function ClientDetailPage() {
     queryFn: () => fetchClient(id),
     enabled: isValidId,
     staleTime: 2 * 60 * 1000,
+  });
+
+  // Deduplicates with SessionTimeline's query — just reads the count
+  const { data: sessions = [] } = useQuery<{ id: string }[]>({
+    queryKey: ['sessions', id],
+    queryFn: async () => {
+      const res = await fetch(`/api/sessions?client_id=${id}`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data.sessions ?? [];
+    },
+    enabled: isValidId && !!client,
+    staleTime: 30 * 1000,
   });
 
   // Same query key as PendingActionsSection — deduplicates fetch, keeps count in sync
@@ -189,7 +202,7 @@ export default function ClientDetailPage() {
           {/* Stats row */}
           <div className="mb-8 flex items-center gap-6 rounded-lg border border-gray-200 bg-white px-5 py-3 text-sm">
             <div className="text-center">
-              <p className="font-semibold text-[#1A1A1A]">0</p>
+              <p className="font-semibold text-[#1A1A1A]">{sessions.length}</p>
               <p className="text-xs text-[#9CA3AF]">Total Sessions</p>
             </div>
             <div className="h-8 w-px bg-gray-200" />
@@ -206,7 +219,7 @@ export default function ClientDetailPage() {
 
           {/* Sections */}
           <div className="space-y-4">
-            <SessionTimelineStub clientId={client.id} />
+            <SessionTimeline clientId={client.id} />
             <PendingActionsSection clientId={client.id} />
 
             <section>

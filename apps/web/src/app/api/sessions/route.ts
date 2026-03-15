@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
 
     const { data: sessions, error: queryError } = await supabase
       .from('sessions')
-      .select('*')
+      .select('*, action_items(id, status)')
       .eq('client_id', clientId)
       .eq('user_id', userId)
       .order('session_date', { ascending: false });

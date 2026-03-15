@@ -419,6 +419,7 @@ export interface Session {
   status: SessionStatus;
   created_at: string;
   updated_at: string;
+  action_items?: { id: string; status: string }[];
 }
 
 export interface SessionInsert {
