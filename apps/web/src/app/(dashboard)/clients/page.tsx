@@ -28,8 +28,12 @@ async function fetchClients(): Promise<Client[]> {
     headers: { 'Content-Type': 'application/json' },
   });
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error?.message || 'Failed to fetch clients');
+    try {
+      const error = await response.json();
+      throw new Error(error.error?.message || 'Failed to fetch clients');
+    } catch {
+      throw new Error('Failed to fetch clients');
+    }
   }
   const data = await response.json();
   return data.clients;

@@ -58,7 +58,7 @@
 | **3.2** | Manual Transcript Upload | P0 | 1 day | 3.1 |
 | **3.3** | Auto-Transcription (Deepgram) | P0 | 1 day | 3.1 |
 | **3.4** | AI Summary Generation | P0 | 1 day | 3.2 or 3.3 |
-| **3.5** | Session Timeline UI | P0 | 1 day | 3.1, 2.6 |
+| **3.5** | Session Timeline UI | ✅ Done | — | — |
 | **3.6** | Action Item Tracking UI | P0 | 0.5 days | 3.4, 3.5 |
 
 **Sprint 2 total:** ~5 days
@@ -97,6 +97,20 @@
 | **5.13** | Launch Checklist & Production Deploy | P0 | 1 day | All stories done |
 
 **Sprint 4 total:** ~9.5 days
+
+---
+
+## Technical Debt
+
+| ID | Issue | Introduced | Priority | Effort |
+|----|-------|------------|----------|--------|
+| TECH-001 | Jest test failures — OpenAI runtime shim crashes in Node.js | Story 3.4 | Medium | 1–2h |
+
+### TECH-001 Detail
+**Symptom:** 40 of 84 test suites fail. `openai/_shims/web-runtime.ts` initializes browser APIs on import; Jest/Node has no browser runtime.
+**Impact:** 667/872 tests still pass. Production unaffected.
+**Fix:** Add `jest.mock('openai', () => ({ OpenAI: jest.fn() }))` in `jest.setup.js` or per affected test file.
+**Files:** `jest.setup.js`, any test importing `summarize-session.ts` / `openai-ai-service.ts`
 
 ---
 
