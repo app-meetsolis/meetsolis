@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const clientId = searchParams.get('client_id');
     const status = searchParams.get('status');
+    const sessionId = searchParams.get('session_id');
 
     if (!clientId) {
       return NextResponse.json(
@@ -87,6 +88,10 @@ export async function GET(request: NextRequest) {
 
     if (status) {
       query = query.eq('status', status);
+    }
+
+    if (sessionId) {
+      query = query.eq('session_id', sessionId);
     }
 
     const { data: actionItems, error: queryError } = await query;
@@ -152,7 +157,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { client_id, description, assignee, status } = validation.data;
+    const { client_id, description, assignee, status, session_id } =
+      validation.data;
 
     const userId = await getInternalUserId(clerkUserId);
     if (!userId) {
@@ -188,6 +194,7 @@ export async function POST(request: NextRequest) {
         assignee: assignee || null,
         status: status || 'pending',
         completed: false,
+        session_id: session_id || null,
       })
       .select()
       .single();
