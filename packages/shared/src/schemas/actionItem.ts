@@ -5,6 +5,7 @@ export const ActionItemCreateSchema = z.object({
   description: z.string().min(1, 'Description is required').max(500, 'Max 500 characters'),
   assignee: z.enum(['coach', 'client']).optional(),
   status: z.enum(['pending', 'in_progress', 'completed', 'cancelled']).default('pending'),
+  session_id: z.string().uuid().optional().nullable(),
 });
 
 export const ActionItemUpdateSchema = z.object({

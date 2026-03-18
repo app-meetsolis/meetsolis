@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Session } from '@meetsolis/shared';
+import { ActionItemList } from '@/components/sessions/ActionItemList';
 
 interface SessionCardProps {
   session: Session;
@@ -154,7 +155,7 @@ export function SessionCard({ session, clientId, onRetry }: SessionCardProps) {
             </div>
           )}
 
-          {/* TODO: Story 3.6 — ActionItemList */}
+          <ActionItemList sessionId={session.id} clientId={clientId} />
 
           {hasTranscript && (
             <Link
