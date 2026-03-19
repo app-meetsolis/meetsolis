@@ -58,6 +58,16 @@ export interface AIService extends ExternalService {
   generateEmbedding(text: string): Promise<number[]>;
 }
 
+export interface TranscriptionResult {
+  text: string;
+  duration_seconds?: number;
+  confidence?: number;
+}
+
+export interface TranscriptionService extends ExternalService {
+  transcribe(audioUrl: string): Promise<TranscriptionResult>;
+}
+
 export interface TranslationService extends ExternalService {
   translate(text: string, targetLanguage: string): Promise<string>;
   detectLanguage(text: string): Promise<string>;

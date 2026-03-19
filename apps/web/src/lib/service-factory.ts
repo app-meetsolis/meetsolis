@@ -5,17 +5,22 @@ import {
   TranslationService,
   SMSService,
   AnalyticsService,
+  TranscriptionService,
 } from '@meetsolis/shared';
 import { serviceConfig } from './config/services';
 import { config } from './config/env';
 
 // Mock services
+import { MockTranscriptionService } from './services/mock/mock-transcription-service';
 import { MockAuthService } from './services/mock/mock-auth-service';
 import { MockDatabaseService } from './services/mock/mock-database-service';
 import { MockAIService } from './services/mock/mock-ai-service';
 import { MockTranslationService } from './services/mock/mock-translation-service';
 import { MockSMSService } from './services/mock/mock-sms-service';
 import { MockAnalyticsService } from './services/mock/mock-analytics-service';
+
+// Real transcription services
+import { DeepgramTranscriptionService } from './services/transcription/deepgram-transcription-service';
 
 // Real AI services
 import { OpenAIAIService } from './services/ai/openai-ai-service';
@@ -101,6 +106,35 @@ export class ServiceFactory {
     return this.instances.get('ai');
   }
 
+  static createTranscriptionService(): TranscriptionService {
+    if (!this.instances.has('transcription')) {
+      const svcConfig = serviceConfig.getConfig();
+
+      if (svcConfig.useMockServices) {
+        this.instances.set('transcription', new MockTranscriptionService());
+      } else {
+        const provider = config.transcription.provider;
+        if (provider === 'deepgram') {
+          if (!config.transcription.deepgramApiKey)
+            throw new Error(
+              'DEEPGRAM_API_KEY is required when TRANSCRIPTION_PROVIDER=deepgram'
+            );
+          this.instances.set(
+            'transcription',
+            new DeepgramTranscriptionService(
+              config.transcription.deepgramApiKey
+            )
+          );
+        } else {
+          // TRANSCRIPTION_PROVIDER=placeholder — use mock
+          this.instances.set('transcription', new MockTranscriptionService());
+        }
+      }
+    }
+
+    return this.instances.get('transcription');
+  }
+
   static createTranslationService(): TranslationService {
     if (!this.instances.has('translation')) {
       const config = serviceConfig.getConfig();
@@ -161,6 +195,7 @@ export class ServiceFactory {
       auth: this.instances.get('auth'),
       database: this.instances.get('database'),
       ai: this.instances.get('ai'),
+      transcription: this.instances.get('transcription'),
       translation: this.instances.get('translation'),
       sms: this.instances.get('sms'),
       analytics: this.instances.get('analytics'),

@@ -41,8 +41,13 @@ export function SessionTimeline({ clientId }: SessionTimelineProps) {
   });
 
   async function onRetry(sessionId: string) {
+    const session = sessions?.find(s => s.id === sessionId);
+    const endpoint =
+      session?.transcript_audio_url && !session?.transcript_text
+        ? `/api/sessions/${sessionId}/transcribe`
+        : `/api/sessions/${sessionId}/summarize`;
     try {
-      await fetch(`/api/sessions/${sessionId}/summarize`, { method: 'POST' });
+      await fetch(endpoint, { method: 'POST' });
     } catch {
       // silent — query will still refresh
     }

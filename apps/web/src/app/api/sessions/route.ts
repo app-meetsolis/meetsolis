@@ -18,6 +18,7 @@ import {
   incrementTranscriptCount,
 } from '@/lib/quota/transcriptQuota';
 import { runSummarize } from '@/lib/sessions/summarize-session';
+import { runTranscribe } from '@/lib/sessions/transcribe-session';
 
 function getSupabase() {
   return createClient(config.supabase.url!, config.supabase.serviceRoleKey!);
@@ -333,10 +334,16 @@ export async function POST(request: NextRequest) {
     // Increment transcript count (stub in Story 3.2)
     await incrementTranscriptCount(userId);
 
-    // Fire-and-forget summarization — call directly (no HTTP, no auth issues)
-    runSummarize(newSession.id, userId).catch(err =>
-      console.error('[Sessions API] Summarize trigger failed:', err)
-    );
+    // Conditional: transcribe first if audio URL provided without transcript text
+    if (transcript_audio_url && !resolvedTranscriptText) {
+      runTranscribe(newSession.id, userId).catch(err =>
+        console.error('[Sessions API] Transcribe trigger failed:', err)
+      );
+    } else if (resolvedTranscriptText) {
+      runSummarize(newSession.id, userId).catch(err =>
+        console.error('[Sessions API] Summarize trigger failed:', err)
+      );
+    }
 
     return NextResponse.json({ session: newSession }, { status: 201 });
   } catch (error) {
