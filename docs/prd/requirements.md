@@ -13,6 +13,7 @@
 - **FR1.3:** Password reset via email
 - **FR1.4:** User profile: name, email, timezone
 - **FR1.5:** GDPR-compliant data deletion (right to erasure)
+- **FR1.6:** GDPR Data Processing Agreements (DPAs) executed with all sub-processors (Deepgram, OpenAI, Supabase, Clerk, Resend) before UK/EU launch
 
 ---
 
@@ -22,7 +23,7 @@
 - **FR2.2:** Edit and delete client records
 - **FR2.3:** Client card displays: name, goal, coaching start date, total sessions count, pending action items count, last session date
 - **FR2.4:** Search clients by name (real-time, client-side filter)
-- **FR2.5:** Free tier: 1 active client maximum; Pro: unlimited
+- **FR2.5:** Free tier: 3 active clients maximum; Pro: unlimited
 - **FR2.6:** Upgrade CTA shown when free user attempts to add second client
 - **FR2.7:** Client deletion cascades to all sessions, action items, and solis queries
 
@@ -62,7 +63,7 @@
 - **FR5.6:** Session embedding auto-generated from summary text and stored in `sessions.embedding` (vector 1536)
 - **FR5.7:** Manual editing of generated summary supported
 - **FR5.8:** Regenerate summary option available
-- **FR5.9:** Free tier: 3 lifetime AI sessions; Pro: 25/month. Manual uploads without AI processing are always unlimited.
+- **FR5.9:** Free tier: 5 lifetime AI sessions; Pro: 25/month. Manual uploads without AI processing are always unlimited.
 
 ---
 
@@ -95,14 +96,14 @@
 - **FR8.4:** Client-specific mode: "Ask Solis about [Client Name]" (scoped to that client)
 - **FR8.5:** Global mode: cross-client queries on `/dashboard/intelligence` page
 - **FR8.6:** Query and response stored in `solis_queries` table
-- **FR8.7:** Usage counter displayed: "X of 50 lifetime queries used" (free) or "X of 2,000 monthly queries" (pro)
-- **FR8.8:** Free tier: 50 lifetime queries; Pro: 2,000/month. Upgrade CTA on limit hit.
+- **FR8.7:** Usage counter displayed: "X of 75 lifetime queries used" (free) or "X of 2,000 monthly queries" (pro)
+- **FR8.8:** Free tier: 75 lifetime queries; Pro: 2,000/month. Upgrade CTA on limit hit.
 
 ---
 
 ## FR9: Usage Limits & Billing
 
-- **FR9.1:** Free tier limits enforced at API level: 1 client, 3 lifetime AI sessions, 50 lifetime Solis queries
+- **FR9.1:** Free tier limits enforced at API level: 3 clients, 5 lifetime AI sessions, 75 lifetime Solis queries
 - **FR9.2:** Pro tier limits enforced: unlimited clients, 25 AI sessions/month, 2,000 Solis queries/month
 - **FR9.3:** Monthly reset via `transcript_reset_at` and `query_reset_at` timestamps in `usage_tracking` table
 - **FR9.4:** Upgrade prompt modal shown when any limit is hit

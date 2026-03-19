@@ -58,9 +58,9 @@ Build billing infrastructure (Stripe), free vs pro tier enforcement, settings, o
 **Acceptance Criteria:**
 - [ ] Middleware function: `checkTierLimit(feature, userId)`
 - [ ] Limits to enforce:
-  - Clients: Free=1, Pro=unlimited
-  - AI sessions (transcripts): Free=3 lifetime, Pro=25/month
-  - Solis queries: Free=50 lifetime, Pro=2,000/month
+  - Clients: Free=3, Pro=unlimited
+  - AI sessions (transcripts): Free=5 lifetime, Pro=25/month
+  - Solis queries: Free=75 lifetime, Pro=2,000/month
 - [ ] Check before allowing action
 - [ ] If limit exceeded: Return 403 error with upgrade message
 - [ ] Frontend: Show upgrade modal/toast
@@ -128,7 +128,7 @@ Build billing infrastructure (Stripe), free vs pro tier enforcement, settings, o
 
 ---
 
-> **Story 5.6 (Free Trial) — Removed in v3.** Free tier provides genuine value with 1 client, 3 sessions, 50 queries. No trial needed.
+> **Story 5.6 (Free Trial) — Removed in v3.** Free tier provides genuine value with 3 clients, 5 sessions, 75 queries. No trial needed.
 
 ---
 
@@ -160,7 +160,7 @@ Build billing infrastructure (Stripe), free vs pro tier enforcement, settings, o
 - Auto-Transcription (Deepgram Nova-2 speaker diarization)
 
 **Pricing Section:**
-- Free: 1 client, 3 sessions, 50 queries
+- Free: 3 clients, 5 sessions, 75 queries
 - Pro: $99/month — unlimited clients, 25 sessions/month, 2,000 queries/month
 
 **Trust Signals:**

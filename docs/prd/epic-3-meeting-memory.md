@@ -248,10 +248,10 @@ Files:
 - `apps/web/src/lib/ai/providers/openai.ts` — GPT-4o-mini implementation
 - `apps/web/src/lib/ai/providers/placeholder.ts` — dev stub
 - `apps/web/src/lib/ai/index.ts` — `getAIProvider()` reads `AI_PROVIDER` env var
-- `apps/web/src/lib/ai/prompts.ts` — ICF-compliant prompt templates
+- `apps/web/src/lib/ai/prompts.ts` — ICF-aligned prompt templates
 - `apps/web/src/lib/ai/summarize.ts` — response parser → SessionSummary
 
-#### ICF-Compliant Summary Prompt Guidelines
+#### ICF-Aligned Summary Prompt Guidelines
 
 Prompts must:
 - Use coaching vocabulary (not therapy language)
@@ -375,6 +375,11 @@ Auto-transcription (audio/video):
   → TranscriptionProvider.transcribe(audioUrl) → transcript text
   → POST /api/sessions/[id]/summarize → AI Provider → SessionSummary
   → Create action_items records → Generate embedding → Update session (status: complete)
+  → Delete audio from Supabase Storage → Set transcript_audio_url = NULL
+
+### Audio Deletion Policy
+
+Audio files are deleted from Supabase Storage immediately after successful transcription. The `transcript_audio_url` field is set to NULL post-deletion. On transcription failure, audio is retained for retry. This prevents unbounded storage cost accumulation (Deepgram charges ~$6.50/user; keeping raw audio adds storage cost on top).
 ```
 
 ### Environment Variables

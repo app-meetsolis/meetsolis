@@ -60,15 +60,17 @@ Fractional CFOs and fractional executives managing 3–4 company clients with re
 - **Executive coaching specifically:** Fastest-growing segment, highest price point
 - **Total Addressable Market (TAM):** 87,900 executive coaches globally
 - **Serviceable Addressable Market (SAM):** ~30,000 in English-speaking markets
-- **Target Year 1:** 200–400 paying customers = $240K–570K ARR
+- **Target Year 1:** 100–300 paying customers = $120K–300K ARR
 - **Long-term exit target:** $15–30M acquisition by Notion, Calendly, or HubSpot (Year 3–4)
 
 ## Business Goals
 
-- **Month 1:** 50–100 signups, 10–20 paying → $990–1,980 MRR
-- **Month 3:** 150–250 signups, 30–50 paying → $2,970–4,950 MRR
-- **Month 6:** 300–500 signups, 100–150 paying → **$9,900–14,850 MRR**
-- **Month 12:** 600–1,000 signups, 200–400 paying → $19,800–39,600 MRR ($240K–475K ARR)
+- **Month 1:** 15–30 signups, 2–5 paying → $198–495 MRR
+- **Month 3:** 40–80 signups, 8–16 paying → $792–1,584 MRR
+- **Month 6:** 100–200 signups, 30–60 paying → **$2,970–5,940 MRR**
+- **Month 12:** 250–500 signups, 100–300 paying → $9,900–29,700 MRR ($120K–300K ARR)
+
+**Growth channel:** Cold outreach only (no existing coaching network). Founder-led: 15–20 hrs/week via LinkedIn, ICF chapters, Reddit r/coaching, coaching Facebook groups. Launch markets: US + UK.
 - **Free-to-paid conversion:** 3–5% (vertical SaaS benchmark)
 - **Monthly churn:** <3%
 - **NPS target:** >50
