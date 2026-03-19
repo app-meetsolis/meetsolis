@@ -54,7 +54,9 @@ export function SessionCard({ session, clientId, onRetry }: SessionCardProps) {
           </div>
         </div>
         <p className="mt-2 text-xs text-[#9CA3AF]">
-          AI is processing your session…
+          {session.transcript_audio_url && !session.transcript_text
+            ? 'Transcribing audio…'
+            : 'AI is processing your session…'}
         </p>
       </div>
     );
