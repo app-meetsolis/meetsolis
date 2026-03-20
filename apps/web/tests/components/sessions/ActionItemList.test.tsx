@@ -341,6 +341,34 @@ describe('ActionItemList', () => {
     });
   });
 
+  it('POST failure calls toast.error and does not persist item (AC handle add catch)', async () => {
+    const { toast } = require('sonner');
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ actionItems: [] }),
+      })
+      .mockResolvedValueOnce({ ok: false, json: async () => ({}) });
+
+    const user = userEvent.setup();
+    renderWithQueryClient(
+      <ActionItemList sessionId={SESSION_ID} clientId={CLIENT_ID} />
+    );
+    await waitFor(() =>
+      expect(screen.getByText('No action items yet.')).toBeInTheDocument()
+    );
+
+    const input = screen.getByPlaceholderText('Add action item\u2026');
+    await user.type(input, 'Task that will fail');
+    await user.keyboard('{Enter}');
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith('Failed to add action item')
+    );
+    // Item should not appear in the list
+    expect(screen.queryByText('Task that will fail')).not.toBeInTheDocument();
+  });
+
   it('input disabled while POST in-flight', async () => {
     let resolvePost!: (v: unknown) => void;
     const postPending = new Promise(res => {
