@@ -1,8 +1,8 @@
 # MVP Scope and Timeline
 
-**Version:** 3.0
+**Version:** 3.2
 **Launch Target:** March 10, 2026 (soft) / March 31, 2026 (hard deadline)
-**Last Updated:** March 8, 2026
+**Last Updated:** March 19, 2026
 
 ---
 
@@ -19,7 +19,7 @@
 5. AI summaries — provider-agnostic (Claude Sonnet 4.5 default)
 6. Solis Intelligence Q&A with hybrid RAG
 7. Action item tracking (extract + manual)
-8. Usage limits enforcement (free: 1 client, 3 lifetime sessions, 50 lifetime queries)
+8. Usage limits enforcement (free: 3 clients, 5 lifetime sessions, 75 lifetime queries)
 9. Stripe billing & subscriptions ($99/mo Pro)
 10. 5-step onboarding flow with sample transcript
 11. Landing page (executive coach positioning)
@@ -32,7 +32,7 @@
 - Client tagging/categories
 - Action item due dates and email reminders
 - Action item dashboard (cross-client view)
-- ICF-compliant PDF export
+- ICF-aligned PDF export
 - Automated email notifications
 - Therapist/HIPAA support
 - Enterprise accounts, SSO, 2FA
@@ -91,7 +91,7 @@ All three external service integrations are provider-agnostic. Switch providers 
 - [ ] File parsing utility (parseTranscript.ts): .txt, .docx (mammoth), paste text
 - [ ] AI abstraction layer (provider.ts + claude/openai/placeholder providers)
 - [ ] Transcription abstraction layer (provider.ts + deepgram/placeholder)
-- [ ] Session summarization (prompts.ts ICF-compliant, summarize.ts parser)
+- [ ] Session summarization (prompts.ts ICF-aligned, summarize.ts parser)
 - [ ] Embedding generation (embeddings.ts, sessions.embedding column)
 - [ ] SessionUploadModal (2-tab: Manual / Auto-Transcribe)
 - [ ] SessionTimeline + SessionCard components
@@ -140,8 +140,8 @@ All three external service integrations are provider-agnostic. Switch providers 
 ## Success Criteria (MVP Launch)
 
 - [ ] 70%+ of beta users say "I would pay $99/month for this"
-- [ ] 50+ signups in first 2 weeks
-- [ ] 10+ paying customers ($990+ MRR)
+- [ ] 15–30 signups in first 30 days
+- [ ] 2–5 paying customers ($198–495 MRR)
 - [ ] Solis response time <5 seconds
 - [ ] AI summary generation <15 seconds
 - [ ] <5 critical bugs
@@ -152,12 +152,24 @@ All three external service integrations are provider-agnostic. Switch providers 
 
 | Service | Cost |
 |---------|------|
-| Vercel hosting | $0 (free tier) |
-| Supabase DB + Storage | $0 (free tier) |
-| Clerk auth | $0 (free: 10,000 MAU) |
+| Vercel Pro | $20/mo |
+| Supabase Pro | $25/mo |
+| Resend (email) | $20/mo |
+| Claude Code | $20/mo |
+| Miscellaneous | $15/mo |
+| **Baseline total** | **$100/mo** |
 | Claude API (AI summaries) | ~$0.50/user/month |
-| Deepgram (auto-transcription) | ~$0.19/session |
+| Deepgram (auto-transcription) | ~$6.50/user/month |
 | Stripe | 2.9% + $0.30/transaction |
-| **Total COGS/user** | **~$2.50/month** |
+| **Total COGS/user** | **~$9.00/month** |
 
-Monthly infra cost during development: $20 (Claude Code subscription only).
+Monthly infra baseline: $100/mo (Vercel Pro required — free tier has 60s function timeout, incompatible with Deepgram transcription).
+
+## Key Risks
+
+| Risk | Mitigation |
+|------|-----------|
+| Vercel Pro required | Upgrade before launch; $20/mo |
+| Cold outreach only (no coaching network) | 15–20 hrs/week founder-led sales; ICF chapter events |
+| GDPR DPA | Execute DPAs with Deepgram, OpenAI, Supabase, Clerk before UK launch |
+| Solo founder bottleneck | Automate non-essential ops; defer features aggressively |

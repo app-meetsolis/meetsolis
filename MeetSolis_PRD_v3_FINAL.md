@@ -1,14 +1,25 @@
 # MeetSolis – Product Requirements Document (PRD) v3.0 FINAL
 ## Post-Meeting Intelligence Platform for Executive Coaches
 
-**Last Updated:** March 8, 2026
-**Version:** 3.1 (Updated - Architecture Decisions Locked)
+**Last Updated:** March 19, 2026
+**Version:** 3.2 (Cost corrections, revenue projections, ICF language, free tier)
 **Status:** Ready for Development Sprint
 **Target Launch:** March 10, 2026 (30 days)
 
 ---
 
 ## Document Status & Change Log
+
+**v3.2 - Mar 19, 2026:**
+- Corrected monthly infra cost: $100/mo baseline (was $20; requires Vercel Pro + Supabase Pro + Resend)
+- Corrected COGS/user: $9.00/mo (added Deepgram $6.50; was $2.50)
+- Corrected gross margin: 90.9% (was 97.5%)
+- Revised revenue projections to cold-outreach reality (no existing coaching network)
+- Corrected free tier: 3 clients, 5 sessions, 75 queries (was 1/3/50)
+- Replaced "ICF-compliant" language with "ICF-aligned" throughout
+- Removed fake testimonial (Sarah Chen) — placeholder for post-launch real quotes
+- Added Risks 9–13 (cold outreach, Vercel timeout, GDPR DPA, solo founder, audio storage)
+- Added GDPR DPA requirement before UK/EU launch
 
 **v3.1 - Mar 8, 2026:**
 - Added auto-transcription mode (Deepgram Nova-2, audio/video) alongside manual upload — both in MVP
@@ -25,7 +36,7 @@
 - Removed client-facing portal from MVP (post-launch feature)
 - Added annual pricing discount ($948/year)
 - Finalized tech stack: Next.js + Clerk + Supabase + Vercel
-- Bootstrap approach confirmed ($20/month costs)
+- Bootstrap approach confirmed ($100/month baseline: Vercel Pro + Supabase Pro + Resend + Claude Code + misc)
 - Development timeline: 30 days to launch
 
 **v2.0 - Feb 10, 2026:**
@@ -75,18 +86,18 @@ MeetSolis provides:
 - Coach-specific (not generic meeting tool)
 - Client memory across ALL sessions (not single-meeting summaries)
 - Post-meeting focus (no bots, no disruption)
-- ICF-compliant documentation
+- ICF-aligned documentation
 - Designed for non-technical, busy professionals
 
 ### Business Model
 
 **Primary Revenue:** SaaS subscriptions
-- Free: 1 client, 3 lifetime transcripts, 50 queries
+- Free: 3 clients, 5 lifetime transcripts, 75 queries
 - Pro: $99/month or $948/year (unlimited clients, 25 transcripts/month, 2,000 queries)
 
 **Target Market:** 87,900 executive coaches globally, $103.6B coaching industry
 
-**Year 1 Goal:** 200-400 paying customers = $240K-570K ARR
+**Year 1 Goal:** 100-300 paying customers = $120K-300K ARR
 
 **Exit Strategy:** $15-30M acquisition by Notion, Calendly, HubSpot, or coaching platform (Year 3-4)
 
@@ -322,7 +333,7 @@ Every coach, consultant, and advisor uses MeetSolis to **never forget a single c
 - 🎯 Post-meeting intelligence platform (we activate AFTER sessions)
 - 🧠 Client memory layer (grows more valuable over time)
 - 🤖 Coach's AI second brain (perfect recall)
-- 📋 ICF-compliant documentation system
+- 📋 ICF-aligned documentation system
 - ✨ Simplicity-first tool (for non-technical users)
 
 **What MeetSolis IS NOT:**
@@ -364,7 +375,7 @@ Client conversations are deeply personal. We treat data with respect, never trai
 
 **Phase 2: Early Growth (Months 2-6)**
 - **Goal:** Reach 100-200 paying coaches
-- **Features:** Zoom integration (auto-import transcripts), session prep briefs, ICF-compliant exports
+- **Features:** Zoom integration (auto-import transcripts), session prep briefs, ICF-aligned exports
 - **Target:** $10K-20K MRR
 - **Success Metric:** 70%+ retention, organic referrals happening
 
@@ -1197,7 +1208,7 @@ CREATE TABLE usage_tracking (
 const tier = await getUserTier(userId);
 const usage = await getUsage(userId);
 
-if (tier === 'free' && usage.transcripts_processed >= 3) {
+if (tier === 'free' && usage.transcripts_processed >= 5) {
   throw new Error('Free tier limit reached. Upgrade to Pro for unlimited.');
 }
 
@@ -1211,7 +1222,7 @@ if (tier === 'pro' && usage.transcripts_processed >= 25) {
 const tier = await getUserTier(userId);
 const usage = await getUsage(userId);
 
-if (tier === 'free' && usage.solis_queries_used >= 50) {
+if (tier === 'free' && usage.solis_queries_used >= 75) {
   throw new Error('Free tier limit reached. Upgrade to Pro.');
 }
 
@@ -1221,7 +1232,7 @@ if (tier === 'pro' && usage.solis_queries_used >= 2000) {
 ```
 
 **UI Indicators:**
-- **Dashboard:** "2/3 transcripts used" badge
+- **Dashboard:** "2/5 transcripts used" badge
 - **Before Action:** Warning modal if close to limit
 - **After Limit:** Upgrade CTA modal
 
@@ -1249,7 +1260,7 @@ if (tier === 'pro' && usage.solis_queries_used >= 2000) {
 **Description:** Paid subscription management
 
 **Pricing:**
-- **Free:** $0/month (1 client, 3 transcripts lifetime, 50 queries)
+- **Free:** $0/month (3 clients, 5 transcripts lifetime, 75 queries)
 - **Pro Monthly:** $99/month (unlimited clients, 25 transcripts/month, 2,000 queries/month)
 - **Pro Annual:** $948/year ($79/month effective, save $240/year)
 
@@ -1425,7 +1436,7 @@ CREATE TABLE subscriptions (
 │  You have:                                       │
 │  • 1 client added                                │
 │  • 1 session processed                           │
-│  • 2 more free transcripts                       │
+│  • 4 more free transcripts                       │
 │                                                   │
 │  Ready to add your own clients?                  │
 │                                                   │
@@ -1477,14 +1488,12 @@ built for executive coaches.
 
 [Start Free Trial] [Watch Demo (1 min)]
 
-✨ No credit card required · 3 free AI summaries
+✨ No credit card required · 5 free AI summaries
 ```
 
 **2. Social Proof:**
 ```
-"MeetSolis saves me 8 hours per week. I never mix up 
-clients anymore."
-— Sarah Chen, ICF-Certified Executive Coach
+[Real testimonials added post-launch]
 ```
 
 **3. How It Works (3 Steps):**
@@ -1501,16 +1510,16 @@ clients anymore."
 
 **4. Features Overview:**
 - Client Cards (persistent client memory)
-- AI Summaries (ICF-compliant documentation)
+- AI Summaries (ICF-aligned documentation)
 - Solis Intelligence (conversational AI)
 - Action Item Tracking (never forget commitments)
 
 **5. Pricing Preview:**
 ```
 FREE: Perfect for testing
-• 1 client
-• 3 AI transcripts
-• 50 Solis queries
+• 3 clients
+• 5 AI transcripts
+• 75 Solis queries
 
 PRO: $99/month for serious coaches
 • Unlimited clients
@@ -1528,7 +1537,7 @@ PRO: $99/month for serious coaches
 
 **7. Final CTA:**
 ```
-Join 100+ Executive Coaches Using MeetSolis
+Join coaches from the ICF community
 
 [Start Your Free Trial]
 No credit card required.
@@ -1769,8 +1778,9 @@ CREATE INDEX idx_user_subscription ON subscriptions(user_id);
 - Password hashing (Clerk handles)
 
 **Compliance:**
-- **ICF Standards:** Session documentation meets ICF requirements
+- **ICF Standards:** Session documentation designed for ICF requirements
 - **GDPR-Ready:** Right to access, delete, export (implement on request)
+- **GDPR DPA Requirement:** Before UK/EU launch, execute Data Processing Agreements with all sub-processors: Deepgram, OpenAI, Supabase, Clerk, Resend. This is a legal prerequisite.
 - **Privacy-First:** No AI training on user data (Anthropic policy)
 
 **Access Control:**
@@ -1842,7 +1852,7 @@ CREATE INDEX idx_user_subscription ON subscriptions(user_id);
 - Unlimited clients
 - 25 AI transcripts/month
 - 2,000 Solis queries/month
-- ICF-compliant exports
+- ICF-aligned exports
 - Priority support (24-hour response)
 
 **Annual Discount:** Save $240/year ($79/month effective)
@@ -1850,24 +1860,26 @@ CREATE INDEX idx_user_subscription ON subscriptions(user_id);
 **Revenue Projections:**
 
 **Month 1 (Post-Launch):**
-- 50-100 signups
-- 10-20 paying ($99/mo)
-- MRR: $990-1,980
+- 15-30 signups (cold outreach only)
+- 2-5 paying ($99/mo)
+- MRR: $198-495
 
 **Month 3:**
-- 150-250 signups total
-- 30-50 paying
-- MRR: $2,970-4,950
+- 40-80 signups total
+- 8-16 paying
+- MRR: $792-1,584
 
 **Month 6:**
-- 300-500 signups total
-- 100-150 paying
-- MRR: $9,900-14,850
+- 100-200 signups total
+- 30-60 paying
+- MRR: $2,970-5,940
 
 **Month 12:**
-- 600-1,000 signups total
-- 200-400 paying
-- MRR: $19,800-39,600 ($240K-475K ARR)
+- 250-500 signups total
+- 100-300 paying
+- MRR: $9,900-29,700 ($120K-300K ARR)
+
+**Note:** All growth via cold outreach (LinkedIn, ICF chapters, Reddit r/coaching). No existing coaching network. Expect 15-20 hrs/week founder-led sales. PMF judgment: evaluate at Month 4-6, not Month 1.
 
 ---
 
@@ -1881,18 +1893,18 @@ CREATE INDEX idx_user_subscription ON subscriptions(user_id);
 
 **COGS:**
 - AI Summaries (25/mo): $0.50
-- Solis Queries (2,000/mo with caching): $2.00
-- Infrastructure: $0 (free tiers)
-- **Total COGS: $2.50/month**
+- Deepgram transcription: $6.50
+- Solis Queries + infra (2,000/mo with caching): $2.00
+- **Total COGS: $9.00/month**
 
-**Gross Profit:** $96.50/month  
-**Gross Margin:** 97.5%
+**Gross Profit:** $90.00/month
+**Gross Margin:** 90.9%
 
-**CAC:** $250 (target)  
-**LTV:** $99 × 36 months × 0.75 retention = $2,673  
-**LTV:CAC:** 10.7:1 (Excellent - target is 3:1+)
+**CAC:** $250 (target)
+**LTV:** $99 × 24 months × 0.75 retention = $1,782
+**LTV:CAC:** 7.1:1 (Strong - target is 3:1+)
 
-**Payback Period:** $250 / $96.50 = 2.6 months
+**Payback Period:** $250 / $90.00 = 2.8 months
 
 ---
 
@@ -1969,7 +1981,7 @@ Target Progression:
   - Community-led growth (trust > ads)
   - Referral program (coaches influence each other)
   - ICF partnerships (official certification)
-  - 14-day free trial (no credit card)
+  - Free tier (no credit card required)
 
 ---
 
@@ -2018,6 +2030,26 @@ Target Progression:
   - Content marketing (blog on coaching)
   - Partner with ICF trainers
 
+**Risk 9: Cold Outreach Dependency**
+- **Threat:** No existing coaching network; all growth via cold outreach
+- **Mitigation:** 15-20 hrs/week founder-led sales; target ICF chapter events; LinkedIn + Reddit r/coaching
+
+**Risk 10: Vercel Function Timeout**
+- **Threat:** Deepgram transcription may exceed 60s Vercel function limit (free tier: 10s, Pro: 60s)
+- **Mitigation:** Vercel Pro required before launch; consider background job queue (Supabase Edge Functions) for recordings >5 min
+
+**Risk 11: GDPR DPA**
+- **Threat:** UK/EU launch requires signed Data Processing Agreements with all sub-processors
+- **Mitigation:** Execute DPAs with Deepgram, OpenAI, Supabase, Clerk, Resend before UK launch
+
+**Risk 12: Solo Founder Bottleneck**
+- **Threat:** Single point of failure for sales, development, and support simultaneously
+- **Mitigation:** Prioritize automation; defer non-essential features aggressively; hire CS after 100 customers
+
+**Risk 13: Audio Storage Cost Accumulation**
+- **Threat:** Undeleted audio files accumulate Supabase Storage costs over time
+- **Mitigation:** Delete audio immediately after successful transcription; set `transcript_audio_url` = NULL
+
 ---
 
 ## 9. Post-MVP Roadmap (Year 1)
@@ -2025,7 +2057,7 @@ Target Progression:
 ### Q2 2026 (Months 4-6)
 - Zoom integration (auto-import transcripts)
 - Session preparation briefs (enhanced Solis feature)
-- ICF-compliant PDF export
+- ICF-aligned PDF export
 - Email notifications (session reminders)
 
 ### Q3 2026 (Months 7-9)
@@ -2068,7 +2100,7 @@ Target Progression:
 
 ### MVP Team (Month 1)
 - **Founder (You):** Product, strategy, coding (with Claude Code)
-- **Budget:** $20/month (Claude Code)
+- **Budget:** $100/month baseline (Vercel Pro $20 + Supabase Pro $25 + Resend $20 + Claude Code $20 + misc $15) + ~$9.00/user COGS
 
 ### Post-Launch (Months 2-6)
 - Founder: Product, sales, support
@@ -2202,12 +2234,12 @@ Target Progression:
 ### Success Criteria (First 30 Days)
 
 If we achieve:
-- ✅ 50+ signups
-- ✅ 10+ paying customers ($990+ MRR)
+- ✅ 15-30 signups
+- ✅ 2-5 paying customers ($198-495 MRR)
 - ✅ 70%+ say "I would pay for this"
 - ✅ <5 critical bugs
 
-**→ We have product-market fit signal. Keep building.**
+**→ We have early signal. Evaluate PMF at Month 4-6, not Month 1.**
 
 Otherwise:
 - Interview users deeply

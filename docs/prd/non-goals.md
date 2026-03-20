@@ -41,7 +41,7 @@ Calendar sync, auto-import from Zoom/Google Meet, automated reminders, webhook i
 | Client-facing portal | Not building | Year 2 |
 | Team/agency accounts | Not building | Year 2 |
 | Calendar integration (Zoom/GCal auto-import) | Not building | Q2 2026 |
-| ICF-compliant PDF export | Not building | Q2 2026 |
+| ICF-aligned PDF export | Not building | Q2 2026 |
 | Action item due dates | Not building | Q2 2026 |
 | Email/push reminders | Not building | Q2 2026 |
 | Cross-client action item dashboard | Not building | Q2 2026 |

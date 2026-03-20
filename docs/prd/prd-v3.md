@@ -1,7 +1,7 @@
 # MeetSolis Product Requirements Document (PRD)
 
-**Version:** 3.0
-**Date:** March 8, 2026
+**Version:** 3.2
+**Date:** March 19, 2026
 **Status:** Active Development - MVP Phase
 **Previous Versions:** v1.0 (Video Conferencing), v2.0 (Generic Freelancers/Consultants) - See archive/
 
@@ -53,7 +53,19 @@
 | Transcription | Gladia | Deepgram Nova-2 |
 | AI Model | OpenAI GPT-4 | Claude Sonnet 4.5 |
 | Pricing | $29/mo, $249/yr | $99/mo, $948/yr |
-| Free Tier | 3 clients, 3 AI meetings/mo, 100 queries | 1 client, 3 transcripts lifetime, 50 queries lifetime |
+| Free Tier | 3 clients, 3 AI meetings/mo, 100 queries | 3 clients, 5 transcripts lifetime, 75 queries lifetime |
+
+### v3.0 → v3.2 (March 19, 2026)
+
+| Correction | v3.0 | v3.2 |
+|-----------|------|------|
+| Monthly infra cost | $20/mo | $100/mo (Vercel Pro + Supabase Pro + Resend) |
+| COGS/user | $2.50/mo | $9.00/mo (added Deepgram $6.50) |
+| Gross margin | 97.5% | 90.9% |
+| Month 1 target | 50–100 signups, 10+ paying | 15–30 signups, 2–5 paying |
+| Year 1 ARR | $240K–570K | $120K–300K |
+| Free tier | 1 client, 3 sessions, 50 queries | 3 clients, 5 sessions, 75 queries |
+| ICF language | "ICF-compliant" | "ICF-aligned" throughout |
 
 **Why:** Narrow ICP = sharper positioning, better retention, premium pricing justified. Executive coaches have recurring 1:1 clients (10–25), need session memory acutely, and can afford $99/mo.
 
@@ -75,7 +87,7 @@
 
 | Tier | Price | Limits |
 |------|-------|--------|
-| Free | $0 | 1 client, 3 session transcripts (lifetime), 50 Solis queries (lifetime) |
+| Free | $0 | 3 clients, 5 session transcripts (lifetime), 75 Solis queries (lifetime) |
 | Pro | $99/mo or $948/yr | Unlimited clients, unlimited sessions, unlimited Solis queries |
 
 ---
@@ -130,7 +142,7 @@
 **Primary:**
 - Executive coaches return before every session (engagement)
 - "I can't manage my clients without this" (retention)
-- 50 signups + 10 paying by April 30, 2026 ($990+ MRR)
+- 15–30 signups + 2–5 paying by April 30, 2026 ($198–495 MRR)
 
 **Secondary:**
 - 3–5% free-to-paid conversion

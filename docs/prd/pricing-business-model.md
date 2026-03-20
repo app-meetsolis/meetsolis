@@ -5,9 +5,9 @@
 ### Free (Forever)
 **$0/month**
 
-- 1 active client
-- 3 AI-processed sessions (lifetime — never resets)
-- 50 Solis Intelligence queries (lifetime — never resets)
+- 3 active clients
+- 5 AI-processed sessions (lifetime — never resets)
+- 75 Solis Intelligence queries (lifetime — never resets)
 - Unlimited manual transcript uploads (text/docx paste — AI processing counted toward limit)
 - Basic session timeline
 - Action item tracking
@@ -22,7 +22,7 @@
 - 2,000 Solis Intelligence queries/month (resets monthly)
 - All session upload types (manual + auto-transcription)
 - Hybrid RAG Solis Intelligence with full citation history
-- ICF-compliant session documentation
+- ICF-aligned session documentation
 - Priority support (24-hour response)
 
 ## Pricing Rationale
@@ -35,9 +35,9 @@
 
 | Feature | Free | Pro |
 |---------|------|-----|
-| Active clients | 1 | Unlimited |
-| AI sessions | 3 lifetime | 25/month |
-| Solis queries | 50 lifetime | 2,000/month |
+| Active clients | 3 | Unlimited |
+| AI sessions | 5 lifetime | 25/month |
+| Solis queries | 75 lifetime | 2,000/month |
 | Manual uploads | Unlimited | Unlimited |
 | Reset schedule | Never (lifetime) | Monthly |
 
@@ -51,25 +51,26 @@
 |--------|-------|
 | Monthly revenue per customer | $99 |
 | COGS (AI summaries) | $0.50/month |
-| COGS (Solis queries) | $2.00/month |
-| Total COGS | ~$2.50/month |
-| Gross profit | $96.50/month |
-| Gross margin | **97.5%** |
+| COGS (Deepgram transcription) | $6.50/month |
+| COGS (Solis queries + infra) | $2.00/month |
+| Total COGS | ~$9.00/month |
+| Gross profit | $90.00/month |
+| Gross margin | **90.9%** |
 | CAC target | $250 |
-| Average LTV (36 months × 75% retention) | $2,673 |
-| LTV:CAC ratio | **10.7:1** |
-| Payback period | **2.6 months** |
+| Average LTV (24 months × 75% retention) | $1,782 |
+| LTV:CAC ratio | **7.1:1** |
+| Payback period | **2.8 months** |
 
 ## Revenue Projections
 
 | Month | Signups | Paying | MRR |
 |-------|---------|--------|-----|
-| 1 | 50–100 | 10–20 | $990–1,980 |
-| 3 | 150–250 | 30–50 | $2,970–4,950 |
-| 6 | 300–500 | 100–150 | $9,900–14,850 |
-| 12 | 600–1,000 | 200–400 | $19,800–39,600 |
+| 1 | 15–30 | 2–5 | $198–495 |
+| 3 | 40–80 | 8–16 | $792–1,584 |
+| 6 | 100–200 | 30–60 | $2,970–5,940 |
+| 12 | 250–500 | 100–300 | $9,900–29,700 |
 
-**Year 1 ARR target:** $240K–475K
+**Year 1 ARR target:** $120K–300K
 **Exit target:** $15–30M acquisition (Year 3–4)
 
 ## Payment Infrastructure
@@ -94,4 +95,6 @@ This allows switching payment processors without code changes if needed.
 - Coaching Facebook groups
 - Personal email network
 
-**Month 1 target:** 50–100 signups, 10+ paying customers ($990+ MRR)
+**Month 1 target:** 15–30 signups, 2–5 paying customers ($198–495 MRR)
+
+**Note:** All growth is cold outreach (no existing coaching connections). Founder-led: LinkedIn direct outreach, ICF chapter communities, Reddit r/coaching. Expect 15–20 hrs/week of sales effort.

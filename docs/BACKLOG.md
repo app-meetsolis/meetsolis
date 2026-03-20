@@ -138,7 +138,7 @@
 
 **Soft launch March 10:** Internal testing + first beta coaches
 **Hard launch March 31:** Public announcement — LinkedIn, ICF forums, Reddit r/coaching
-**Goal:** 50+ signups, 10+ paying customers ($990+ MRR) by April 30
+**Goal:** 15-30 signups, 2-5 paying ($198-495 MRR) by April 30
 
 ---
 
@@ -148,7 +148,7 @@
 |---------|---------|
 | Calendar integration (Google Cal, Calendly) | Q2 2026 |
 | Zoom/Google Meet auto-import | Q2 2026 |
-| ICF-compliant PDF export | Q2 2026 |
+| ICF-aligned PDF export | Q2 2026 |
 | Action item due dates + reminders | Q2 2026 |
 | Cross-client action item dashboard | Q3 2026 |
 | Client tagging (v2) | Q3 2026 |
