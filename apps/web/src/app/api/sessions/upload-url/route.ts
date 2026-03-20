@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
 
   const supabase = getSupabase();
   const uniqueId = crypto.randomUUID();
-  const path = `transcripts/${userId}/${uniqueId}/${filename}`;
+  const path = `transcripts/${userId}/${uniqueId}/${Date.now()}-${filename}`;
 
   const { data, error } = await supabase.storage
     .from('transcripts')

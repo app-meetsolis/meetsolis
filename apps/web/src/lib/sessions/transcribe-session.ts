@@ -52,6 +52,26 @@ export async function runTranscribe(
 
     await incrementTranscriptCount(userId);
 
+    // Delete audio from storage after successful transcription (PRD requirement)
+    const audioUrl = session.transcript_audio_url;
+    const storagePath = audioUrl.split('/transcripts/')[1];
+    if (storagePath) {
+      const { error: deleteError } = await supabase.storage
+        .from('transcripts')
+        .remove([storagePath]);
+      if (deleteError) {
+        console.warn(
+          '[Transcribe] Audio delete failed (non-fatal):',
+          deleteError.message
+        );
+      } else {
+        await supabase
+          .from('sessions')
+          .update({ transcript_audio_url: null })
+          .eq('id', sessionId);
+      }
+    }
+
     // Chain into summarization
     await runSummarize(sessionId, userId);
 
