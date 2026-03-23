@@ -51,12 +51,15 @@ export async function DELETE(request: NextRequest) {
       confirmationToken ? 'Yes' : 'No'
     );
 
-    await DataDeletionService.deleteUserData(userId, 'user_request');
-
-    return NextResponse.json({
-      success: true,
-      message: 'User data has been successfully deleted',
-    });
+    // Data deletion is not yet implemented — return 501 to avoid false compliance
+    return NextResponse.json(
+      {
+        error: 'Not Implemented',
+        message:
+          'Data deletion is not yet available. Contact support@meetsolis.com for manual erasure requests.',
+      },
+      { status: 501 }
+    );
   } catch (error) {
     console.error('Data deletion error:', error);
 

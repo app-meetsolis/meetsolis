@@ -12,6 +12,7 @@ import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import mammoth from 'mammoth';
 import { config } from '@/lib/config/env';
+import { sanitizeFileName } from '@/lib/security/sanitization';
 import { SessionCreateSchema } from '@meetsolis/shared';
 import {
   checkTranscriptLimit,
@@ -168,7 +169,7 @@ async function uploadTranscriptFile(
 ): Promise<string | null> {
   try {
     const supabase = getSupabase();
-    const path = `transcripts/${userId}/${sessionId}/${file.name}`;
+    const path = `transcripts/${userId}/${sessionId}/${sanitizeFileName(file.name)}`;
     const { error } = await supabase.storage
       .from('transcripts')
       .upload(path, file.bytes, { contentType: file.type, upsert: false });
