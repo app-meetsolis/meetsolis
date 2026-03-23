@@ -21,7 +21,6 @@ export default authMiddleware({
     '/sign-in(.*)',
     '/sign-up(.*)',
     '/api/webhooks(.*)',
-    '/admin/services', // Admin page
   ],
 
   // Custom handler to integrate rate limiting and security headers
@@ -29,6 +28,11 @@ export default authMiddleware({
     // Check if user is accessing a protected route without authentication
     const isProtectedRoute =
       req.nextUrl.pathname.startsWith('/dashboard') ||
+      req.nextUrl.pathname.startsWith('/clients') ||
+      req.nextUrl.pathname.startsWith('/intelligence') ||
+      req.nextUrl.pathname.startsWith('/settings') ||
+      req.nextUrl.pathname.startsWith('/analytics') ||
+      req.nextUrl.pathname.startsWith('/admin') ||
       req.nextUrl.pathname.startsWith('/onboarding') ||
       (req.nextUrl.pathname.startsWith('/api/') &&
         !req.nextUrl.pathname.startsWith('/api/webhooks'));
