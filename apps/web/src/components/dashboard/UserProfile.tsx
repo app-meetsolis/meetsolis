@@ -56,12 +56,13 @@ export function UserProfile({ className }: UserProfileProps) {
     return null;
   }
 
-  const initials = displayName
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2) || 'U';
+  const initials =
+    displayName
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2) || 'U';
 
   return (
     <DropdownMenu>
@@ -79,7 +80,9 @@ export function UserProfile({ className }: UserProfileProps) {
           </Avatar>
           <div className="hidden flex-col items-start md:flex">
             <p className="text-sm font-medium">{displayName}</p>
-            <p className="text-xs text-gray-500">{profile?.title || user.role}</p>
+            <p className="text-xs text-gray-500">
+              {profile?.title || user.role}
+            </p>
           </div>
         </Button>
       </DropdownMenuTrigger>
@@ -87,17 +90,15 @@ export function UserProfile({ className }: UserProfileProps) {
         <DropdownMenuLabel>
           <div className="flex flex-col gap-1">
             <p className="text-sm font-medium">{displayName}</p>
-            <p className="text-xs text-gray-500">{profile?.email || user.email}</p>
+            <p className="text-xs text-gray-500">
+              {profile?.email || user.email}
+            </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
+        <DropdownMenuItem onClick={() => router.push('/settings')}>
           <Settings className="mr-2 h-4 w-4" />
           Settings
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>
-          <User className="mr-2 h-4 w-4" />
-          Profile
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut} className="text-red-600">

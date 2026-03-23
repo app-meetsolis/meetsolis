@@ -20,20 +20,10 @@ import {
 } from '@/lib/quota/transcriptQuota';
 import { runSummarize } from '@/lib/sessions/summarize-session';
 import { runTranscribe } from '@/lib/sessions/transcribe-session';
+import { getInternalUserId } from '@/lib/helpers/user';
 
 function getSupabase() {
   return createClient(config.supabase.url!, config.supabase.serviceRoleKey!);
-}
-
-async function getInternalUserId(clerkUserId: string) {
-  const supabase = getSupabase();
-  const { data: user, error } = await supabase
-    .from('users')
-    .select('id')
-    .eq('clerk_id', clerkUserId)
-    .single();
-  if (error || !user) return null;
-  return user.id as string;
 }
 
 /**
@@ -61,7 +51,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const userId = await getInternalUserId(clerkUserId);
+    const userId = await getInternalUserId(getSupabase(), clerkUserId);
     if (!userId) {
       return NextResponse.json(
         { error: { code: 'USER_NOT_FOUND', message: 'User not found' } },
@@ -229,7 +219,7 @@ export async function POST(request: NextRequest) {
       key_topics,
     } = validation.data;
 
-    const userId = await getInternalUserId(clerkUserId);
+    const userId = await getInternalUserId(getSupabase(), clerkUserId);
     if (!userId) {
       return NextResponse.json(
         { error: { code: 'USER_NOT_FOUND', message: 'User not found' } },

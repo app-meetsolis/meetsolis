@@ -10,6 +10,7 @@ import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import { config } from '@/lib/config/env';
 import { runTranscribe } from '@/lib/sessions/transcribe-session';
+import { getInternalUserId } from '@/lib/helpers/user';
 
 // Allow up to 120s for transcription (requires Vercel Pro)
 export const maxDuration = 120;
@@ -20,17 +21,6 @@ function getSupabase() {
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-async function getInternalUserId(clerkUserId: string) {
-  const supabase = getSupabase();
-  const { data: user, error } = await supabase
-    .from('users')
-    .select('id')
-    .eq('clerk_id', clerkUserId)
-    .single();
-  if (error || !user) return null;
-  return user.id as string;
-}
 
 /**
  * POST /api/sessions/[id]/transcribe
@@ -55,7 +45,7 @@ export async function POST(
     );
   }
 
-  const userId = await getInternalUserId(clerkUserId);
+  const userId = await getInternalUserId(getSupabase(), clerkUserId);
   if (!userId) {
     return NextResponse.json(
       { error: { code: 'USER_NOT_FOUND', message: 'User not found' } },
