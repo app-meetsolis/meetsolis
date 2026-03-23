@@ -15,7 +15,11 @@ import { OnboardingState } from '@/types/onboarding';
 import { useAuth } from '@clerk/nextjs';
 
 // UI Components - using inline definitions to avoid import issues in tests
-const Alert = ({ children, className, ...props }: any) => (
+const Alert = ({
+  children,
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) => (
   <div
     className={`relative w-full rounded-lg border p-4 ${className}`}
     {...props}
@@ -24,7 +28,13 @@ const Alert = ({ children, className, ...props }: any) => (
   </div>
 );
 
-const AlertTitle = ({ children, className, ...props }: any) => (
+const AlertTitle = ({
+  children,
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLHeadingElement> & {
+  children: React.ReactNode;
+}) => (
   <h5
     className={`mb-1 font-medium leading-none tracking-tight ${className}`}
     {...props}
@@ -33,13 +43,27 @@ const AlertTitle = ({ children, className, ...props }: any) => (
   </h5>
 );
 
-const AlertDescription = ({ children, className, ...props }: any) => (
+const AlertDescription = ({
+  children,
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) => (
   <div className={`text-sm ${className}`} {...props}>
     {children}
   </div>
 );
 
-const Button = ({ children, className, variant, size, ...props }: any) => (
+const Button = ({
+  children,
+  className,
+  variant: _variant,
+  size: _size,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  children: React.ReactNode;
+  variant?: string;
+  size?: string;
+}) => (
   <button
     className={`inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 ${className}`}
     {...props}
@@ -55,7 +79,10 @@ const DAYS_BEFORE_RESHOW = 7;
 
 interface OnboardingIncompleteBannerProps {
   className?: string;
-  onAnalyticsTrack?: (event: string, properties?: Record<string, any>) => void;
+  onAnalyticsTrack?: (
+    event: string,
+    properties?: Record<string, unknown>
+  ) => void;
 }
 
 export function OnboardingIncompleteBanner({
@@ -113,11 +140,17 @@ export function OnboardingIncompleteBanner({
 
   // Analytics tracking helper
   const trackAnalytics = useCallback(
-    (event: string, properties?: Record<string, any>) => {
+    (event: string, properties?: Record<string, unknown>) => {
       if (onAnalyticsTrack) {
         onAnalyticsTrack(event, properties);
-      } else if (typeof window !== 'undefined' && (window as any).analytics) {
-        (window as any).analytics.track(event, properties);
+      } else if (typeof window !== 'undefined' && 'analytics' in window) {
+        (
+          window as unknown as {
+            analytics: {
+              track: (e: string, p?: Record<string, unknown>) => void;
+            };
+          }
+        ).analytics.track(event, properties);
       }
     },
     [onAnalyticsTrack]

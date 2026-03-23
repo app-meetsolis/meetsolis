@@ -11,7 +11,7 @@ export async function GET() {
   try {
     const healthChecks = await ServiceFactory.healthCheckAllServices();
     const statuses = Object.entries(healthChecks).reduce(
-      (acc, [name, check]: [string, any]) => {
+      (acc, [name, check]: [string, { status: string }]) => {
         acc[name] = check.status;
         return acc;
       },
