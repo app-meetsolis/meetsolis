@@ -29,7 +29,6 @@ export default authMiddleware({
     // Check if user is accessing a protected route without authentication
     const isProtectedRoute =
       req.nextUrl.pathname.startsWith('/dashboard') ||
-      req.nextUrl.pathname.startsWith('/meeting') ||
       req.nextUrl.pathname.startsWith('/onboarding') ||
       (req.nextUrl.pathname.startsWith('/api/') &&
         !req.nextUrl.pathname.startsWith('/api/webhooks'));
