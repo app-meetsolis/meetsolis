@@ -1,0 +1,43 @@
+schema: 1
+story: '4.1'
+story_title: 'Embeddings & Vector Index'
+gate: PASS
+status_reason: 'All ACs met, 19/19 tests pass, migration applied, no blocking issues found.'
+reviewer: 'Quinn (Test Architect)'
+updated: '2026-03-25T00:00:00Z'
+
+top_issues: []
+waiver:
+  active: false
+
+quality_score: 100
+expires: '2026-04-08T00:00:00Z'
+
+evidence:
+  tests_reviewed: 19
+  risks_identified: 0
+  trace:
+    ac_covered: [1, 2, 3, 4]
+    ac_gaps: []
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'Input validation (embedding dims, query length, limit), user scoping in SQL, error sanitization, service role key server-side only.'
+  performance:
+    status: PASS
+    notes: 'GIN index on fts, IVFFlat index from migration 015, LIMIT 20 in both CTEs, app-layer cap of 10.'
+  reliability:
+    status: PASS
+    notes: 'Null data → empty array, RPC error → sanitized throw, empty queryText → semantic-only fallback via FULL OUTER JOIN.'
+  maintainability:
+    status: PASS
+    notes: 'Clean minimal code, SQL comments explain RRF and guards, SessionSearchResult type annotated for Story 4.2 migration.'
+
+recommendations:
+  immediate: []
+  future:
+    - action: 'Add one-line comment on solis.ts:39 explaining clientId=null returns empty (by design)'
+      refs: ['apps/web/src/lib/ai/solis.ts']
+    - action: 'Move SessionSearchResult to @meetsolis/shared when Story 4.2 imports it'
+      refs: ['apps/web/src/lib/ai/solis.ts', 'packages/shared/src/index.ts']
