@@ -39,3 +39,15 @@ export async function getUserByClerkId(
 
   return data;
 }
+
+/**
+ * Get user's internal database UUID from their Clerk ID.
+ * Convenience wrapper over getUserByClerkId — returns just the id string.
+ */
+export async function getInternalUserId(
+  supabase: SupabaseClient,
+  clerkUserId: string
+): Promise<string | null> {
+  const user = await getUserByClerkId(supabase, clerkUserId);
+  return user?.id ?? null;
+}

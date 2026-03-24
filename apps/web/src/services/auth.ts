@@ -51,7 +51,11 @@ export async function createUserProfile(
   };
 
   const result = await executeQuery(
-    supabase.from('users').insert(userInsert).select().single() as any
+    supabase
+      .from('users')
+      .insert(userInsert)
+      .select()
+      .single() as unknown as Parameters<typeof executeQuery>[0]
   );
 
   if (!result.success) {
@@ -87,7 +91,7 @@ export async function updateUserProfile(
       .update(userUpdate)
       .eq('clerk_id', clerkUserId)
       .select()
-      .single() as any
+      .single() as unknown as Parameters<typeof executeQuery>[0]
   );
 
   if (!result.success) {
@@ -107,7 +111,12 @@ export async function deleteUserProfile(clerkUserId: string): Promise<void> {
 
   // Hard delete from database (CASCADE will handle related records)
   const result = await executeQuery(
-    supabase.from('users').delete().eq('clerk_id', clerkUserId) as any
+    supabase
+      .from('users')
+      .delete()
+      .eq('clerk_id', clerkUserId) as unknown as Parameters<
+      typeof executeQuery
+    >[0]
   );
 
   if (!result.success) {
@@ -131,7 +140,7 @@ export async function getUserProfile(
       .from('users')
       .select('*')
       .eq('clerk_id', clerkUserId)
-      .single() as any
+      .single() as unknown as Parameters<typeof executeQuery>[0]
   );
 
   if (!result.success) {

@@ -10,7 +10,7 @@ const envSchema = z.object({
   // Supabase Configuration
   NEXT_PUBLIC_SUPABASE_URL: z.string().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
-  SUPABASE_ANON_KEY: z.string().optional(),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().optional(),
 
   // AI Provider (abstracted)
   AI_PROVIDER: z
@@ -125,7 +125,7 @@ export const config = {
   supabase: {
     url: env.NEXT_PUBLIC_SUPABASE_URL,
     serviceRoleKey: env.SUPABASE_SERVICE_ROLE_KEY,
-    anonKey: env.SUPABASE_ANON_KEY,
+    anonKey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   },
 
   ai: {

@@ -30,9 +30,6 @@ export async function GET() {
       status: overallStatus,
       timestamp: new Date().toISOString(),
       responseTime,
-      services: healthChecks,
-      environment: config.app.env,
-      useMockServices: config.useMockServices,
     };
 
     // Set appropriate HTTP status code
@@ -51,8 +48,7 @@ export async function GET() {
       {
         status: 'unavailable',
         timestamp: new Date().toISOString(),
-        error: error instanceof Error ? error.message : 'Unknown error',
-        environment: config.app.env,
+        error: 'Health check failed',
       },
       { status: 503 }
     );

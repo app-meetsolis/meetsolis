@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { config } from '@/lib/config/env';
 import { getUserByClerkId } from '@/lib/helpers/user';
@@ -26,7 +26,7 @@ const UpdateProfileSchema = z.object({
  * Get user from Supabase, or create if doesn't exist
  * This is a fallback for when webhooks aren't configured
  */
-async function getOrCreateUser(supabase: any, userId: string) {
+async function getOrCreateUser(supabase: SupabaseClient, userId: string) {
   // Try to get existing user
   const user = await getUserByClerkId(supabase, userId);
 
@@ -131,7 +131,7 @@ export async function PUT(request: NextRequest) {
     const user = await getOrCreateUser(supabase, userId);
 
     // Build update object (only include fields that were provided)
-    const updateData: any = {};
+    const updateData: Record<string, string | boolean> = {};
 
     if (validation.data.display_name !== undefined) {
       updateData.display_name = validation.data.display_name;

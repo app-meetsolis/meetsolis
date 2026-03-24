@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { config } from '@/lib/config/env';
 import type { AnalyticsDashboardMetrics } from '@meetsolis/shared';
 
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
  * Fetch analytics metrics from database
  */
 async function fetchAnalyticsMetrics(
-  supabase: any
+  supabase: SupabaseClient
 ): Promise<AnalyticsDashboardMetrics> {
   // Get date ranges
   const now = new Date();
@@ -99,11 +99,12 @@ async function fetchAnalyticsMetrics(
     .select('id, scheduled_at, duration, status');
 
   const completedMeetings =
-    allMeetings?.filter((m: any) => m.status === 'completed') || [];
+    allMeetings?.filter((m: { status: string }) => m.status === 'completed') ||
+    [];
   const averageDuration =
     completedMeetings.length > 0
       ? completedMeetings.reduce(
-          (sum: number, m: any) => sum + (m.duration || 0),
+          (sum: number, m: { duration?: number }) => sum + (m.duration || 0),
           0
         ) / completedMeetings.length
       : 0;

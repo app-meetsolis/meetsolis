@@ -34,7 +34,7 @@ export async function GET() {
       return NextResponse.json(
         {
           service: 'database',
-          health: { status: 'degraded', error: error.message },
+          health: { status: 'degraded' },
         },
         { status: 503 }
       );
@@ -54,7 +54,7 @@ export async function GET() {
         service: 'database',
         health: {
           status: 'unavailable',
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: 'Database check failed',
         },
         timestamp: new Date().toISOString(),
       },

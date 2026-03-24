@@ -8,7 +8,7 @@ export const securityHeaders = {
   'Content-Security-Policy': [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' https://*.clerk.dev https://*.clerk.accounts.dev https://challenges.cloudflare.com https://*.paddle.com https://*.razorpay.com https://va.vercel-scripts.com https://*.vercel.com https://*.posthog.com https://cdn.mxpnl.com https://*.mixpanel.com https://*.hotjar.com https://*.hotjar.io https://static.hotjar.com",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.clerk.dev https://*.clerk.accounts.dev https://*.deepl.com https://*.vercel.com https://*.vercel-analytics.com https://app.posthog.com https://*.posthog.com https://*.mixpanel.com https://api.mixpanel.com https://*.hotjar.com https://*.hotjar.io https://vars.hotjar.com https://*.sentry.io https://sentry.io https://*.stream-io-api.com wss://*.stream-io-api.com https://*.stream-io-video.com wss://*.stream-io-video.com https://hint.stream-io-video.com",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.clerk.dev https://*.clerk.accounts.dev https://*.deepl.com https://*.vercel.com https://*.vercel-analytics.com https://app.posthog.com https://*.posthog.com https://*.mixpanel.com https://api.mixpanel.com https://*.hotjar.com https://*.hotjar.io https://vars.hotjar.com https://*.sentry.io https://sentry.io",
     "img-src 'self' data: https: https://img.clerk.com",
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self' data:",
@@ -51,7 +51,7 @@ export const developmentSecurityHeaders = {
   'Content-Security-Policy': [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.dev https://*.clerk.accounts.dev https://challenges.cloudflare.com https://va.vercel-scripts.com https://*.vercel.com https://*.posthog.com https://cdn.mxpnl.com https://*.mixpanel.com https://*.hotjar.com https://*.hotjar.io https://static.hotjar.com",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.clerk.dev https://*.clerk.accounts.dev https://*.deepl.com ws://localhost:* https://*.vercel.com https://*.vercel-analytics.com https://app.posthog.com https://*.posthog.com https://*.mixpanel.com https://api.mixpanel.com https://*.hotjar.com https://*.hotjar.io https://vars.hotjar.com https://*.sentry.io https://sentry.io https://*.stream-io-api.com wss://*.stream-io-api.com https://*.stream-io-video.com wss://*.stream-io-video.com https://hint.stream-io-video.com",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.clerk.dev https://*.clerk.accounts.dev https://*.deepl.com ws://localhost:* https://*.vercel.com https://*.vercel-analytics.com https://app.posthog.com https://*.posthog.com https://*.mixpanel.com https://api.mixpanel.com https://*.hotjar.com https://*.hotjar.io https://vars.hotjar.com https://*.sentry.io https://sentry.io",
     "img-src 'self' data: https: https://img.clerk.com",
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self' data:",
