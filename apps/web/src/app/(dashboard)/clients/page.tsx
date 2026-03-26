@@ -66,8 +66,8 @@ function ClientsPageContent() {
     refetchOnWindowFocus: true,
   });
 
-  // Free tier: 1 client max. Pro: unlimited (API enforces this too)
-  const maxClients = 1;
+  // Free tier: 3 client max. Pro: unlimited (API enforces this too)
+  const maxClients = 3;
   const clientCount = clients?.length || 0;
   const canAddClient = clientCount < maxClients;
 

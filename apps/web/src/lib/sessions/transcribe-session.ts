@@ -11,7 +11,7 @@ import { runSummarize } from '@/lib/sessions/summarize-session';
 import {
   checkTranscriptLimit,
   incrementTranscriptCount,
-} from '@/lib/quota/transcriptQuota';
+} from '@/lib/billing/checkUsage';
 
 function getSupabase() {
   return createClient(config.supabase.url!, config.supabase.serviceRoleKey!);
