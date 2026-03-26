@@ -1,0 +1,117 @@
+story: "4.4"
+title: "Usage Enforcement"
+reviewer: "Quinn (Test Architect)"
+date: "2026-03-26"
+decision: CONCERNS
+
+quality_score: 78/100
+
+summary: >
+  Core enforcement logic is solid and 9 of 10 ACs pass. Two critical gaps block
+  a clean PASS: UpgradeModal is not wired into the client creation error flow (AC 8
+  partial), and increment functions lack error checking. Fixes are straightforward
+  and low-risk. Ship after addressing criticals.
+
+ac_coverage:
+  - ac: 1
+    description: "Free: 3 client max"
+    status: PASS
+  - ac: 2
+    description: "Free: 5 lifetime AI sessions"
+    status: PASS
+  - ac: 3
+    description: "Free: 75 lifetime queries"
+    status: PASS
+  - ac: 4
+    description: "Pro: 25 AI/month + monthly reset"
+    status: PASS
+  - ac: 5
+    description: "Pro: 2000 queries/month + monthly reset"
+    status: PASS
+  - ac: 6
+    description: "usage_tracking auto-created on first check"
+    status: PASS
+  - ac: 7
+    description: "Monthly reset: 30 days -> reset counter + timestamp"
+    status: PASS
+  - ac: 8
+    description: "UpgradeModal displays with correct context"
+    status: PARTIAL
+    note: "UpgradeModal component exists and is correct. NOT integrated into ClientForm error handler — 403 response shows toast instead of modal."
+  - ac: 9
+    description: "Server-side checks, increment only on success"
+    status: PASS
+  - ac: 10
+    description: "403 shape: { code: LIMIT_EXCEEDED, message, type }"
+    status: PASS
+
+critical_issues:
+  - id: QA-4.4-C1
+    title: "AC 8 — UpgradeModal not wired into ClientForm"
+    severity: CRITICAL
+    description: >
+      ClientForm catches 403 from POST /api/clients but handles it with a generic
+      toast. The UpgradeModal component is built but never opened. AC 8 requires
+      the modal to display with correct context (limitType).
+    fix: >
+      In ClientForm.tsx createMutation error handler:
+      if status === 403 and error.code === 'LIMIT_EXCEEDED',
+      extract error.type and setState to open UpgradeModal with limitType.
+    files:
+      - "apps/web/src/components/clients/ClientForm.tsx"
+      - "apps/web/src/components/billing/UpgradeModal.tsx"
+
+  - id: QA-4.4-C2
+    title: "incrementTranscriptCount / incrementQueryCount — silent DB failure"
+    severity: CRITICAL
+    description: >
+      Both increment functions call supabase .update() without checking the result.
+      If the DB update fails, the count is never incremented and the failure is
+      completely silent. Usage tracking becomes inaccurate with no observable signal.
+    fix: >
+      Add error checking after .update().eq() in both functions.
+      Log or throw on error so callers can handle.
+    files:
+      - "apps/web/src/lib/billing/checkUsage.ts"
+
+concerns:
+  - id: QA-4.4-W1
+    title: "Pro users with NULL reset_at — limits not enforced until Story 5.1"
+    severity: MEDIUM
+    description: >
+      New pro users have NULL transcript_reset_at and query_reset_at.
+      maybeResetMonthlyCounter skips them (line 76: if (!resetAt) return usage).
+      Until Story 5.1 initializes these on upgrade, pro limits are not enforced.
+    fix: "Confirm Story 5.1 story spec explicitly sets reset_at on subscription upgrade."
+
+  - id: QA-4.4-W2
+    title: "Test gaps: increment failures, pro NULL reset_at, integration flow"
+    severity: LOW
+    description: >
+      Missing tests: increment DB failure path, pro user with NULL reset_at,
+      full integration (check -> AI -> increment).
+    fix: "Add targeted tests for these edge cases."
+
+  - id: QA-4.4-W3
+    title: "ClientForm does not differentiate 403 LIMIT_EXCEEDED from other 403s"
+    severity: LOW
+    description: >
+      All !response.ok errors are collapsed. Should branch on code: LIMIT_EXCEEDED
+      before falling back to generic toast.
+    fix: "Check error.code in the 403 handler before showing toast."
+
+passed_areas:
+  - "Core free/pro enforcement logic (checkClientLimit, checkTranscriptLimit, checkQueryLimit)"
+  - "Monthly reset logic (THIRTY_DAYS_MS comparison, counter reset + timestamp update)"
+  - "getOrCreateUsageTracking race condition handling (upsert + fallback fetch)"
+  - "403 response shape across both routes"
+  - "incrementTranscriptCount called only when result !== 'error'"
+  - "UpgradeModal component — content, CTAs, routing"
+  - "TypeScript: 0 errors"
+  - "17 new unit/integration tests — all pass"
+  - "Stub migration: quota/transcriptQuota deleted, imports updated"
+
+retest_required: true
+retest_after:
+  - "QA-4.4-C1 (UpgradeModal wired)"
+  - "QA-4.4-C2 (increment error handling)"

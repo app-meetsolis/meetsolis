@@ -54,3 +54,20 @@ export function isApiError(error: unknown): error is ApiError {
     'response' in error
   );
 }
+
+// =============================================================================
+// UPGRADE REQUIRED ERROR (Story 4.4)
+// =============================================================================
+
+export type UsageLimitType = 'client' | 'transcript' | 'query';
+
+export class UpgradeRequiredError extends Error {
+  constructor(public limitType: UsageLimitType) {
+    super(`Usage limit exceeded: ${limitType}`);
+    this.name = 'UpgradeRequiredError';
+  }
+}
+
+export function isUpgradeRequiredError(error: unknown): error is UpgradeRequiredError {
+  return error instanceof UpgradeRequiredError;
+}

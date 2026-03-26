@@ -446,3 +446,43 @@ export interface SessionUpdate {
   status?: SessionStatus;
   updated_at?: string;
 }
+
+// =============================================================================
+// BILLING / SUBSCRIPTION TYPES (Story 4.4)
+// =============================================================================
+
+export type SubscriptionPlan = 'free' | 'pro';
+
+export interface Subscription {
+  id: string;
+  user_id: string;
+  plan: SubscriptionPlan;
+  status: string;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  current_period_end: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UsageTracking {
+  id: string;
+  user_id: string;
+  transcript_count: number;
+  transcript_reset_at: string | null;
+  query_count: number;
+  query_reset_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UsageResponse {
+  tier: SubscriptionPlan;
+  transcript_count: number;
+  transcript_limit: number;
+  query_count: number;
+  query_limit: number;
+  client_count: number;
+  client_limit: number;
+  resets_at: string | null;
+}

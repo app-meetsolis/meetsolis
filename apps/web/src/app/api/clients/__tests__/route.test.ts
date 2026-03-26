@@ -24,8 +24,18 @@ jest.mock('@/lib/config/env', () => ({
   },
 }));
 
+jest.mock('@/lib/billing/checkUsage', () => ({
+  checkClientLimit: jest.fn(),
+}));
+
 import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
+import { checkClientLimit } from '@/lib/billing/checkUsage';
+import { UpgradeRequiredError } from '@meetsolis/shared';
+
+const mockCheckClientLimit = checkClientLimit as jest.MockedFunction<
+  typeof checkClientLimit
+>;
 
 const mockAuth = auth as jest.MockedFunction<typeof auth>;
 const mockCreateClient = createClient as jest.MockedFunction<
@@ -37,6 +47,9 @@ describe('POST /api/clients', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Default: no limit exceeded
+    mockCheckClientLimit.mockResolvedValue(undefined);
 
     // Setup mock Supabase client
     mockSupabase = {
@@ -107,6 +120,7 @@ describe('POST /api/clients', () => {
 
   it('should return 403 when tier limit exceeded (free tier)', async () => {
     mockAuth.mockResolvedValue({ userId: 'clerk-user-123' } as any);
+    mockCheckClientLimit.mockRejectedValue(new UpgradeRequiredError('client'));
 
     // Mock user lookup
     mockSupabase.from.mockImplementation((table: string) => {
@@ -120,25 +134,6 @@ describe('POST /api/clients', () => {
           }),
         };
       }
-      if (table === 'user_preferences') {
-        return {
-          select: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockReturnThis(),
-          single: jest.fn().mockResolvedValue({
-            data: { max_clients: 3 },
-            error: null,
-          }),
-        };
-      }
-      if (table === 'clients') {
-        const chainable = {
-          select: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockResolvedValue({ count: 3, error: null }),
-          single: jest.fn(),
-          maybeSingle: jest.fn(),
-        };
-        return chainable;
-      }
     });
 
     const request = new NextRequest('http://localhost:3000/api/clients', {
@@ -150,7 +145,8 @@ describe('POST /api/clients', () => {
     expect(response.status).toBe(403);
 
     const data = await response.json();
-    expect(data.error.code).toBe('TIER_LIMIT_EXCEEDED');
+    expect(data.error.code).toBe('LIMIT_EXCEEDED');
+    expect(data.error.type).toBe('client');
   });
 
   it('should return 409 for duplicate email', async () => {

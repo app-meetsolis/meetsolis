@@ -5,17 +5,23 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Client, ClientCreateSchema } from '@meetsolis/shared';
+import {
+  Client,
+  ClientCreateSchema,
+  UpgradeRequiredError,
+  type UsageLimitType,
+} from '@meetsolis/shared';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { UpgradeModal } from '@/components/billing/UpgradeModal';
 
 // Form schema — v3 coaching fields only
 const ClientFormSchema = z.object({
@@ -57,6 +63,8 @@ export function ClientForm({
   onSubmittingChange,
 }: ClientFormProps) {
   const queryClient = useQueryClient();
+  const [upgradeLimitType, setUpgradeLimitType] =
+    useState<UsageLimitType | null>(null);
 
   const {
     register,
@@ -104,8 +112,11 @@ export function ClientForm({
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error?.message || 'Failed to create client');
+        const body = await response.json();
+        if (response.status === 403 && body.error?.code === 'LIMIT_EXCEEDED') {
+          throw new UpgradeRequiredError(body.error.type as UsageLimitType);
+        }
+        throw new Error(body.error?.message || 'Failed to create client');
       }
       return response.json();
     },
@@ -116,6 +127,10 @@ export function ClientForm({
       onSuccess();
     },
     onError: (error: Error) => {
+      if (error instanceof UpgradeRequiredError) {
+        setUpgradeLimitType(error.limitType);
+        return;
+      }
       toast.error(error.message || 'Failed to save client. Please try again.');
     },
   });
@@ -152,117 +167,136 @@ export function ClientForm({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {/* Name (Required) */}
-      <div className="space-y-2">
-        <Label htmlFor="name" className="text-sm font-medium text-[#1A1A1A]">
-          Name <span className="text-red-500">*</span>
-        </Label>
-        <Input
-          id="name"
-          {...register('name')}
-          placeholder="Sarah Johnson"
-          className={errors.name ? 'border-red-500' : ''}
+    <>
+      {upgradeLimitType && (
+        <UpgradeModal
+          isOpen={!!upgradeLimitType}
+          onClose={() => setUpgradeLimitType(null)}
+          limitType={upgradeLimitType}
         />
-        {errors.name && (
-          <p className="text-sm text-red-500">{errors.name.message}</p>
-        )}
-      </div>
+      )}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {/* Name (Required) */}
+        <div className="space-y-2">
+          <Label htmlFor="name" className="text-sm font-medium text-[#1A1A1A]">
+            Name <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="name"
+            {...register('name')}
+            placeholder="Sarah Johnson"
+            className={errors.name ? 'border-red-500' : ''}
+          />
+          {errors.name && (
+            <p className="text-sm text-red-500">{errors.name.message}</p>
+          )}
+        </div>
 
-      {/* Coaching Goal */}
-      <div className="space-y-2">
-        <Label htmlFor="goal" className="text-sm font-medium text-[#1A1A1A]">
-          Coaching Goal
-        </Label>
-        <Textarea
-          id="goal"
-          {...register('goal')}
-          placeholder="e.g. Transition to CTO role, improve executive presence"
-          rows={2}
-        />
-        {errors.goal && (
-          <p className="text-sm text-red-500">{errors.goal.message}</p>
-        )}
-      </div>
+        {/* Coaching Goal */}
+        <div className="space-y-2">
+          <Label htmlFor="goal" className="text-sm font-medium text-[#1A1A1A]">
+            Coaching Goal
+          </Label>
+          <Textarea
+            id="goal"
+            {...register('goal')}
+            placeholder="e.g. Transition to CTO role, improve executive presence"
+            rows={2}
+          />
+          {errors.goal && (
+            <p className="text-sm text-red-500">{errors.goal.message}</p>
+          )}
+        </div>
 
-      {/* Coaching Start Date */}
-      <div className="space-y-2">
-        <Label
-          htmlFor="start_date"
-          className="text-sm font-medium text-[#1A1A1A]"
-        >
-          Coaching Start Date
-        </Label>
-        <Input id="start_date" type="date" {...register('start_date')} />
-        {errors.start_date && (
-          <p className="text-sm text-red-500">{errors.start_date.message}</p>
-        )}
-      </div>
+        {/* Coaching Start Date */}
+        <div className="space-y-2">
+          <Label
+            htmlFor="start_date"
+            className="text-sm font-medium text-[#1A1A1A]"
+          >
+            Coaching Start Date
+          </Label>
+          <Input id="start_date" type="date" {...register('start_date')} />
+          {errors.start_date && (
+            <p className="text-sm text-red-500">{errors.start_date.message}</p>
+          )}
+        </div>
 
-      {/* Company */}
-      <div className="space-y-2">
-        <Label htmlFor="company" className="text-sm font-medium text-[#1A1A1A]">
-          Company
-        </Label>
-        <Input id="company" {...register('company')} placeholder="Acme Corp" />
-      </div>
+        {/* Company */}
+        <div className="space-y-2">
+          <Label
+            htmlFor="company"
+            className="text-sm font-medium text-[#1A1A1A]"
+          >
+            Company
+          </Label>
+          <Input
+            id="company"
+            {...register('company')}
+            placeholder="Acme Corp"
+          />
+        </div>
 
-      {/* Role */}
-      <div className="space-y-2">
-        <Label htmlFor="role" className="text-sm font-medium text-[#1A1A1A]">
-          Role
-        </Label>
-        <Input id="role" {...register('role')} placeholder="CEO" />
-      </div>
+        {/* Role */}
+        <div className="space-y-2">
+          <Label htmlFor="role" className="text-sm font-medium text-[#1A1A1A]">
+            Role
+          </Label>
+          <Input id="role" {...register('role')} placeholder="CEO" />
+        </div>
 
-      {/* Website */}
-      <div className="space-y-2">
-        <Label htmlFor="website" className="text-sm font-medium text-[#1A1A1A]">
-          Website
-        </Label>
-        <Input
-          id="website"
-          type="url"
-          {...register('website')}
-          placeholder="https://example.com"
-          className={errors.website ? 'border-red-500' : ''}
-        />
-        {errors.website && (
-          <p className="text-sm text-red-500">{errors.website.message}</p>
-        )}
-      </div>
+        {/* Website */}
+        <div className="space-y-2">
+          <Label
+            htmlFor="website"
+            className="text-sm font-medium text-[#1A1A1A]"
+          >
+            Website
+          </Label>
+          <Input
+            id="website"
+            type="url"
+            {...register('website')}
+            placeholder="https://example.com"
+            className={errors.website ? 'border-red-500' : ''}
+          />
+          {errors.website && (
+            <p className="text-sm text-red-500">{errors.website.message}</p>
+          )}
+        </div>
 
-      {/* Notes */}
-      <div className="space-y-2">
-        <Label htmlFor="notes" className="text-sm font-medium text-[#1A1A1A]">
-          Notes
-        </Label>
-        <Textarea
-          id="notes"
-          {...register('notes')}
-          placeholder="Any additional context about this client..."
-          rows={3}
-        />
-      </div>
+        {/* Notes */}
+        <div className="space-y-2">
+          <Label htmlFor="notes" className="text-sm font-medium text-[#1A1A1A]">
+            Notes
+          </Label>
+          <Textarea
+            id="notes"
+            {...register('notes')}
+            placeholder="Any additional context about this client..."
+            rows={3}
+          />
+        </div>
 
-      {/* Actions */}
-      <div className="flex justify-end gap-3 pt-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isSubmitting}
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          disabled={!isValid || isSubmitting}
-          className="bg-[#001F3F] hover:bg-[#003366]"
-        >
-          {isSubmitting ? 'Saving...' : 'Save'}
-        </Button>
-      </div>
-    </form>
+        {/* Actions */}
+        <div className="flex justify-end gap-3 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={!isValid || isSubmitting}
+            className="bg-[#001F3F] hover:bg-[#003366]"
+          >
+            {isSubmitting ? 'Saving...' : 'Save'}
+          </Button>
+        </div>
+      </form>
+    </>
   );
 }

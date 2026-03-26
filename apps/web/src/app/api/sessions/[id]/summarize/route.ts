@@ -11,6 +11,11 @@ import { createClient } from '@supabase/supabase-js';
 import { config } from '@/lib/config/env';
 import { runSummarize } from '@/lib/sessions/summarize-session';
 import { getInternalUserId } from '@/lib/helpers/user';
+import {
+  checkTranscriptLimit,
+  incrementTranscriptCount,
+} from '@/lib/billing/checkUsage';
+import { UpgradeRequiredError } from '@meetsolis/shared';
 
 function getSupabase() {
   return createClient(config.supabase.url!, config.supabase.serviceRoleKey!);
@@ -65,7 +70,31 @@ export async function POST(
     );
   }
 
+  // Enforce transcript limit before AI processing
+  try {
+    await checkTranscriptLimit(userId);
+  } catch (e) {
+    if (e instanceof UpgradeRequiredError) {
+      return NextResponse.json(
+        {
+          error: {
+            code: 'LIMIT_EXCEEDED',
+            message:
+              'AI session limit reached. Upgrade to Pro for more sessions.',
+            type: e.limitType,
+          },
+        },
+        { status: 403 }
+      );
+    }
+    throw e;
+  }
+
   const result = await runSummarize(params.id, userId);
+
+  if (result !== 'error') {
+    await incrementTranscriptCount(userId);
+  }
 
   if (result === 'error') {
     return NextResponse.json(

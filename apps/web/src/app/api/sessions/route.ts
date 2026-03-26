@@ -17,7 +17,7 @@ import { SessionCreateSchema } from '@meetsolis/shared';
 import {
   checkTranscriptLimit,
   incrementTranscriptCount,
-} from '@/lib/quota/transcriptQuota';
+} from '@/lib/billing/checkUsage';
 import { runSummarize } from '@/lib/sessions/summarize-session';
 import { runTranscribe } from '@/lib/sessions/transcribe-session';
 import { getInternalUserId } from '@/lib/helpers/user';

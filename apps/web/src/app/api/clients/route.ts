@@ -10,7 +10,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import { config } from '@/lib/config/env';
-import { ClientCreateSchema } from '@meetsolis/shared';
+import { ClientCreateSchema, UpgradeRequiredError } from '@meetsolis/shared';
+import { checkClientLimit } from '@/lib/billing/checkUsage';
 
 /**
  * POST /api/clients
@@ -73,48 +74,24 @@ export async function POST(request: NextRequest) {
 
     const userId = user.id;
 
-    // Check tier limit via subscriptions table (free = 1 client, pro = unlimited)
-    const { data: subscription } = await supabase
-      .from('subscriptions')
-      .select('plan')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    const isPro = subscription?.plan === 'pro';
-
-    if (!isPro) {
-      const { count, error: countError } = await supabase
-        .from('clients')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId);
-
-      if (countError) {
-        console.error('[Clients API] Failed to count clients:', countError);
+    // Check client tier limit (free = 3, pro = unlimited)
+    try {
+      await checkClientLimit(userId);
+    } catch (e) {
+      if (e instanceof UpgradeRequiredError) {
         return NextResponse.json(
           {
             error: {
-              code: 'INTERNAL_ERROR',
-              message: 'Failed to check client limit',
-            },
-          },
-          { status: 500 }
-        );
-      }
-
-      if (count !== null && count >= 1) {
-        return NextResponse.json(
-          {
-            error: {
-              code: 'TIER_LIMIT_EXCEEDED',
+              code: 'LIMIT_EXCEEDED',
               message:
-                'Free tier is limited to 1 client. Upgrade to Pro for unlimited clients.',
-              limit: 1,
-              current: count,
+                'Client limit reached. Upgrade to Pro for unlimited clients.',
+              type: e.limitType,
             },
           },
           { status: 403 }
         );
       }
+      throw e;
     }
 
     // Insert client with v3 fields
