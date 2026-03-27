@@ -275,6 +275,17 @@ export class MockAIService extends BaseService implements AIService {
     return Array(1536).fill(0);
   }
 
+  async querySolis(
+    _systemPrompt: string,
+    _userPrompt: string
+  ): Promise<string> {
+    return JSON.stringify({
+      answer:
+        'Based on the available session history, your client has been focused on leadership transitions and delegation challenges. Key themes include building trust and managing organizational change.',
+      cited_sessions: [],
+    });
+  }
+
   // Mock-specific methods
   getRequestCount(): number {
     return this.requestCount;
