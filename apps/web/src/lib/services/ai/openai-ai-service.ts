@@ -88,4 +88,20 @@ export class OpenAIAIService extends BaseService implements AIService {
     const wordCount = text.split(/\s+/).length;
     return { wordCount, characterCount: text.length };
   }
+
+  async querySolis(systemPrompt: string, userPrompt: string): Promise<string> {
+    const response = await this.client.chat.completions.create({
+      model: 'gpt-4o-mini',
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      temperature: 0.2,
+      max_tokens: 1500,
+    });
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error('OpenAI returned empty response');
+    return content;
+  }
 }

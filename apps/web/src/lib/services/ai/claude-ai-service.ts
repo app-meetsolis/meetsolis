@@ -89,4 +89,23 @@ export class ClaudeAIService extends BaseService implements AIService {
     const wordCount = text.split(/\s+/).length;
     return { wordCount, characterCount: text.length };
   }
+
+  async querySolis(systemPrompt: string, userPrompt: string): Promise<string> {
+    const response = await this.client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1500,
+      system: [
+        {
+          type: 'text',
+          text: systemPrompt,
+          cache_control: { type: 'ephemeral' },
+        },
+      ],
+      messages: [{ role: 'user', content: userPrompt }],
+    });
+    const block = response.content[0];
+    if (block.type !== 'text')
+      throw new Error('Claude returned non-text response');
+    return block.text;
+  }
 }

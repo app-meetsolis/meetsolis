@@ -1,0 +1,57 @@
+schema: 1
+story: "4.2"
+story_title: "Solis Q&A API — Hybrid RAG"
+gate: PASS
+status_reason: "All 15 ACs implemented and verified. One medium finding (silent insert error) fixed during review. 16 unit tests pass, existing solis tests unaffected, tsc clean."
+reviewer: "Quinn (Test Architect)"
+updated: "2026-03-28T00:00:00Z"
+
+waiver: { active: false }
+
+top_issues:
+  - id: "REL-001"
+    severity: low
+    finding: "incrementQueryCount failure after answer delivery causes 500 — user gets error despite query being answered"
+    suggested_action: "Wrap incrementQueryCount in try/catch, log error, still return 200. Future improvement."
+
+risk_summary:
+  totals: { critical: 0, high: 0, medium: 0, low: 1 }
+  recommendations:
+    must_fix: []
+    monitor:
+      - "solis_queries insert failures (now logged, non-fatal)"
+
+quality_score: 90
+
+expires: "2026-04-11T00:00:00Z"
+
+evidence:
+  tests_reviewed: 27
+  risks_identified: 1
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    ac_gaps: []
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: "Clerk auth, client ownership check, Zod validation, prompt injection delimiters, user_id isolation at DB level"
+  performance:
+    status: PASS
+    notes: "Promise.all for parallel ops, max 6 sessions context, AI max_tokens 1500, placeholder mode zero-delay"
+  reliability:
+    status: PASS
+    notes: "AI errors caught, JSON parse fallback, insert errors now logged. incrementQueryCount failure minor edge case."
+  maintainability:
+    status: PASS
+    notes: "Clear step comments in route, section headers in solis.ts, good type safety, files all under 200 lines"
+
+recommendations:
+  immediate: []
+  future:
+    - action: "Wrap incrementQueryCount in try/catch to avoid 500 when answer was already delivered"
+      refs: ["apps/web/src/app/api/intelligence/query/route.ts"]
+    - action: "Move SessionSearchResult type from solis.ts to @meetsolis/shared"
+      refs: ["apps/web/src/lib/ai/solis.ts"]
+    - action: "Add route-level integration tests before Epic 5"
+      refs: ["docs/backlog/story-4.2-manual-qa-pending.md"]

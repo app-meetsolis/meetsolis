@@ -486,3 +486,26 @@ export interface UsageResponse {
   client_limit: number;
   resets_at: string | null;
 }
+
+// =============================================================================
+// SOLIS Q&A TYPES (Story 4.2)
+// =============================================================================
+
+export interface SolisCitation {
+  session_id: string;
+  session_date: string;
+  title: string;
+}
+
+export interface SolisQueryResponse {
+  answer: string;
+  citations: SolisCitation[];
+}
+
+export interface SolisQueryInsert {
+  user_id: string;
+  client_id: string | null;
+  query: string;
+  response: string;
+  citations: SolisCitation[];
+}

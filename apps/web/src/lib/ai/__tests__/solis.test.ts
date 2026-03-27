@@ -1,7 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
-import { searchSessions } from '../solis';
+
+// Prevent transitive openai load (solis.ts imports ServiceFactory)
+jest.mock('@/lib/service-factory', () => ({
+  ServiceFactory: { createAIService: jest.fn(), clearAllServices: jest.fn() },
+}));
 
 jest.mock('@supabase/supabase-js');
+
+import { searchSessions } from '../solis';
 
 const mockRpc = jest.fn();
 

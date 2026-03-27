@@ -56,6 +56,7 @@ export interface AIService extends ExternalService {
   analyzeText(text: string): Promise<any>;
   summarizeSession(transcript: string, ctx: ClientContext): Promise<SessionSummary>;
   generateEmbedding(text: string): Promise<number[]>;
+  querySolis(systemPrompt: string, userPrompt: string): Promise<string>;
 }
 
 export interface TranscriptionResult {
