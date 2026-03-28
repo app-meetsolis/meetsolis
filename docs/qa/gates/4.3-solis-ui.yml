@@ -1,0 +1,61 @@
+schema: 1
+story: '4.3'
+story_title: 'Solis UI'
+gate: CONCERNS
+status_reason: 'All 18 ACs implemented and verified. 42 tests passing, 0 lint errors. Two minor non-blocking concerns: AC10 invalidation not explicitly tested, and fetchGlobalClientRoster has no action_items limit ceiling.'
+reviewer: 'Quinn (Test Architect)'
+updated: '2026-03-28T00:00:00.000Z'
+
+top_issues:
+  - id: QA-4.3-01
+    severity: low
+    description: 'AC10 gap — no isolated test asserting queryClient.invalidateQueries(["usage"]) is called after successful mutation'
+    suggested_owner: dev
+    refs:
+      - 'apps/web/src/components/solis/__tests__/SolisPanel.test.tsx'
+  - id: QA-4.3-02
+    severity: low
+    description: 'fetchGlobalClientRoster fetches all pending action_items with no row limit — add .limit(200) safety ceiling'
+    suggested_owner: dev
+    refs:
+      - 'apps/web/src/lib/ai/solis.ts'
+
+waiver:
+  active: false
+
+quality_score: 85
+expires: '2026-04-11T00:00:00.000Z'
+
+evidence:
+  tests_reviewed: 42
+  risks_identified: 2
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18]
+    ac_gaps: [10]
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'User input wrapped in <user_query> tags (prompt injection mitigation). All DB queries scoped to userId. client_id ownership verified in route before context build.'
+  performance:
+    status: PASS
+    notes: 'Promise.all used for parallel fetches in buildSolisContext. fetchGlobalClientRoster has no row limit on action_items — acceptable at current scale, add ceiling before scaling.'
+  reliability:
+    status: PASS
+    notes: 'Graceful null checks on all Supabase results. UpgradeRequiredError handled separately from generic errors. toast.error fallback in place.'
+  maintainability:
+    status: PASS
+    notes: 'SolisPanel 207 lines (well under 500 limit). Mutation pattern matches ClientForm.tsx convention. Client context helpers are private functions, cleanly separated from exported API.'
+
+recommendations:
+  immediate: []
+  future:
+    - action: 'Add explicit test for queryClient.invalidateQueries call after successful mutation (AC10)'
+      refs:
+        - 'apps/web/src/components/solis/__tests__/SolisPanel.test.tsx'
+    - action: 'Add .limit(200) to action_items query in fetchGlobalClientRoster'
+      refs:
+        - 'apps/web/src/lib/ai/solis.ts'
+    - action: 'Replace native <button> chips with Shadcn <Button variant="outline"> for consistency'
+      refs:
+        - 'apps/web/src/components/solis/SolisPanel.tsx'

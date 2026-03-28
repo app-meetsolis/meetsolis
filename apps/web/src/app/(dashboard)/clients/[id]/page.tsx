@@ -30,6 +30,14 @@ import { NotesEditor } from '@/components/clients/NotesEditor';
 import { ClientModal } from '@/components/clients/ClientModal';
 import { SessionTimeline } from '@/components/sessions/SessionTimeline';
 import { PendingActionsSection } from '@/components/clients/PendingActionsSection';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { SolisPanel } from '@/components/solis/SolisPanel';
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -62,6 +70,7 @@ export default function ClientDetailPage() {
   const queryClient = useQueryClient();
   const id = params.id as string;
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSolisOpen, setIsSolisOpen] = useState(false);
 
   const isValidId = UUID_REGEX.test(id);
 
@@ -180,9 +189,8 @@ export default function ClientDetailPage() {
               <Button
                 variant="outline"
                 size="sm"
-                disabled
-                title={`Coming soon — Story 4.3`}
-                className="gap-1.5 text-[#9CA3AF]"
+                onClick={() => setIsSolisOpen(true)}
+                className="gap-1.5 text-[#001F3F]"
               >
                 <Sparkles className="h-3.5 w-3.5" />
                 Ask Solis about {client.name}
@@ -244,6 +252,18 @@ export default function ClientDetailPage() {
         mode="edit"
         client={client}
       />
+
+      <Dialog open={isSolisOpen} onOpenChange={setIsSolisOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Ask Solis about {client.name}</DialogTitle>
+            <DialogDescription className="sr-only">
+              AI-powered Q&A about {client.name}
+            </DialogDescription>
+          </DialogHeader>
+          <SolisPanel clientId={id} clientName={client.name} />
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
