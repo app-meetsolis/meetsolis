@@ -98,3 +98,6 @@ temp/
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Personal planning — never push to GitHub
+marketing/

@@ -184,7 +184,8 @@ describe('buildSolisQueryPrompt', () => {
   it('handles empty sessions gracefully', () => {
     const prompt = buildSolisQueryPrompt('query', []);
     expect(prompt).toContain('<user_query>query</user_query>');
-    expect(prompt).toContain('SESSION CONTEXT:');
+    // SESSION CONTEXT omitted when no sessions — clientMeta will provide context instead
+    expect(prompt).not.toContain('SESSION CONTEXT:');
   });
 });
 

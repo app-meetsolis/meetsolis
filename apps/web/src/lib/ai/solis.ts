@@ -93,6 +93,89 @@ export type SolisContext = {
   prompt: string;
 };
 
+// =============================================================================
+// CLIENT CONTEXT HELPERS
+// =============================================================================
+
+async function fetchGlobalClientRoster(userId: string): Promise<string> {
+  const supabase = getSupabase();
+
+  const [{ data: clients }, { data: actionItems }] = await Promise.all([
+    supabase
+      .from('clients')
+      .select('id, name, last_session_at')
+      .eq('user_id', userId)
+      .order('name'),
+    supabase
+      .from('action_items')
+      .select('client_id')
+      .eq('user_id', userId)
+      .eq('status', 'pending'),
+  ]);
+
+  if (!clients?.length) return '';
+
+  const pendingByClient = new Map<string, number>();
+  for (const item of actionItems ?? []) {
+    pendingByClient.set(
+      item.client_id,
+      (pendingByClient.get(item.client_id) ?? 0) + 1
+    );
+  }
+
+  const lines = clients.map(c => {
+    const last = c.last_session_at
+      ? new Date(c.last_session_at).toISOString().split('T')[0]
+      : 'no sessions yet';
+    const pending = pendingByClient.get(c.id) ?? 0;
+    return `- ${c.name} (last session: ${last}, ${pending} pending action${pending !== 1 ? 's' : ''})`;
+  });
+
+  return `CLIENT ROSTER (${clients.length} total):\n${lines.join('\n')}`;
+}
+
+async function fetchClientProfile(
+  userId: string,
+  clientId: string
+): Promise<string> {
+  const supabase = getSupabase();
+
+  const [{ data: client }, { data: actions }] = await Promise.all([
+    supabase
+      .from('clients')
+      .select('name, company, role, goal, start_date')
+      .eq('id', clientId)
+      .eq('user_id', userId)
+      .single(),
+    supabase
+      .from('action_items')
+      .select('description, due_date')
+      .eq('client_id', clientId)
+      .eq('user_id', userId)
+      .eq('status', 'pending')
+      .limit(10),
+  ]);
+
+  if (!client) return '';
+
+  const lines: string[] = ['CLIENT PROFILE:'];
+  lines.push(`Name: ${client.name}`);
+  if (client.company) lines.push(`Company: ${client.company}`);
+  if (client.role) lines.push(`Role: ${client.role}`);
+  if (client.goal) lines.push(`Coaching goal: ${client.goal}`);
+  if (client.start_date) lines.push(`Coaching since: ${client.start_date}`);
+
+  if (actions?.length) {
+    lines.push(`Pending action items (${actions.length}):`);
+    for (const a of actions) {
+      const due = a.due_date ? ` (due: ${a.due_date})` : '';
+      lines.push(`  - ${a.description}${due}`);
+    }
+  }
+
+  return lines.join('\n');
+}
+
 export async function buildSolisContext(
   query: string,
   userId: string,
@@ -100,10 +183,13 @@ export async function buildSolisContext(
 ): Promise<SolisContext> {
   const aiService = ServiceFactory.createAIService();
 
-  // Run embedding generation and recency fetch in parallel
-  const [embedding, recentSessions] = await Promise.all([
+  // Fetch embedding, recent sessions, and client context in parallel
+  const [embedding, recentSessions, clientMeta] = await Promise.all([
     aiService.generateEmbedding(query),
     fetchRecentSessions(userId, clientId, 3),
+    clientId
+      ? fetchClientProfile(userId, clientId)
+      : fetchGlobalClientRoster(userId),
   ]);
 
   const isZeroVector = embedding.every(v => v === 0);
@@ -131,7 +217,7 @@ export async function buildSolisContext(
 
   return {
     sessions: merged,
-    prompt: buildSolisQueryPrompt(query, merged),
+    prompt: buildSolisQueryPrompt(query, merged, clientMeta),
   };
 }
 
