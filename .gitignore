@@ -100,4 +100,13 @@ temp/
 .claude/settings.local.json
 
 # Personal planning — never push to GitHub
-marketing/
+/marketing/
+
+# Local tooling & IDE
+.agents/
+.trae/
+.claude/skills/
+skills-lock.json
+
+# Planning docs
+/plans/

@@ -53,6 +53,7 @@ export default function PrivacyPage() {
                     'Retention',
                     'Sharing',
                     'AI Processing',
+                    'Your Rights',
                   ].map(item => (
                     <div
                       key={item}
@@ -163,7 +164,44 @@ export default function PrivacyPage() {
 
               <hr className="my-8 border-slate-100" />
 
-              <h3>7. Changes to This Policy</h3>
+              <h3>7. Your Rights</h3>
+              <p>
+                Depending on your jurisdiction, you may have the following
+                rights regarding your personal data:
+              </p>
+              <ul className="marker:text-slate-400">
+                <li>
+                  <strong>Access:</strong> Request a copy of the personal data
+                  we hold about you.
+                </li>
+                <li>
+                  <strong>Correction:</strong> Request correction of inaccurate
+                  or incomplete data.
+                </li>
+                <li>
+                  <strong>Deletion:</strong> Request deletion of your personal
+                  data (&quot;right to be forgotten&quot;).
+                </li>
+                <li>
+                  <strong>Portability:</strong> Request a machine-readable
+                  export of your data.
+                </li>
+                <li>
+                  <strong>Objection:</strong> Object to processing of your data
+                  for direct marketing.
+                </li>
+              </ul>
+              <p>
+                To exercise any of these rights, email us at{' '}
+                <a href="mailto:appmeetsolis@gmail.com">
+                  appmeetsolis@gmail.com
+                </a>
+                . We will respond within 30 days.
+              </p>
+
+              <hr className="my-8 border-slate-100" />
+
+              <h3>8. Changes to This Policy</h3>
               <p>
                 We may update this Privacy Policy from time to time. We will
                 notify you of any significant changes via email or a prominent
@@ -172,7 +210,7 @@ export default function PrivacyPage() {
 
               <hr className="my-8 border-slate-100" />
 
-              <h3>8. Contact Us</h3>
+              <h3>9. Contact Us</h3>
               <p>
                 If you have any questions about this Privacy Policy or our data
                 practices, please contact us at{' '}
