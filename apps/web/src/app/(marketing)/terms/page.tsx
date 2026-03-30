@@ -53,6 +53,7 @@ export default function TermsPage() {
                     'Privacy',
                     'Intellectual Property',
                     'Acceptable Use',
+                    'Payments & Refunds',
                   ].map(item => (
                     <div
                       key={item}
@@ -162,7 +163,33 @@ export default function TermsPage() {
 
               <hr className="my-8 border-slate-100" />
 
-              <h3>8. Modifications to Service</h3>
+              <h3>8. Payments, Subscriptions, and Refunds</h3>
+              <p>
+                MeetSolis offers free and paid subscription plans. By
+                subscribing to a paid plan, you authorize us to charge your
+                payment method on a recurring basis.
+              </p>
+              <p>
+                <strong>Payment Processing:</strong> Payments are processed by
+                our authorized payment partners acting as the reseller of
+                MeetSolis subscriptions. Your billing statement may reflect the
+                name of our payment processor.
+              </p>
+              <p>
+                <strong>Refunds:</strong> We offer a 30-day money-back guarantee
+                on the first payment of any new paid subscription. See our{' '}
+                <a href="/refund">Refund Policy</a> for full details.
+              </p>
+              <p>
+                <strong>Cancellation:</strong> You may cancel your subscription
+                at any time from your account settings. Cancellation stops
+                future billing. Access continues until the end of the current
+                billing period.
+              </p>
+
+              <hr className="my-8 border-slate-100" />
+
+              <h3>9. Modifications to Service</h3>
               <p>
                 We reserve the right to modify or discontinue, temporarily or
                 permanently, the Service (or any part thereof) with or without
@@ -171,7 +198,7 @@ export default function TermsPage() {
 
               <hr className="my-8 border-slate-100" />
 
-              <h3>9. Governing Law</h3>
+              <h3>10. Governing Law</h3>
               <p>
                 These Terms shall be governed and construed in accordance with
                 the laws of India, without regard to its conflict of law
@@ -180,7 +207,7 @@ export default function TermsPage() {
 
               <hr className="my-8 border-slate-100" />
 
-              <h3>10. Contact Us</h3>
+              <h3>11. Contact Us</h3>
               <p>
                 If you have any questions about these Terms, please contact us
                 at{' '}
