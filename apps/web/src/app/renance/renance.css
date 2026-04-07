@@ -1,0 +1,128 @@
+/* ============================================================
+   Renance Clone — Scoped Design Tokens & Base Styles
+   ============================================================ */
+
+.renance-root {
+  --rn-bg: #f3f2ec;
+  --rn-fg: #0a0a0a;
+  --rn-muted: #6b6b6b;
+  --rn-card: #e8e6dc;
+  --rn-card-hover: #e0ded4;
+  --rn-border: #d5d3c9;
+  --rn-badge-bg: #e2e0d6;
+  --rn-btn-primary: #0a0a0a;
+  --rn-btn-primary-fg: #ffffff;
+  --rn-btn-secondary: #e2e0d5;
+  --rn-btn-secondary-fg: #0a0a0a;
+  --rn-footer-bg: #0a0a0a;
+  --rn-footer-fg: #ffffff;
+  --rn-green: #2d6a4f;
+  --rn-red: #c84b31;
+  --rn-serif: var(--font-instrument-serif), 'Instrument Serif', Georgia, serif;
+  --rn-sans: var(--font-inter), 'Inter', system-ui, sans-serif;
+
+  font-family: var(--rn-sans);
+  background-color: var(--rn-bg);
+  color: var(--rn-fg);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+.renance-root * {
+  box-sizing: border-box;
+}
+
+/* Serif heading utility */
+.rn-serif {
+  font-family: var(--rn-serif);
+  font-weight: 400;
+}
+
+/* Pill / badge component */
+.rn-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--rn-badge-bg);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--rn-fg);
+  font-family: var(--rn-sans);
+}
+
+/* Section container */
+.rn-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+@media (max-width: 768px) {
+  .rn-container {
+    padding: 0 20px;
+  }
+}
+
+/* Feature card base */
+.rn-card {
+  background: var(--rn-card);
+  border-radius: 20px;
+  overflow: hidden;
+  transition: background 0.2s ease;
+}
+
+.rn-card:hover {
+  background: var(--rn-card-hover);
+}
+
+/* Primary button */
+.rn-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--rn-btn-primary);
+  color: var(--rn-btn-primary-fg);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--rn-sans);
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  text-decoration: none;
+}
+
+.rn-btn-primary:hover {
+  opacity: 0.85;
+}
+
+/* Secondary button */
+.rn-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--rn-btn-secondary);
+  color: var(--rn-btn-secondary-fg);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--rn-sans);
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  text-decoration: none;
+}
+
+.rn-btn-secondary:hover {
+  background: var(--rn-border);
+}
+
+/* Green check icon */
+.rn-check {
+  color: var(--rn-green);
+  flex-shrink: 0;
+}
