@@ -1,5 +1,5 @@
-import { Navbar } from '@/components/marketing/layout/Navbar';
-import { Footer } from '@/components/marketing/layout/Footer';
+import Navbar from '@/components/marketing/Navbar';
+import Footer from '@/components/marketing/Footer';
 
 export default function MarketingLayout({
   children,
@@ -7,9 +7,16 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex flex-col bg-background font-sans selection:bg-primary/20 selection:text-primary relative">
+    <div
+      style={{
+        fontFamily: 'Geist, Plus Jakarta Sans, sans-serif',
+        backgroundColor: 'rgb(248,249,250)',
+        minHeight: '100vh',
+      }}
+    >
       <Navbar />
-      <main className="flex-1">{children}</main>
+      <div style={{ height: '80px' }} />
+      <main>{children}</main>
       <Footer />
     </div>
   );
