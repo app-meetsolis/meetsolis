@@ -21,11 +21,11 @@ export default function SignInPage() {
               headerTitle: 'text-navy-900',
               headerSubtitle: 'text-gray-600',
               socialButtonsBlockButton: 'border-gray-300 hover:bg-gray-50',
-              formButtonPrimary: 'bg-teal-600 hover:bg-teal-700',
-              footerActionLink: 'text-teal-600 hover:text-teal-700',
+              formButtonPrimary: 'bg-black hover:bg-gray-900',
+              footerActionLink: 'text-black hover:text-gray-700',
               formFieldInput:
-                'border-gray-300 focus:border-teal-500 focus:ring-teal-500',
-              identityPreviewEditButton: 'text-teal-600 hover:text-teal-700',
+                'border-gray-300 focus:border-black focus:ring-black',
+              identityPreviewEditButton: 'text-black hover:text-gray-700',
             },
           }}
           routing="path"

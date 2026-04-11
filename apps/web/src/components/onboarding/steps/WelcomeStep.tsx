@@ -15,7 +15,8 @@ export function WelcomeStep() {
           Welcome to MeetSolis!
         </h3>
         <p className="text-gray-600">
-          Let's get you started with a quick tour of the platform's main features.
+          Let&apos;s get you started with a quick tour of the platform&apos;s
+          main features.
         </p>
       </div>
 
@@ -28,9 +29,11 @@ export function WelcomeStep() {
           </p>
         </div>
 
-        <div className="p-4 bg-teal-50 rounded-lg">
-          <Users className="w-8 h-8 text-teal-600 mb-2" />
-          <h4 className="font-semibold text-gray-900 mb-1">Team Collaboration</h4>
+        <div className="p-4 bg-[#f0fdf9] rounded-lg">
+          <Users className="w-8 h-8 text-[#16a780] mb-2" />
+          <h4 className="font-semibold text-gray-900 mb-1">
+            Team Collaboration
+          </h4>
           <p className="text-sm text-gray-600">
             Work together with shared whiteboards and screen sharing
           </p>
@@ -55,8 +58,9 @@ export function WelcomeStep() {
 
       <div className="bg-gray-50 rounded-lg p-4">
         <p className="text-sm text-gray-700">
-          <strong>Next steps:</strong> We'll help you set up your devices, create your profile,
-          and schedule your first meeting. The whole process takes less than 5 minutes!
+          <strong>Next steps:</strong> We&apos;ll help you set up your devices,
+          create your profile, and schedule your first meeting. The whole
+          process takes less than 5 minutes!
         </p>
       </div>
     </div>

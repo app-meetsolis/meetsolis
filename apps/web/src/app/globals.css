@@ -56,73 +56,76 @@
 
 @layer base {
   :root {
-    /* Cal.com inspired theme */
-    --background: 240 5% 96%;
-    /* #F2F2F5 - Light Grey Canvas */
-    --foreground: 240 10% 4%;
-    /* Near Black */
+    /* MeetSolis Design System — Black/White/Green */
+    --background: 210 17% 98%;
+    /* rgb(248,249,250) — page background */
+    --foreground: 0 0% 0%;
+    /* #000000 — primary text */
 
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 4%;
+    --card-foreground: 0 0% 0%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 4%;
+    --popover-foreground: 0 0% 0%;
 
-    --primary: 240 6% 10%;
-    /* #19191D - Deep Black/Grey */
-    --primary-foreground: 0 0% 98%;
+    --primary: 0 0% 0%;
+    /* #000000 — black primary */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 240 6% 10%;
+    --secondary: 210 17% 98%;
+    --secondary-foreground: 0 0% 0%;
 
-    --muted: 240 5% 90%;
-    --muted-foreground: 240 4% 45%;
+    --muted: 220 9% 91%;
+    /* rgb(228,228,228) */
+    --muted-foreground: 213 17% 37%;
+    /* rgb(78,91,109) */
 
-    --accent: 240 5% 96%;
-    --accent-foreground: 240 6% 10%;
+    --accent: 152 79% 57%;
+    /* rgb(55,234,158) — green accent */
+    --accent-foreground: 0 0% 0%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 240 6% 10%;
+    --border: 216 14% 85%;
+    /* rgb(209,213,221) */
+    --input: 216 14% 85%;
+    --ring: 0 0% 0%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --font-heading: var(--font-outfit);
-    /* Keeping Outfit as it works for modern headings */
-    --font-body: var(--font-dm-sans);
+    --font-heading: 'Geist', sans-serif;
+    --font-body: 'Geist', 'Plus Jakarta Sans', sans-serif;
   }
 
   .dark {
-    --background: 240 10% 4%;
+    --background: 0 0% 0%;
     --foreground: 0 0% 98%;
 
-    --card: 240 10% 4%;
+    --card: 215 13% 11%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 240 10% 4%;
+    --popover: 215 13% 11%;
     --popover-foreground: 0 0% 98%;
 
     --primary: 0 0% 98%;
-    --primary-foreground: 240 6% 10%;
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 240 4% 16%;
+    --secondary: 213 17% 20%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 5% 65%;
+    --muted: 213 17% 20%;
+    --muted-foreground: 215 16% 66%;
 
-    --accent: 240 4% 16%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 152 79% 57%;
+    --accent-foreground: 0 0% 0%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 4% 16%;
-    --input: 240 4% 16%;
-    --ring: 240 5% 84%;
+    --border: 213 17% 22%;
+    --input: 213 17% 22%;
+    --ring: 152 79% 57%;
   }
 }
 
