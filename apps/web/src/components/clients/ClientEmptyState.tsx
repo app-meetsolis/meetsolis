@@ -15,17 +15,17 @@ interface ClientEmptyStateProps {
 
 export function ClientEmptyState({ onAddClient }: ClientEmptyStateProps) {
   return (
-    <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white p-12 text-center">
+    <div className="flex min-h-[400px] flex-col items-center justify-center rounded-[12px] border-2 border-dashed border-border bg-card p-12 text-center">
       {/* Icon */}
-      <div className="mb-4 rounded-full bg-gray-100 p-6">
-        <Users className="h-12 w-12 text-gray-400" />
+      <div className="mb-4 rounded-full bg-muted p-6">
+        <Users className="h-12 w-12 text-muted-foreground" />
       </div>
 
       {/* Message */}
-      <h3 className="mb-2 text-xl font-semibold text-[#1A1A1A]">
+      <h3 className="mb-2 text-xl font-semibold text-foreground">
         No clients yet
       </h3>
-      <p className="mb-6 max-w-sm text-sm text-[#6B7280]">
+      <p className="mb-6 max-w-sm text-sm text-muted-foreground">
         Add your first client to get started managing your professional
         relationships.
       </p>

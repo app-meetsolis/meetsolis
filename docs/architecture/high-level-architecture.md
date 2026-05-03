@@ -1,17 +1,17 @@
 # High Level Architecture
 
-**Version:** 2.0 (Updated for Client Memory Pivot)
-**Last Updated:** January 6, 2026
+**Version:** 3.2 (Post-Meeting Intelligence Platform for Executive Coaches)
+**Last Updated:** April 11, 2026
 
 ### Technical Summary
 
-MeetSolis follows a **Jamstack serverless architecture** deployed on Vercel's free tier with Supabase as the backend-as-a-service. The frontend is a Next.js 14 application using App Router for optimal SSR/SSG performance, while the backend leverages Vercel Edge Functions and Supabase PostgreSQL with pgvector extension for RAG-powered AI features. Gladia handles audio transcription from uploaded meeting recordings, OpenAI GPT-4 generates summaries and powers the AI assistant, and all client data remains private within the user's Supabase tenant. The system is designed to operate within free tier constraints while supporting the MVP target of 50-100 users.
+MeetSolis follows a **Jamstack serverless architecture** deployed on Vercel Pro with Supabase Pro as the backend-as-a-service. The frontend is a Next.js 14 application using App Router, while the backend leverages Vercel Edge Functions and Supabase PostgreSQL with pgvector for hybrid RAG. Deepgram Nova-2 handles audio/video transcription with speaker diarization (coach vs. client), Claude Sonnet 4.5 generates coaching-specific summaries and powers Solis Intelligence, and all client data remains private within the user's Supabase tenant. Baseline infra cost: ~$100/mo (Vercel Pro + Supabase Pro + Resend + misc).
 
 ### Platform and Infrastructure Choice
 
-**Platform:** Vercel + Supabase (Free Tiers)
-**Key Services:** Vercel Edge Functions, Supabase PostgreSQL + pgvector, Supabase Storage, Clerk Authentication
-**AI Services:** Gladia (transcription), OpenAI GPT-4 (summaries, RAG, research)
+**Platform:** Vercel Pro + Supabase Pro (~$100/mo baseline)
+**Key Services:** Vercel Edge Functions, Supabase PostgreSQL + pgvector, Supabase Storage, Clerk Authentication, Resend (email)
+**AI Services:** Deepgram Nova-2 (transcription), Claude Sonnet 4.5 default / GPT-4o-mini fallback (summaries + Solis Intelligence RAG)
 **Deployment Host and Regions:** Vercel Edge Network (Global), Supabase US-East-1
 
 ### Repository Structure
@@ -43,9 +43,9 @@ graph TB
     end
 
     subgraph "AI Services"
-        GLADIA[Gladia Transcription]
-        OPENAI[OpenAI GPT-4o-mini]
-        EMBEDDINGS[OpenAI Embeddings]
+        DEEPGRAM[Deepgram Nova-2 Transcription]
+        AI[Claude Sonnet 4.5 / GPT-4o-mini]
+        EMBEDDINGS[OpenAI Embeddings - pgvector]
     end
 
     subgraph "Optional Integrations (Post-MVP)"
@@ -62,8 +62,8 @@ graph TB
     EDGE --> VECTOR
     EDGE --> STORAGE
 
-    EDGE --> GLADIA
-    EDGE --> OPENAI
+    EDGE --> DEEPGRAM
+    EDGE --> AI
     EDGE --> EMBEDDINGS
     EDGE -.-> GCAL
     EDGE -.-> STRIPE
@@ -75,7 +75,7 @@ graph TB
 
 - **Jamstack Architecture:** Static site generation with serverless APIs - _Rationale:_ Optimal performance and cost efficiency for free tier constraints
 - **Component-Based UI:** Reusable React components with TypeScript - _Rationale:_ Maintainability and type safety across client management interface
-- **Backend-for-Frontend (BFF):** Vercel Edge Functions as API layer - _Rationale:_ Abstracts external APIs (Gladia, OpenAI) and enforces security policies
+- **Backend-for-Frontend (BFF):** Vercel Edge Functions as API layer - _Rationale:_ Abstracts external APIs (Deepgram, Claude/OpenAI) and enforces security policies
 - **RAG (Retrieval-Augmented Generation):** pgvector for semantic search - _Rationale:_ AI assistant with full context from client meetings and notes
 - **Async Processing:** Background jobs for transcription/summarization - _Rationale:_ Don't block user while processing large audio files
 - **Row-Level Security (RLS):** Database-level access control - _Rationale:_ Multi-tenant security, each user sees only their clients/meetings

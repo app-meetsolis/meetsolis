@@ -11,12 +11,12 @@ const features = [
         height="32"
         fill="currentColor"
       >
-        <path d="M144,104V64a8,8,0,0,1,13.66-5.66L172,72.69l30.34-30.35a8,8,0,0,1,11.32,11.32L183.31,84l14.35,14.34A8,8,0,0,1,192,112H152A8,8,0,0,1,144,104Zm-40,40H64a8,8,0,0,0-5.66,13.66L72.69,172,42.34,202.34a8,8,0,0,0,11.32,11.32L84,183.31l14.34,14.35A8,8,0,0,0,112,192V152A8,8,0,0,0,104,144Zm3.06-87.39a8,8,0,0,0-8.72,1.73L84,72.69,53.66,42.34A8,8,0,0,0,42.34,53.66L72.69,84,58.34,98.34A8,8,0,0,0,64,112h40a8,8,0,0,0,8-8V64A8,8,0,0,0,107.06,56.61ZM183.31,172l14.35-14.34A8,8,0,0,0,192,144H152a8,8,0,0,0-8,8v40a8,8,0,0,0,13.66,5.66L172,183.31l30.34,30.35a8,8,0,0,0,11.32-11.32Z" />
+        <path d="M176,232a8,8,0,0,1-8,8H88a8,8,0,0,1,0-16h80A8,8,0,0,1,176,232Zm40-128a87.55,87.55,0,0,1-33.64,69.21A16.24,16.24,0,0,0,176,186v6a16,16,0,0,1-16,16H96a16,16,0,0,1-16-16v-6a16,16,0,0,0-6.23-12.66A87.59,87.59,0,0,1,40,104a88,88,0,0,1,176,0Z" />
       </svg>
     ),
-    title: 'Effortless Connectivity',
+    title: 'Works with Any Video Platform',
     description:
-      'Our AI agents seamlessly integrate with your existing systems, ensuring a smooth transition and enhanced productivity.',
+      'Use Zoom, Google Meet, Microsoft Teams, or any other tool. Record your session anywhere, upload to MeetSolis — no new apps required.',
   },
   {
     icon: (
@@ -27,12 +27,12 @@ const features = [
         height="32"
         fill="currentColor"
       >
-        <path d="M212,76V72a44,44,0,0,0-74.86-31.31,3.93,3.93,0,0,0-1.14,2.8v88.72a4,4,0,0,0,6.2,3.33A47.67,47.67,0,0,1,167.68,128a8.18,8.18,0,0,1,8.31,7.58,8,8,0,0,1-8,8.42,32,32,0,0,0-32,32v33.88a4,4,0,0,0,1.49,3.12,47.92,47.92,0,0,0,74.21-17.16,4,4,0,0,0-4.49-5.56A68.06,68.06,0,0,1,192,192h-7.73a8.18,8.18,0,0,1-8.25-7.47,8,8,0,0,1,8-8.53h8a51.6,51.6,0,0,0,24-5.88v0A52,52,0,0,0,212,76Zm-12,36h-4a36,36,0,0,1-36-36V72a8,8,0,0,1,16,0v4a20,20,0,0,0,20,20h4a8,8,0,0,1,0,16ZM88,28A44.05,44.05,0,0,0,44,72v4a52,52,0,0,0-4,94.12h0A51.6,51.6,0,0,0,64,176h7.73A8.18,8.18,0,0,1,80,183.47,8,8,0,0,1,72,192H64a67.48,67.48,0,0,1-15.21-1.73,4,4,0,0,0-4.5,5.55A47.93,47.93,0,0,0,118.51,213a4,4,0,0,0,1.49-3.12V176a32,32,0,0,0-32-32,8,8,0,0,1-8-8.42A8.18,8.18,0,0,1,88.32,128a47.67,47.67,0,0,1,25.48,7.54,4,4,0,0,0,6.2-3.33V43.49a4,4,0,0,0-1.14-2.81A43.85,43.85,0,0,0,88,28Zm8,48a36,36,0,0,1-36,36H56a8,8,0,0,1,0-16h4A20,20,0,0,0,80,76V72a8,8,0,0,1,16,0Z" />
+        <path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z" />
       </svg>
     ),
-    title: 'The Next Frontier',
+    title: 'Automatic Action Item Extraction',
     description:
-      'Explore the exciting predictions and trends shaping the future of AI technology and its impact on various industries.',
+      'Every client commitment, follow-up, and next step is automatically pulled from the transcript. No coaching session goes unaccounted for.',
   },
   {
     icon: (
@@ -43,12 +43,12 @@ const features = [
         height="32"
         fill="currentColor"
       >
-        <path d="M128,24a104,104,0,1,0,30.57,203.43,7.9,7.9,0,0,0,3.3-2l63.57-63.57a8,8,0,0,0,2-3.31A104.09,104.09,0,0,0,128,24ZM92,96a12,12,0,1,1-12,12A12,12,0,0,1,92,96Zm82.92,60c-10.29,17.79-27.39,28-46.92,28s-36.63-10.2-46.92-28a8,8,0,1,1,13.84-8c7.47,12.91,19.21,20,33.08,20s25.61-7.1,33.08-20a8,8,0,1,1,13.84,8ZM164,120a12,12,0,1,1,12-12A12,12,0,0,1,164,120Z" />
+        <path d="M245.48,125.57c-19.85-42.6-64.85-70.07-117.48-70.07S30.37,83,10.52,125.57a8,8,0,0,0,0,4.86C30.37,173,75.37,200.5,128,200.5s97.63-27.47,117.48-70.07A8,8,0,0,0,245.48,125.57ZM128,184.5c-44.17,0-82.81-21.87-100.06-56.5C45.19,93.37,83.83,71.5,128,71.5s82.81,21.87,100.06,56.5C210.81,162.63,172.17,184.5,128,184.5Zm0-112a40,40,0,1,0,40,40A40,40,0,0,0,128,72.5Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,128,136.5Z" />
       </svg>
     ),
-    title: 'Exceptional User Engagement',
+    title: 'Speaker-Aware Coaching Transcripts',
     description:
-      'Our platform prioritizes user experience, providing intuitive interfaces and personalized interactions.',
+      'AI automatically separates coach and client voices in every transcript. Instantly see who said what — no manual labeling needed.',
   },
   {
     icon: (
@@ -59,12 +59,12 @@ const features = [
         height="32"
         fill="currentColor"
       >
-        <path d="M224,40V80a8,8,0,0,1-16,0V48H176a8,8,0,0,1,0-16h40A8,8,0,0,1,224,40ZM80,208H48V176a8,8,0,0,0-16,0v40a8,8,0,0,0,8,8H80a8,8,0,0,0,0-16Zm136-40a8,8,0,0,0-8,8v32H176a8,8,0,0,0,0,16h40a8,8,0,0,0,8-8V176A8,8,0,0,0,216,168ZM40,88a8,8,0,0,0,8-8V48H80a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8V80A8,8,0,0,0,40,88Zm32-8v96a8,8,0,0,0,8,8h96a8,8,0,0,0,8-8V80a8,8,0,0,0-8-8H80A8,8,0,0,0,72,80Z" />
+        <path d="M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Zm-40-96a8,8,0,0,1-8,8H104a8,8,0,0,1,0-16h48A8,8,0,0,1,160,120Zm0,32a8,8,0,0,1-8,8H104a8,8,0,0,1,0-16h48A8,8,0,0,1,160,152Zm0,32a8,8,0,0,1-8,8H104a8,8,0,0,1,0-16h48A8,8,0,0,1,160,184Z" />
       </svg>
     ),
-    title: 'Future Insights',
+    title: 'Flexible Transcript Upload',
     description:
-      'Stay ahead of the curve with our analysis of emerging AI trends that will redefine business landscapes.',
+      'Paste plain text, upload a .txt or .docx file, or drop an audio/video recording. MeetSolis processes any format into structured coaching notes.',
   },
   {
     icon: (
@@ -75,12 +75,12 @@ const features = [
         height="32"
         fill="currentColor"
       >
-        <path d="M32,80a8,8,0,0,1,8-8H77.17a28,28,0,0,1,53.66,0H216a8,8,0,0,1,0,16H130.83a28,28,0,0,1-53.66,0H40A8,8,0,0,1,32,80Zm184,88H194.83a28,28,0,0,0-53.66,0H40a8,8,0,0,0,0,16H141.17a28,28,0,0,0,53.66,0H216a8,8,0,0,0,0-16Z" />
+        <path d="M208,40H48A16,16,0,0,0,32,56V216a8,8,0,0,0,13,6.22L128,163.28l83,58.94A8,8,0,0,0,224,216V56A16,16,0,0,0,208,40Z" />
       </svg>
     ),
-    title: 'Streamlined Solutions',
+    title: 'Private by Design — Your Clients\u2019 Data Is Never Shared',
     description:
-      'Experience the power of our AI agents that effortlessly adapt to your business needs, enhancing efficiency.',
+      'Client conversations are confidential. MeetSolis never uses your session data to train AI models. Your clients\u2019 breakthroughs stay between you.',
   },
   {
     icon: (
@@ -91,145 +91,124 @@ const features = [
         height="32"
         fill="currentColor"
       >
-        <path d="M101.85,191.14C97.34,201,82.29,224,40,224a8,8,0,0,1-8-8c0-42.29,23-57.34,32.86-61.85a8,8,0,0,1,6.64,14.56c-6.43,2.93-20.62,12.36-23.12,38.91,26.55-2.5,36-16.69,38.91-23.12a8,8,0,1,1,14.56,6.64Zm122-144a16,16,0,0,0-15-15c-12.58-.75-44.73.4-71.4,27.07h0L88,108.7A8,8,0,0,1,76.67,97.39l26.56-26.57A4,4,0,0,0,100.41,64H74.35A15.9,15.9,0,0,0,63,68.68L28.7,103a16,16,0,0,0,9.07,27.16l38.47,5.37,44.21,44.21,5.37,38.49a15.94,15.94,0,0,0,10.78,12.92,16.11,16.11,0,0,0,5.1.83A15.91,15.91,0,0,0,153,227.3L187.32,193A16,16,0,0,0,192,181.65V155.59a4,4,0,0,0-6.83-2.82l-26.57,26.56a8,8,0,0,1-11.71-.42,8.2,8.2,0,0,1,.6-11.1l49.27-49.27h0C223.45,91.86,224.6,59.71,223.85,47.12Z" />
+        <path d="M229.66,218.34l-50.07-50.07a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.31ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z" />
       </svg>
     ),
-    title: 'Visionary AI',
+    title: 'Full-Text Search Across All Sessions',
     description:
-      'Discover how our innovative AI solutions are set to transform industries and create new opportunities for growth.',
+      'Instantly search every transcript, summary, and note across all clients. Find any insight, quote, or decision from any session in seconds.',
   },
 ];
 
 export default function FeaturesSection() {
   return (
     <section
-      className="w-full flex flex-col items-center"
+      className="w-full flex flex-col items-center px-4 py-10 sm:px-8 md:px-16"
       id="core-value"
-      style={{ padding: '64px', backgroundColor: 'rgb(248,249,250)' }}
+      style={{ backgroundColor: 'rgb(248,249,250)' }}
     >
       <div className="w-full max-w-[1000px] flex flex-col gap-16">
         {/* Header */}
         <div className="flex flex-col items-center gap-6">
           <div className="flex flex-col items-center gap-4">
-            <span className="section-badge">EASY ONBOARDING</span>
+            <span className="section-badge">EVERYTHING YOU NEED</span>
             <div className="text-center">
-              <h1
+              <h2
                 style={{
-                  fontSize: '48px',
+                  fontSize: 'clamp(28px, 5vw, 48px)',
                   fontWeight: 600,
-                  letterSpacing: '-3px',
+                  letterSpacing: 'clamp(-1px, -0.4vw, -3px)',
                   lineHeight: '1em',
                   color: '#000000',
                   textAlign: 'center',
                 }}
               >
-                Discover the amazing
-              </h1>
-              <h1
+                The details that make
+              </h2>
+              <h2
                 style={{
-                  fontSize: '48px',
+                  fontSize: 'clamp(28px, 5vw, 48px)',
                   fontWeight: 600,
-                  letterSpacing: '-3px',
+                  letterSpacing: 'clamp(-1px, -0.4vw, -3px)',
                   lineHeight: '1em',
                   color: '#000000',
                   textAlign: 'center',
                 }}
               >
-                features of our AI Agents
-              </h1>
+                the difference
+              </h2>
             </div>
           </div>
         </div>
 
-        {/* Features Grid */}
-        <div className="w-full">
-          {/* Top Row */}
-          <div
-            className="flex border-b"
-            style={{ borderColor: 'rgb(233,235,239)' }}
-          >
-            {features?.slice(0, 3)?.map((feature, i) => (
-              <React.Fragment key={i}>
-                <div className="flex flex-col items-center gap-3 flex-1 p-6">
-                  <div style={{ color: '#000000' }}>{feature?.icon}</div>
-                  <div className="flex flex-col items-center gap-3">
-                    <h5
-                      style={{
-                        fontSize: '18px',
-                        fontWeight: 600,
-                        color: '#000000',
-                        textAlign: 'center',
-                        lineHeight: '1em',
-                      }}
-                    >
-                      {feature?.title}
-                    </h5>
-                    <p
-                      style={{
-                        fontSize: '14px',
-                        fontWeight: 500,
-                        color: '#000000',
-                        textAlign: 'center',
-                        opacity: 0.7,
-                        lineHeight: '1.5em',
-                        letterSpacing: '-0.02em',
-                      }}
-                    >
-                      {feature?.description}
-                    </p>
-                  </div>
-                </div>
-                {i < 2 && (
-                  <div
-                    className="w-px"
-                    style={{ backgroundColor: 'rgb(233,235,239)' }}
-                  />
-                )}
-              </React.Fragment>
-            ))}
-          </div>
-          {/* Bottom Row */}
-          <div className="flex">
-            {features?.slice(3, 6)?.map((feature, i) => (
-              <React.Fragment key={i}>
-                <div className="flex flex-col items-center gap-3 flex-1 p-6">
-                  <div style={{ color: '#000000' }}>{feature?.icon}</div>
-                  <div className="flex flex-col items-center gap-3">
-                    <h5
-                      style={{
-                        fontSize: '18px',
-                        fontWeight: 600,
-                        color: '#000000',
-                        textAlign: 'center',
-                        lineHeight: '1em',
-                      }}
-                    >
-                      {feature?.title}
-                    </h5>
-                    <p
-                      style={{
-                        fontSize: '14px',
-                        fontWeight: 500,
-                        color: '#000000',
-                        textAlign: 'center',
-                        opacity: 0.7,
-                        lineHeight: '1.5em',
-                        letterSpacing: '-0.02em',
-                      }}
-                    >
-                      {feature?.description}
-                    </p>
-                  </div>
-                </div>
-                {i < 2 && (
-                  <div
-                    className="w-px"
-                    style={{ backgroundColor: 'rgb(233,235,239)' }}
-                  />
-                )}
-              </React.Fragment>
-            ))}
-          </div>
+        {/* Features Strip List */}
+        <div
+          className="w-full"
+          style={{
+            border: '1px solid rgb(228,228,228)',
+            borderRadius: '20px',
+            overflow: 'hidden',
+            background: '#fff',
+          }}
+        >
+          {features.map((feature, i) => (
+            <div
+              key={i}
+              className="group/row flex flex-col sm:flex-row sm:items-center gap-4 hover:bg-[rgb(250,251,252)] transition-colors cursor-default"
+              style={{
+                padding: '16px 20px',
+                borderBottom:
+                  i < features.length - 1
+                    ? '1px solid rgb(233,235,239)'
+                    : 'none',
+              }}
+            >
+              {/* Icon box */}
+              <div
+                className="shrink-0 [&_svg]:w-5 [&_svg]:h-5"
+                style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '12px',
+                  background: 'rgba(55,234,158,0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'rgb(55,234,158)',
+                }}
+              >
+                {feature.icon}
+              </div>
+
+              {/* Title */}
+              <h5
+                className="shrink-0"
+                style={{
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  color: '#000',
+                  lineHeight: '1.3',
+                  minWidth: '220px',
+                  margin: 0,
+                }}
+              >
+                {feature.title}
+              </h5>
+
+              {/* Description */}
+              <p
+                style={{
+                  fontSize: '14px',
+                  color: 'rgba(0,0,0,0.6)',
+                  lineHeight: '1.5',
+                  flex: 1,
+                  margin: 0,
+                }}
+              >
+                {feature.description}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </section>

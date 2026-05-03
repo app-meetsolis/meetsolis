@@ -1,7 +1,7 @@
 # Tech Stack
 
-**Version:** 2.0 (Updated for Client Memory Pivot)
-**Last Updated:** January 6, 2026
+**Version:** 3.2 (Post-Meeting Intelligence Platform for Executive Coaches)
+**Last Updated:** April 11, 2026
 
 ### Technology Stack Table (Version-Locked)
 
@@ -21,7 +21,7 @@
 | Vector Extension | pgvector | ^0.5.1 | Vector embeddings for RAG | PRD AI assistant with semantic search |
 | File Storage | @supabase/storage-js | ^2.5.1 | File uploads with signed URLs | Meeting recordings and transcripts |
 | Authentication | @clerk/nextjs | ^4.29.1 | User auth with social logins | PRD role-based access |
-| Transcription Service | Gladia API | Latest | Audio-to-text transcription | Meeting recordings → transcripts |
+| Transcription Service | Deepgram Nova-2 | Latest | Audio/video → transcript with speaker diarization | Session recordings → transcripts; 36% lower WER, built-in coach/client speaker labels |
 | AI Embeddings | OpenAI Embeddings API | Latest | text-embedding-3-small | RAG semantic search |
 | Frontend Testing | Jest ^29.7.0 + @testing-library/react ^14.1.2 | 29.7.0, 14.1.2 | Component and unit tests | PRD testing pyramid |
 | Backend Testing | Jest ^29.7.0 + supertest ^6.3.3 | 29.7.0, 6.3.3 | API route testing | Edge function integration tests |
@@ -31,7 +31,7 @@
 | Monorepo Tool | npm workspaces | ^10.2.4 | Package management | No additional tooling overhead |
 | CI/CD | GitHub Actions | v4 | Automated deployment | Free tier Vercel integration |
 | Monitoring | PostHog ^3.0.0 + @sentry/nextjs ^7.93.0 | 3.0.0, 7.93.0 | Analytics and error tracking | PRD monitoring requirements |
-| AI Integration | openai | ^4.24.1 | Summaries, RAG queries, research | PRD AI features |
+| AI Integration | @anthropic-ai/sdk + openai | Latest | AI summaries, action items, Solis Intelligence RAG | AI_PROVIDER env var abstracts provider (claude default, openai fallback) |
 | Payment Processing | @stripe/stripe-js | ^2.3.0 | Subscription billing | PRD Pro tier monetization |
 | Web Scraping | puppeteer | ^21.7.0 | Client website research | PRD public data collection |
 | Input Sanitization | sanitize-html | ^2.11.0 | XSS prevention | PRD security requirement |

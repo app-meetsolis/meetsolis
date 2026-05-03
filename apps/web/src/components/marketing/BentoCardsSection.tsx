@@ -2,30 +2,85 @@
 import React from 'react';
 import Image from 'next/image';
 
+const GREEN = 'rgb(55,234,158)';
+const GREEN_DIM = 'rgba(55,234,158,0.4)';
+const WHITE_MUTED = 'rgba(255,255,255,0.5)';
+const CARD_BG = 'rgba(26,29,33,0.96)';
+
+const clients = [
+  {
+    initials: 'MC',
+    name: 'Marcus Chen',
+    lastSeen: '2 days ago',
+    sessions: 3,
+    avatarBg: GREEN,
+    avatarColor: '#000',
+    overdue: false,
+  },
+  {
+    initials: 'SK',
+    name: 'Sarah Kim',
+    lastSeen: '5 days ago',
+    sessions: 7,
+    avatarBg: 'rgb(59,130,246)',
+    avatarColor: '#fff',
+    overdue: false,
+  },
+  {
+    initials: 'DP',
+    name: 'David Park',
+    lastSeen: '12 days ago',
+    sessions: 2,
+    avatarBg: 'rgb(139,92,246)',
+    avatarColor: '#fff',
+    overdue: true,
+  },
+];
+
+const timelineEntries = [
+  {
+    date: 'Jan 15',
+    title: 'Breakthrough: leadership identity',
+    highlight: false,
+  },
+  { date: 'Jan 29', title: 'Goal: reduce overwhelm', highlight: false },
+  {
+    date: 'Feb 12',
+    title: 'Committed to exec coach training',
+    highlight: false,
+  },
+  { date: 'Feb 26', title: 'Board presentation prep', highlight: true },
+];
+
+const avatarImgs = [
+  'https://framerusercontent.com/images/qT2RDznEpOrJtcHZv3nDznB7QOk.jpg',
+  'https://framerusercontent.com/images/lTKrFGv3E8wzq6LqHhJddpV1vE.jpg',
+  'https://framerusercontent.com/images/6NveBVCzvNa67ChHcDODa017M.jpg',
+  'https://framerusercontent.com/images/05knyzw0rUgULM6deRVbL10UAw.jpg',
+];
+
 export default function BentoCardsSection() {
   return (
     <section
-      className="w-full flex flex-col items-center"
-      style={{ padding: '64px', backgroundColor: 'rgb(248,249,250)' }}
+      className="w-full flex flex-col items-center px-4 py-10 sm:px-8 md:px-16"
+      style={{ backgroundColor: 'rgb(248,249,250)' }}
     >
       <div className="w-full max-w-[1200px] flex flex-col md:flex-row gap-3">
-        {/* Left Card: Manage Access */}
+        {/* Left Card: Client Profiles */}
         <div
-          className="flex flex-col gap-4 rounded-[20px] overflow-hidden"
+          className="flex flex-col gap-4 rounded-[20px] overflow-hidden w-full md:w-[300px]"
           style={{
-            backgroundColor: '#000000',
-            width: '300px',
-            minHeight: '582px',
+            backgroundColor: '#000',
+            minHeight: '400px',
             padding: '36px',
             flexShrink: 0,
             position: 'relative',
           }}
         >
-          {/* Dark card content */}
           <div
             className="rounded-2xl overflow-hidden"
             style={{
-              backgroundColor: 'rgba(26,29,33,0.96)',
+              backgroundColor: CARD_BG,
               border: '1px solid rgba(255,255,255,0.08)',
               padding: '24px',
               display: 'flex',
@@ -34,255 +89,119 @@ export default function BentoCardsSection() {
               flex: 1,
             }}
           >
-            {/* Title */}
             <div>
               <h4
                 style={{
                   fontSize: '24px',
                   fontWeight: 600,
-                  color: '#ffffff',
+                  color: '#fff',
                   lineHeight: '1em',
                 }}
               >
-                Manage who can control the agents
+                Every client. Every session. Never forgotten.
               </h4>
               <p
                 style={{
                   fontSize: '16px',
                   fontWeight: 500,
-                  color: 'rgba(255,255,255,0.5)',
+                  color: WHITE_MUTED,
                   marginTop: '8px',
                   lineHeight: '1.5em',
                 }}
               >
-                Select which users can access and view agents.
+                Persistent client profiles that grow richer with every coaching
+                session.
               </p>
             </div>
 
-            {/* Input field */}
-            <div
-              style={{
-                backgroundColor: '#1a1d21',
-                border: '1px solid #363a3d',
-                borderRadius: '8px',
-                height: '48px',
-                display: 'flex',
-                alignItems: 'center',
-                padding: '0 16px 0 8px',
-                gap: '8px',
-              }}
-            >
-              <div style={{ display: 'flex', gap: '4px', flex: 1 }}>
-                {/* Chip 1 */}
+            {/* Client rows */}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {clients.map((c, i) => (
                 <div
+                  key={i}
                   style={{
-                    background:
-                      'linear-gradient(117.58deg, rgba(215,236,236,0.16) 0%, rgba(204,234,234,0) 100%)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: '12px',
-                    height: '32px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px',
-                    padding: '0 12px',
+                    gap: '12px',
+                    padding: '12px 0',
+                    borderBottom:
+                      i < clients.length - 1
+                        ? '1px solid rgba(255,255,255,0.06)'
+                        : 'none',
                   }}
                 >
                   <div
                     style={{
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: '20px',
-                      overflow: 'hidden',
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '50%',
+                      backgroundColor: c.avatarBg,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      color: c.avatarColor,
                     }}
                   >
-                    <Image
-                      src="https://framerusercontent.com/images/E3vzjdpFuSWiVeurdyPGMrSWk.png"
-                      alt="Jessie"
-                      width={24}
-                      height={24}
-                      style={{ objectFit: 'cover' }}
-                    />
+                    {c.initials}
                   </div>
-                  <span
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: 'rgb(155,156,158)',
-                    }}
-                  >
-                    Jessie
-                  </span>
-                </div>
-                {/* Chip 2 */}
-                <div
-                  style={{
-                    background:
-                      'linear-gradient(117.58deg, rgba(215,236,236,0.16) 0%, rgba(204,234,234,0) 100%)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: '12px',
-                    height: '32px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '0 12px',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: '20px',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <Image
-                      src="https://framerusercontent.com/images/mo2Pbj2hqScYdc4e7VO88ooki4.png"
-                      alt="Mark"
-                      width={24}
-                      height={24}
-                      style={{ objectFit: 'cover' }}
-                    />
-                  </div>
-                  <span
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: 'rgb(155,156,158)',
-                    }}
-                  >
-                    Mark
-                  </span>
-                </div>
-              </div>
-              <div
-                style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
-              >
-                <span
-                  style={{
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: 'rgb(106,235,201)',
-                  }}
-                >
-                  can edit
-                </span>
-              </div>
-            </div>
-
-            {/* Invite button */}
-            <div
-              style={{
-                backgroundColor: 'rgb(106,235,201)',
-                borderRadius: '12px',
-                height: '48px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '12px',
-                padding: '8px 24px',
-                cursor: 'pointer',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  color: 'rgb(12,17,50)',
-                }}
-              >
-                Invite
-              </span>
-            </div>
-
-            {/* User list */}
-            <div className="flex flex-col gap-3">
-              {[
-                {
-                  name: 'You',
-                  handle: '@chagatai',
-                  role: 'Owner',
-                  roleColor: 'rgb(106,235,201)',
-                  img: 'https://framerusercontent.com/images/FVjwWr85ut7DBy7LiAzsJoNMlLM.png',
-                },
-                {
-                  name: 'Zhen Klyia',
-                  handle: '@zhen-zhen',
-                  role: 'Editor',
-                  roleColor: 'rgb(130,219,247)',
-                  img: 'https://framerusercontent.com/images/dlhgx3fMLQZlK7XF8F8pg5OGE.png',
-                },
-                {
-                  name: 'Thomas Muller',
-                  handle: '@tho_33',
-                  role: 'Editor',
-                  roleColor: 'rgb(130,219,247)',
-                  img: 'https://framerusercontent.com/images/GsvGVDjt9Og2l8MpVzjNi5xbrS0.png',
-                },
-                {
-                  name: 'Karl Zuber',
-                  handle: '@karlz',
-                  role: 'Viewer',
-                  roleColor: 'rgb(166,176,242)',
-                  img: 'https://framerusercontent.com/images/OrlifnTlYPRMLyxn1o7nUVu4IB8.png',
-                },
-              ]?.map((user, i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div
                       style={{
-                        width: '48px',
-                        height: '48px',
-                        borderRadius: '20px',
-                        overflow: 'hidden',
-                        flexShrink: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
                       }}
                     >
-                      <Image
-                        src={user?.img}
-                        alt={user?.name}
-                        width={48}
-                        height={48}
-                        style={{
-                          objectFit: 'cover',
-                          width: '100%',
-                          height: '100%',
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <p
+                      <span
                         style={{
                           fontSize: '14px',
                           fontWeight: 600,
-                          color: '#ffffff',
+                          color: '#fff',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
                         }}
                       >
-                        {user?.name}
-                      </p>
-                      <p
-                        style={{
-                          fontSize: '12px',
-                          fontWeight: 500,
-                          color: 'rgb(106,235,201)',
-                        }}
-                      >
-                        {user?.handle}
-                      </p>
+                        {c.name}
+                      </span>
+                      {c.overdue && (
+                        <span
+                          style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            backgroundColor: 'rgb(251,191,36)',
+                            flexShrink: 0,
+                            display: 'inline-block',
+                          }}
+                        />
+                      )}
                     </div>
+                    <span
+                      style={{
+                        fontSize: '12px',
+                        color: 'rgba(255,255,255,0.4)',
+                      }}
+                    >
+                      Last: {c.lastSeen}
+                    </span>
                   </div>
                   <span
                     style={{
-                      fontSize: '12px',
+                      fontSize: '11px',
                       fontWeight: 600,
-                      color: user?.roleColor,
-                      background:
-                        'linear-gradient(117.58deg, rgba(215,236,236,0.16) 0%, rgba(204,234,234,0) 100%)',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      borderRadius: '12px',
-                      padding: '4px 12px',
+                      color: GREEN,
+                      backgroundColor: 'rgba(55,234,158,0.1)',
+                      border: '1px solid rgba(55,234,158,0.2)',
+                      borderRadius: '20px',
+                      padding: '3px 10px',
+                      flexShrink: 0,
                     }}
                   >
-                    {user?.role}
+                    {c.sessions} sessions
                   </span>
                 </div>
               ))}
@@ -292,18 +211,16 @@ export default function BentoCardsSection() {
 
         {/* Right Cards */}
         <div className="flex flex-col gap-3 flex-1">
-          {/* Top row: Podcast + Smart Tasks */}
-          <div className="flex gap-3">
-            {/* Podcast Card */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* AI Summaries Card */}
             <div
               className="flex-1 rounded-[20px] overflow-hidden relative"
               style={{
                 border: '1px solid rgb(228,228,228)',
-                backgroundColor: '#ffffff',
+                backgroundColor: '#fff',
                 minHeight: '286px',
               }}
             >
-              {/* Green gradient background */}
               <div
                 style={{
                   background:
@@ -316,14 +233,8 @@ export default function BentoCardsSection() {
                   gap: '8px',
                 }}
               >
-                {/* Overlapping avatars */}
                 <div style={{ display: 'flex', marginBottom: '8px' }}>
-                  {[
-                    'https://framerusercontent.com/images/qT2RDznEpOrJtcHZv3nDznB7QOk.jpg',
-                    'https://framerusercontent.com/images/lTKrFGv3E8wzq6LqHhJddpV1vE.jpg',
-                    'https://framerusercontent.com/images/6NveBVCzvNa67ChHcDODa017M.jpg',
-                    'https://framerusercontent.com/images/05knyzw0rUgULM6deRVbL10UAw.jpg',
-                  ]?.map((img, i) => (
+                  {avatarImgs.map((img, i) => (
                     <div
                       key={i}
                       style={{
@@ -359,17 +270,17 @@ export default function BentoCardsSection() {
                     letterSpacing: '0.12em',
                   }}
                 >
-                  AI AGENTS
+                  AI SUMMARIES
                 </p>
                 <h4
                   style={{
                     fontSize: '24px',
                     fontWeight: 600,
-                    color: '#000000',
+                    color: '#000',
                     lineHeight: '1em',
                   }}
                 >
-                  Let&apos;s discuss AI Agent&apos;s future of the world.
+                  Session done. Notes written. Instantly.
                 </h4>
                 <p
                   style={{
@@ -378,265 +289,376 @@ export default function BentoCardsSection() {
                     color: 'rgb(10,77,59)',
                   }}
                 >
-                  2 hours 40 minutes
+                  Zero note-taking. Ever.
                 </p>
-                <a
-                  href="https://spotify.com"
-                  target="_blank"
-                  rel="noopener"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    padding: '14px 20px',
-                    backgroundColor: 'transparent',
-                    border: '1px solid #000000',
-                    borderRadius: '12px',
-                    fontSize: '16px',
-                    fontWeight: 500,
-                    color: '#000000',
-                    width: 'fit-content',
-                    textDecoration: 'none',
-                    marginTop: '8px',
-                  }}
-                >
-                  Play Podcast
-                </a>
               </div>
             </div>
 
-            {/* Smart Tasks Card */}
+            {/* Timeline Card */}
             <div
               className="flex-1 rounded-[20px] overflow-hidden relative"
               style={{
-                border: '1px solid rgb(228,228,228)',
-                backgroundColor: '#ffffff',
+                backgroundColor: '#000',
                 minHeight: '286px',
+                display: 'flex',
+                flexDirection: 'column',
               }}
             >
-              <div style={{ position: 'relative', height: '100%' }}>
-                <Image
-                  src="https://framerusercontent.com/images/6xHEJdY0oIyqlQjGm0IcaDZoNwg.png"
-                  alt="Smart Tasks"
-                  fill
-                  style={{ objectFit: 'cover' }}
-                />
-
-                <div
+              <div
+                style={{
+                  flex: 1,
+                  padding: '28px 24px 80px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                }}
+              >
+                {timelineEntries.map((e, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '14px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        flexShrink: 0,
+                        width: '14px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '10px',
+                          height: '10px',
+                          borderRadius: '50%',
+                          marginTop: '3px',
+                          flexShrink: 0,
+                          backgroundColor: e.highlight ? GREEN : GREEN_DIM,
+                          border: `2px solid ${e.highlight ? 'rgba(55,234,158,0.6)' : 'rgba(55,234,158,0.2)'}`,
+                          boxShadow: e.highlight
+                            ? '0 0 8px rgba(55,234,158,0.5)'
+                            : 'none',
+                        }}
+                      />
+                      {i < timelineEntries.length - 1 && (
+                        <div
+                          style={{
+                            width: '1px',
+                            flex: 1,
+                            minHeight: '28px',
+                            backgroundColor: 'rgba(55,234,158,0.15)',
+                          }}
+                        />
+                      )}
+                    </div>
+                    <div
+                      style={{
+                        paddingBottom:
+                          i < timelineEntries.length - 1 ? '20px' : '0',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: 600,
+                          color: GREEN,
+                          letterSpacing: '0.08em',
+                        }}
+                      >
+                        {e.date}
+                      </span>
+                      <p
+                        style={{
+                          fontSize: '13px',
+                          fontWeight: e.highlight ? 600 : 400,
+                          color: e.highlight
+                            ? '#fff'
+                            : 'rgba(255,255,255,0.55)',
+                          marginTop: '2px',
+                          lineHeight: '1.3em',
+                        }}
+                      >
+                        {e.title}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  padding: '36px',
+                  background:
+                    'linear-gradient(to top, rgba(0,0,0,0.95) 60%, transparent)',
+                }}
+              >
+                <h4
                   style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    padding: '36px',
-                    background:
-                      'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
+                    fontSize: '24px',
+                    fontWeight: 600,
+                    color: 'rgb(241,254,248)',
+                    lineHeight: '1em',
                   }}
                 >
-                  <h4
-                    style={{
-                      fontSize: '24px',
-                      fontWeight: 600,
-                      color: 'rgb(241,254,248)',
-                      lineHeight: '1em',
-                    }}
-                  >
-                    Smart Tasks
-                  </h4>
-                  <p
-                    style={{
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      color: 'rgba(241,254,248,0.7)',
-                      marginTop: '4px',
-                    }}
-                  >
-                    Let AI handle it.
-                  </p>
-                </div>
+                  Session Timeline
+                </h4>
+                <p
+                  style={{
+                    fontSize: '16px',
+                    fontWeight: 500,
+                    color: 'rgba(241,254,248,0.7)',
+                    marginTop: '4px',
+                  }}
+                >
+                  Every breakthrough organized.
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Bottom: Multi-Agent Card */}
+          {/* Solis Intelligence Card */}
           <div
-            className="rounded-[20px] overflow-hidden"
+            className="rounded-[20px] overflow-hidden flex flex-col sm:flex-row"
             style={{
               border: '1px solid rgb(228,228,228)',
-              backgroundColor: '#000000',
-              height: '285px',
-              display: 'flex',
+              backgroundColor: '#000',
+              flex: 1,
             }}
           >
-            {/* Left text */}
             <div
-              className="flex flex-col gap-4 p-9"
-              style={{ flex: '0.4', borderRight: '1px solid #131619' }}
+              className="flex flex-col gap-4 p-6 sm:p-9 border-b sm:border-b-0 sm:border-r"
+              style={{ flex: '0 0 auto', borderColor: '#131619' }}
             >
+              <p
+                style={{
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: 'rgb(106,235,201)',
+                  letterSpacing: '0.1em',
+                  marginBottom: '4px',
+                }}
+              >
+                SOLIS INTELLIGENCE
+              </p>
               <h4
                 style={{
                   fontSize: '24px',
                   fontWeight: 600,
-                  color: '#ffffff',
-                  lineHeight: '1em',
+                  color: '#fff',
+                  lineHeight: '1.1em',
                 }}
               >
-                Multi-Agent
+                Your clients&apos; history. One question away.
               </h4>
               <p
                 style={{
-                  fontSize: '16px',
+                  fontSize: '15px',
                   fontWeight: 500,
                   color: 'rgba(255,255,255,0.7)',
                   lineHeight: '1.5em',
                 }}
               >
-                Deploy and manage multiple AI agents in parallel to handle
-                complex, multi-step operations.
+                Ask anything. Get cited answers from every session.
               </p>
             </div>
-
-            {/* Right: UI mockup */}
             <div className="flex-1 overflow-hidden p-6">
               <div
                 style={{
-                  backgroundColor: 'rgba(26,29,33,0.96)',
+                  backgroundColor: CARD_BG,
                   borderRadius: '20px',
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
+                  overflow: 'hidden',
                 }}
               >
-                {/* Header */}
+                {/* Chat header */}
                 <div
                   style={{
-                    padding: '24px',
-                    borderBottom: '1px solid #131619',
+                    padding: '16px 20px',
+                    borderBottom: '1px solid rgba(255,255,255,0.06)',
                     display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                  }}
-                >
-                  <div>
-                    <h4
-                      style={{
-                        fontSize: '18px',
-                        fontWeight: 600,
-                        color: '#ffffff',
-                      }}
-                    >
-                      Orbital Oddysey
-                    </h4>
-                    <p
-                      style={{
-                        fontSize: '14px',
-                        color: 'rgba(255,255,255,0.5)',
-                        marginTop: '4px',
-                      }}
-                    >
-                      Marketing Campaign for a new TV series Launch
-                    </p>
-                  </div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      gap: '8px',
-                      alignItems: 'center',
-                    }}
-                  >
-                    {/* Avatars */}
-                    {[
-                      'https://framerusercontent.com/images/VnGF1oQqX1poiXheBo2UcV25x0.png',
-                      'https://framerusercontent.com/images/i0Kkhim9JtWdlb5ssQ6h8Nq1A8.png',
-                    ]?.map((img, i) => (
-                      <div
-                        key={i}
-                        style={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '12px',
-                          overflow: 'hidden',
-                          border: '2px solid #0d0f10',
-                        }}
-                      >
-                        <Image
-                          src={img}
-                          alt=""
-                          width={32}
-                          height={32}
-                          style={{
-                            objectFit: 'cover',
-                            width: '100%',
-                            height: '100%',
-                          }}
-                        />
-                      </div>
-                    ))}
-                    <span
-                      style={{
-                        fontSize: '12px',
-                        color: 'rgb(209,213,221)',
-                        backgroundColor: '#1a1d21',
-                        borderRadius: '12px',
-                        padding: '4px 8px',
-                        border: '2px solid #0d0f10',
-                      }}
-                    >
-                      +4
-                    </span>
-                    <span
-                      style={{
-                        fontSize: '14px',
-                        color: '#ffffff',
-                        padding: '4px 8px',
-                      }}
-                    >
-                      Share
-                    </span>
-                  </div>
-                </div>
-                {/* Nav */}
-                <div
-                  style={{
-                    padding: '24px',
-                    display: 'flex',
-                    gap: '24px',
                     alignItems: 'center',
+                    gap: '10px',
                   }}
                 >
-                  <span
-                    style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)' }}
-                  >
-                    Artificium
-                  </span>
                   <div
                     style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgb(106,235,201)',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '8px',
-                      padding: '0 8px',
-                      position: 'relative',
+                      justifyContent: 'center',
+                      flexShrink: 0,
                     }}
                   >
-                    <span style={{ fontSize: '14px', color: '#ffffff' }}>
-                      Chat
+                    <span
+                      style={{
+                        fontSize: '14px',
+                        fontWeight: 700,
+                        color: '#000',
+                      }}
+                    >
+                      ✦
                     </span>
+                  </div>
+                  <span
+                    style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}
+                  >
+                    Solis
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      color: 'rgb(106,235,201)',
+                      backgroundColor: 'rgba(106,235,201,0.1)',
+                      borderRadius: '6px',
+                      padding: '2px 8px',
+                      marginLeft: 'auto',
+                    }}
+                  >
+                    Marcus Chen
+                  </span>
+                </div>
+                {/* Messages */}
+                <div
+                  style={{
+                    flex: 1,
+                    padding: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                    overflowY: 'hidden',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                     <div
                       style={{
-                        height: '4px',
-                        backgroundColor: 'rgb(106,235,201)',
-                        borderRadius: '4px 4px 0 0',
-                        position: 'absolute',
-                        bottom: '-24px',
-                        left: 0,
-                        right: 0,
+                        backgroundColor: 'rgba(106,235,201,0.12)',
+                        border: '1px solid rgba(106,235,201,0.2)',
+                        borderRadius: '14px 14px 2px 14px',
+                        padding: '10px 14px',
+                        maxWidth: '80%',
                       }}
-                    />
+                    >
+                      <p
+                        style={{
+                          fontSize: '13px',
+                          color: '#fff',
+                          lineHeight: '1.4em',
+                          margin: 0,
+                        }}
+                      >
+                        What did Marcus say about the board presentation last
+                        session?
+                      </p>
+                    </div>
                   </div>
-                  <span
-                    style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)' }}
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'flex-start',
+                      gap: '8px',
+                    }}
                   >
-                    Library
-                  </span>
+                    <div
+                      style={{
+                        width: '22px',
+                        height: '22px',
+                        borderRadius: '6px',
+                        backgroundColor: 'rgb(106,235,201)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        marginTop: '2px',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          color: '#000',
+                        }}
+                      >
+                        ✦
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px',
+                        maxWidth: '85%',
+                      }}
+                    >
+                      <div
+                        style={{
+                          backgroundColor: 'rgba(255,255,255,0.05)',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          borderRadius: '2px 14px 14px 14px',
+                          padding: '10px 14px',
+                        }}
+                      >
+                        <p
+                          style={{
+                            fontSize: '13px',
+                            color: 'rgba(255,255,255,0.85)',
+                            lineHeight: '1.4em',
+                            margin: 0,
+                          }}
+                        >
+                          Marcus felt underprepared going into the board
+                          meeting. He committed to rehearsing his pitch with
+                          Sarah before the next one.
+                        </p>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          color: 'rgb(106,235,201)',
+                          backgroundColor: 'rgba(106,235,201,0.08)',
+                          borderRadius: '6px',
+                          padding: '2px 8px',
+                          width: 'fit-content',
+                        }}
+                      >
+                        ↳ Jan 22 session
+                      </span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <div
+                      style={{
+                        backgroundColor: 'rgba(106,235,201,0.12)',
+                        border: '1px solid rgba(106,235,201,0.2)',
+                        borderRadius: '14px 14px 2px 14px',
+                        padding: '10px 14px',
+                        maxWidth: '80%',
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontSize: '13px',
+                          color: '#fff',
+                          lineHeight: '1.4em',
+                          margin: 0,
+                        }}
+                      >
+                        Any pending actions from him?
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

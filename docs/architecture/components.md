@@ -2,57 +2,71 @@
 
 ### Frontend Components
 
-#### VideoCallManager
-**Responsibility:** Orchestrates Stream SDK connections, manages video streams, and coordinates real-time video features
+#### ClientCardManager
+**Responsibility:** Renders client grid/list, handles client CRUD, manages client search and filtering
 
 **Key Interfaces:**
-- `initializeCall(meetingId: string, participantId: string)` - Setup Stream SDK connection
-- `toggleMute()` - Audio control with UI feedback
-- `toggleVideo()` - Video control with source selection
-- `handlePeerConnection(peerId: string, offer: RTCSessionDescription)` - P2P signaling
+- `createClient(data: ClientInput)` - Create new client with name, goal, company, role, start date
+- `updateClient(id: string, data: Partial<ClientInput>)` - Edit client details
+- `deleteClient(id: string)` - Soft delete with confirmation
+- `searchClients(query: string)` - Filter by name
 
-**Dependencies:** @stream-io/video-react-sdk, Supabase Realtime (signaling)
+**Dependencies:** @tanstack/react-query, Supabase client
+**Technology Stack:** React hooks, TypeScript strict mode, Tailwind CSS
 
-**Technology Stack:** React hooks, Stream Video SDK, TypeScript strict mode, Framer Motion (UI transitions)
-
-#### CollaborationEngine
-**Responsibility:** Manages real-time collaborative features including whiteboard, messaging, reactions, and polls
+#### SessionTimeline
+**Responsibility:** Displays chronological coaching session history within a Client Card; handles expand/collapse of individual sessions
 
 **Key Interfaces:**
-- `sendMessage(content: string, type: MessageType)` - Chat functionality
-- `broadcastReaction(emoji: string)` - Floating reaction system
-- `syncWhiteboardState(state: ExcalidrawElement[])` - Whiteboard collaboration
-- `createPoll(question: string, options: string[])` - Interactive polling
+- `renderSession(session: Session)` - Expandable session card with summary, action items, key topics
+- `markActionItemComplete(itemId: string)` - Toggle action item status
+- `viewTranscript(sessionId: string)` - Open full transcript view
 
-**Dependencies:** @excalidraw/excalidraw, Supabase Realtime, sanitize-html
+**Dependencies:** @tanstack/react-query, Supabase client
+**Technology Stack:** React, TypeScript, Tailwind CSS
 
-**Technology Stack:** React Context, Supabase subscriptions, WebSocket connections, TypeScript interfaces
+#### TranscriptUploadModal
+**Responsibility:** Two-tab upload modal — manual (.txt/.docx file upload or paste) and auto-transcribe (audio/video via Deepgram)
+
+**Key Interfaces:**
+- `uploadFile(file: File, clientId: string, sessionDate: string)` - File upload to Supabase Storage
+- `pasteTranscript(text: string, clientId: string)` - Direct text storage
+- `autoTranscribe(audioFile: File, clientId: string)` - Deepgram transcription pipeline
+
+**Dependencies:** Supabase Storage, Deepgram API (via abstraction layer)
+**Technology Stack:** React, File API, multipart form, TypeScript
 
 ### Backend Components
 
-#### MeetingOrchestrator
-**Responsibility:** Core meeting lifecycle management, participant coordination, and real-time state synchronization
+#### AIProcessingService
+**Responsibility:** Runs AI summary pipeline after transcript upload — generates summary, action items, key topics, and session title using Claude Sonnet 4.5 (default) or GPT-4o-mini
 
 **Key Interfaces:**
-- `createMeeting(hostId: string, settings: MeetingSettings)` - Meeting initialization
-- `joinMeeting(meetingId: string, userId: string)` - Participant admission
-- `updateMeetingState(meetingId: string, updates: Partial<Meeting>)` - State management
-- `endMeeting(meetingId: string, hostId: string)` - Cleanup and archival
+- `processTranscript(sessionId: string, transcript: string, clientContext: ClientContext)` - Full AI pipeline
+- `generateSummary(transcript: string)` - Executive summary (2–3 paragraphs)
+- `extractActionItems(transcript: string)` - Coach + client commitments
+- `generateTitle(transcript: string)` - 3–6 word session title
 
-**Dependencies:** Supabase PostgreSQL, Supabase Realtime, Clerk webhooks
+**Dependencies:** Anthropic SDK or OpenAI SDK (abstracted via `AI_PROVIDER` env var), Supabase
+**Technology Stack:** Vercel Edge Functions, TypeScript, pgvector embeddings
 
-**Technology Stack:** Vercel Edge Functions, PostgreSQL RLS, WebSocket channels, TypeScript validation
-
-#### AIIntegrationService
-**Responsibility:** Coordinates AI-powered features including meeting summaries, translations, and content analysis
+#### SolisIntelligenceService
+**Responsibility:** Conversational AI that answers coach questions about any client's history using hybrid RAG (pgvector semantic search + 3 most recent sessions)
 
 **Key Interfaces:**
-- `generateSummary(transcript: string, meetingId: string)` - OpenAI GPT-4 processing
-- `translateContent(text: string, targetLang: string)` - DeepL translation
-- `extractActionItems(transcript: string)` - AI content analysis
-- `anonymizeContent(content: string)` - Privacy protection
+- `query(question: string, clientId: string, userId: string)` - RAG-powered answer with citations
+- `generateEmbedding(text: string)` - Session summary embedding for pgvector
+- `retrieveContext(question: string, clientId: string)` - Hybrid retrieval (semantic + recency)
 
-**Dependencies:** openai ^4.24.1, deepl-node ^1.12.0, sanitize-html
+**Dependencies:** Anthropic/OpenAI SDK (abstracted), pgvector, Supabase
+**Technology Stack:** Vercel Edge Functions, pgvector, TypeScript
 
-**Technology Stack:** OpenAI API, DeepL API, Vercel Edge Functions, rate limiting, error handling
-
+#### TranscriptionService
+**Responsibility:** Audio/video file transcription via Deepgram Nova-2 with speaker diarization (auto-labels coach vs. client speech)
+
+**Key Interfaces:**
+- `transcribe(audioUrl: string)` - Returns transcript text with speaker labels
+- Provider abstracted via `TRANSCRIPTION_PROVIDER` env var (deepgram | openai-whisper | placeholder)
+
+**Dependencies:** Deepgram SDK (default), OpenAI Whisper (alternative)
+**Technology Stack:** Vercel Edge Functions, Supabase Storage, TypeScript

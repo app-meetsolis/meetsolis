@@ -84,7 +84,7 @@ export function ClientSearch({
     <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       {/* Search Input */}
       <div className="relative flex-1 sm:max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6B7280]" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="text"
           placeholder="Search clients..."
@@ -96,7 +96,7 @@ export function ClientSearch({
         {query && (
           <button
             onClick={handleClearSearch}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#1A1A1A]"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             aria-label="Clear search"
           >
             <X className="h-4 w-4" />
@@ -106,7 +106,7 @@ export function ClientSearch({
 
       {/* Sort */}
       <div className="flex items-center gap-2">
-        <span className="text-sm text-[#6B7280]">Sort:</span>
+        <span className="text-sm text-muted-foreground">Sort:</span>
         <Select
           value={sort}
           onValueChange={value => setSort(value as SortOption)}

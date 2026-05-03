@@ -1,35 +1,34 @@
 'use client';
 import React from 'react';
-import Image from 'next/image';
 
-const integrations = [
+const moments = [
   {
-    name: 'Flowlink',
-    description: 'Team chat and alert system',
-    image:
-      'https://framerusercontent.com/images/k3DYExJloLpyuH8vw9JInbj0oZw.jpg',
+    step: '01',
+    name: 'Before Your Next Session',
+    description:
+      'Ask Solis what you covered last time. Walk in prepared — every goal, concern, and breakthrough recalled instantly.',
   },
   {
-    name: 'Chainkit',
-    description: 'Automation across all tools',
-    image: 'https://framerusercontent.com/images/XC4O6lN2uqvVyMpafT5uIZs7g.jpg',
+    step: '02',
+    name: 'The Moment a Session Ends',
+    description:
+      'Notes, action items, and a full summary are generated before you close your laptop. Zero admin. Zero effort.',
   },
   {
-    name: 'Leadnest',
-    description: 'CRM for growth teams',
-    image:
-      'https://framerusercontent.com/images/LHlGAle7flIiScgLeQ08uifC0Y.jpg',
+    step: '03',
+    name: 'When a Client Mentions Something',
+    description:
+      '"Didn\'t we cover this 3 months ago?" — Yes. Solis finds the exact session, the exact quote, in seconds.',
   },
 ];
 
 export default function IntegrationsSection() {
   return (
     <section
-      className="w-full flex flex-col items-center"
+      className="w-full flex flex-col items-center px-4 py-10 sm:px-8 md:px-16"
       id="integrations"
       style={{
         backgroundColor: '#ffffff',
-        padding: '64px',
         borderBottomLeftRadius: '32px',
         borderBottomRightRadius: '32px',
       }}
@@ -39,19 +38,19 @@ export default function IntegrationsSection() {
         <div className="flex flex-col gap-6 max-w-[500px]">
           <div className="flex flex-col gap-4">
             <span className="section-badge" style={{ width: 'fit-content' }}>
-              WORK WITH YOUR TOOLS
+              BUILT FOR YOUR WORKFLOW
             </span>
             <h3
               style={{
-                fontSize: '36px',
+                fontSize: 'clamp(24px, 4vw, 36px)',
                 fontWeight: 600,
                 letterSpacing: '-0.03em',
                 lineHeight: '1.1em',
                 color: '#000000',
               }}
             >
-              Seamless Integrations, <br />
-              Zero Hassle
+              Before, during, and after <br />
+              every session — covered.
             </h3>
           </div>
           <p
@@ -63,30 +62,29 @@ export default function IntegrationsSection() {
               lineHeight: '1.5em',
             }}
           >
-            Connect your favorite tools in seconds — from communication to data,
-            our agents work wherever you do.
+            MeetSolis fits into every stage of your coaching process. No new
+            habits, no extra admin — just more time to focus on your clients.
           </p>
           <a
             href="#"
             className="btn-dark"
             style={{ width: 'fit-content', padding: '14px 20px' }}
           >
-            Explore Features
+            Get Started Free
           </a>
         </div>
 
         {/* Right: Integration Cards */}
         <div className="flex flex-col gap-3 w-full md:w-auto md:flex-1">
-          {integrations?.map((integration, i) => (
+          {moments?.map((moment, i) => (
             <div
               key={i}
-              className="integration-card"
               style={{
                 backgroundColor: 'rgb(250,250,251)',
                 borderRadius: '16px',
                 padding: '25px',
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 gap: '16px',
               }}
             >
@@ -94,18 +92,24 @@ export default function IntegrationsSection() {
                 style={{
                   width: '36px',
                   height: '36px',
-                  borderRadius: '1000px',
-                  overflow: 'hidden',
+                  borderRadius: '10px',
+                  backgroundColor: '#000000',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   flexShrink: 0,
                 }}
               >
-                <Image
-                  src={integration?.image}
-                  alt={integration?.name}
-                  width={36}
-                  height={36}
-                  style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-                />
+                <span
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    color: 'rgb(106,235,201)',
+                    letterSpacing: '0.02em',
+                  }}
+                >
+                  {moment?.step}
+                </span>
               </div>
               <div className="flex flex-col gap-1">
                 <h5
@@ -113,10 +117,10 @@ export default function IntegrationsSection() {
                     fontSize: '18px',
                     fontWeight: 600,
                     color: '#000000',
-                    lineHeight: '1em',
+                    lineHeight: '1.2em',
                   }}
                 >
-                  {integration?.name}
+                  {moment?.name}
                 </h5>
                 <p
                   style={{
@@ -126,7 +130,7 @@ export default function IntegrationsSection() {
                     lineHeight: '1.5em',
                   }}
                 >
-                  {integration?.description}
+                  {moment?.description}
                 </p>
               </div>
             </div>

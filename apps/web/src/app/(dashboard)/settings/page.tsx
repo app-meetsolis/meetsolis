@@ -7,8 +7,10 @@ export default function SettingsPage() {
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-[#1A1A1A]">Settings</h1>
-        <p className="mt-2 text-[#6B7280]">
+        <h1 className="text-[22px] font-bold tracking-[-0.02em] text-foreground">
+          Settings
+        </h1>
+        <p className="mt-2 text-[13px] text-muted-foreground">
           Coming soon — full implementation in Story 5.4
         </p>
       </div>

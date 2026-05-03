@@ -65,7 +65,6 @@ export function DeleteClientDialog({
     }
   };
 
-  // Reset confirmed when dialog opens for a new client
   const handleOpenChange = (open: boolean) => {
     if (!open) handleClose();
     else setConfirmed(false);
@@ -73,33 +72,37 @@ export function DeleteClientDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-[#1A1A1A]">Delete Client</DialogTitle>
+          <DialogTitle className="text-[18px] font-bold text-foreground">
+            Delete Client
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <p className="text-sm text-[#6B7280]">
+          <p className="text-[13px] text-muted-foreground leading-relaxed">
             Delete{' '}
-            <span className="font-semibold text-[#1A1A1A]">{client?.name}</span>
+            <span className="font-semibold text-foreground">
+              {client?.name}
+            </span>
             ? This will permanently delete all sessions, action items, and Solis
             query history for this client.{' '}
-            <span className="font-medium text-red-600">
+            <span className="font-medium text-red-400">
               This cannot be undone.
             </span>
           </p>
 
-          <div className="flex items-center gap-3 rounded-md border border-red-100 bg-red-50 p-3">
+          <div className="flex items-center gap-3 rounded-md border border-red-400/20 bg-red-400/10 p-3">
             <Checkbox
               id="confirm-delete"
               checked={confirmed}
               onCheckedChange={val => setConfirmed(!!val)}
               disabled={isDeleting}
-              className="border-red-300 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
+              className="border-red-400/50 data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500"
             />
             <Label
               htmlFor="confirm-delete"
-              className="cursor-pointer text-sm text-[#374151]"
+              className="cursor-pointer text-[13px] text-secondary-foreground"
             >
               I understand this is permanent
             </Label>

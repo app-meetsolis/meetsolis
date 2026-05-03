@@ -87,8 +87,8 @@ export default function PartnersSection() {
 
   return (
     <section
-      className="w-full flex flex-col items-center"
-      style={{ padding: '24px 96px', gap: '36px' }}
+      className="w-full flex flex-col items-center px-4 py-6 sm:px-16 md:px-24"
+      style={{ gap: '36px' }}
     >
       <div
         className="ticker-wrapper w-full"

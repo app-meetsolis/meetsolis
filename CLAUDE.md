@@ -27,15 +27,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-MeetSolis is a Next.js 14 video conferencing platform designed as a Zoom alternative for freelancers and small agencies. This is a **greenfield project** following the BMad Method for AI-driven development. The project uses a comprehensive tech stack with TypeScript, Supabase, WebRTC, and various AI integrations.
+MeetSolis is a **post-meeting intelligence platform** built exclusively for executive coaches. Coaches manage 10–25 active clients; MeetSolis solves the core problem of forgetting client context between sessions. This is a **greenfield project** following the BMad Method for AI-driven development.
+
+**Tagline:** *"Never forget a client's breakthrough moment again."*
+
+**What MeetSolis IS:** Post-meeting intelligence, client memory layer, coach's AI second brain.
+**What MeetSolis IS NOT:** Video conferencing, real-time meeting assistant, CRM, project management tool.
 
 ## Key Technology Stack
 
 - **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS, Shadcn UI
 - **Backend**: Vercel Edge Functions, Supabase PostgreSQL
 - **Authentication**: Clerk
-- **Real-time**: Supabase Realtime, WebRTC (simple-peer)
-- **AI**: OpenAI GPT-4, DeepL Translation
+- **AI**: Claude Sonnet 4.5 (default) or OpenAI GPT-4o-mini, switchable via `AI_PROVIDER` env var
+- **Transcription**: Deepgram Nova-2 (default) or OpenAI Whisper, switchable via `TRANSCRIPTION_PROVIDER` env var
+- **Vector Search**: pgvector (hybrid RAG for Solis Intelligence)
 - **Testing**: Jest, Cypress, Testing Library
 - **Development Workflow**: BMad Method with specialized agents
 
@@ -124,13 +130,12 @@ meetsolis/
 
 ## Key Features to Implement
 
-Based on the PRD, prioritize these core features:
-1. **HD Video Calls** - WebRTC with simple-peer library
-2. **Collaborative Whiteboard** - Using Excalidraw integration
-3. **AI-Powered Summaries** - OpenAI GPT-4 integration
-4. **Real-time Translation** - DeepL API integration
-5. **Calendar Integration** - Google Calendar API
-6. **File Sharing** - Supabase Storage with auto-expiration
+Based on PRD v3 (source of truth: `archive/MeetSolis_PRD_v3_FINAL.md`):
+1. **Client Cards** - Persistent containers for each coach's clients (name, goal, company, start date, notes)
+2. **Transcript Upload** - Manual (.txt/.docx) or auto-transcribe audio/video via Deepgram Nova-2
+3. **AI Summary Generation** - Auto-generates session summary, action items, key topics, session title
+4. **Solis Intelligence** - Conversational AI answering questions about any client's history (hybrid RAG: pgvector + 3 recent sessions)
+5. **Session Timeline** - Chronological view of client coaching journey
 
 ## Testing Strategy
 
@@ -141,11 +146,13 @@ Follow the testing pyramid approach:
 
 ## Important Notes
 
-- This is a **cost-optimized project** targeting free tiers (Vercel, Supabase)
-- **Performance targets**: <200ms API response, <1% call failure rate
-- **AI Usage Monitoring**: Implement usage tracking to stay within budget limits
-- **WebRTC Fallback**: Include TURN server fallback for network connectivity
+- **Pricing**: Free (3 clients, 5 lifetime transcripts, 75 queries) / Pro $99/mo or $948/yr (unlimited clients, 25 transcripts/mo, 2000 queries)
+- **ICP**: Executive coaches, 10–25 active clients, $200–500/hr, solo practitioners
+- **Infra cost**: ~$100/mo baseline (Vercel Pro + Supabase Pro + Resend + misc)
+- **COGS**: ~$9/user/mo (Deepgram $6.50 is the main cost)
+- **AI Usage Monitoring**: Track lifetime counters with reset timestamps (not month-based)
 - **Bundle Size**: Keep initial bundle <300KB, total <1MB
+- **Privacy-First**: Never train AI on user data; client conversations are deeply personal
 
 ## Getting Help
 

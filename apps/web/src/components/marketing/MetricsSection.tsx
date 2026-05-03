@@ -1,34 +1,31 @@
 'use client';
 import React from 'react';
-import Image from 'next/image';
+
+const tasks = [
+  { label: 'Session notes', before: 45, after: 0, tag: 'AI writes it' },
+  { label: 'Pre-session prep', before: 20, after: 3, tag: 'Ask Solis' },
+  {
+    label: 'Finding past insights',
+    before: 15,
+    after: 1,
+    tag: 'Solis Intelligence',
+  },
+  { label: 'Action item tracking', before: 10, after: 0, tag: 'Automatic' },
+];
+
+const MAX_TIME = 45;
 
 export default function MetricsSection() {
-  const chartBars = [
-    { height: 40, value: 1200 },
-    { height: 55, value: 1800 },
-    { height: 45, value: 1500 },
-    { height: 70, value: 2400 },
-    { height: 60, value: 2000 },
-    { height: 85, value: 2800 },
-    { height: 75, value: 2500 },
-    { height: 95, value: 3200 },
-    { height: 80, value: 2700 },
-    { height: 100, value: 3500 },
-  ];
-
   return (
     <section
-      className="w-full flex flex-col items-center"
-      style={{ padding: '24px', backgroundColor: '#ffffff' }}
+      className="w-full flex flex-col items-center p-3 md:p-6"
+      style={{ backgroundColor: '#ffffff' }}
     >
       <div
-        className="w-full max-w-[1200px] rounded-[32px] overflow-hidden relative"
-        style={{
-          backgroundColor: '#000000',
-          padding: '64px',
-        }}
+        className="w-full max-w-[1200px] rounded-[32px] overflow-hidden relative px-6 py-10 sm:px-10 md:p-16"
+        style={{ backgroundColor: '#000000' }}
       >
-        {/* Green glow effects */}
+        {/* Glow effects */}
         <div
           className="absolute"
           style={{
@@ -43,7 +40,6 @@ export default function MetricsSection() {
             zIndex: 0,
           }}
         />
-
         <div
           className="absolute"
           style={{
@@ -58,7 +54,6 @@ export default function MetricsSection() {
             zIndex: 0,
           }}
         />
-
         <div
           className="absolute"
           style={{
@@ -73,8 +68,6 @@ export default function MetricsSection() {
             zIndex: 0,
           }}
         />
-
-        {/* Green bottom bar */}
         <div
           className="absolute bottom-0"
           style={{
@@ -89,10 +82,10 @@ export default function MetricsSection() {
         {/* Content */}
         <div
           className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12"
-          style={{ maxWidth: '1000px', margin: '0 auto', height: '400px' }}
+          style={{ maxWidth: '1000px', margin: '0 auto' }}
         >
-          {/* Left: Text */}
-          <div className="flex flex-col gap-6 max-w-[500px] w-full md:w-[500px]">
+          {/* Left: Text + Stats */}
+          <div className="flex flex-col gap-6 max-w-[420px] w-full">
             <div className="flex flex-col gap-4">
               <span
                 className="section-badge"
@@ -102,19 +95,19 @@ export default function MetricsSection() {
                   width: 'fit-content',
                 }}
               >
-                PRODUCTIVITY BOOST
+                TIME RECLAIMED
               </span>
               <h3
                 style={{
-                  fontSize: '36px',
+                  fontSize: 'clamp(24px, 4vw, 36px)',
                   fontWeight: 600,
                   letterSpacing: '-0.03em',
                   lineHeight: '1.1em',
                   color: '#ffffff',
                 }}
               >
-                Measure Real-Time <br />
-                Efficiency Gains
+                Hours back. <br />
+                Every week. Automatically.
               </h3>
             </div>
             <p
@@ -126,19 +119,19 @@ export default function MetricsSection() {
                 lineHeight: '1.5em',
               }}
             >
-              Instantly track hours saved, tasks completed, and the true impact
-              of every deployed agent.
+              See exactly where MeetSolis eliminates the admin work that follows
+              every coaching session.
             </p>
-            {/* Divider */}
+
             <div
               style={{
-                height: '4px',
+                height: '1px',
                 backgroundColor: 'rgba(255,255,255,0.1)',
                 width: '100%',
               }}
             />
-            {/* Stats */}
-            <div className="flex items-start gap-5">
+
+            <div className="flex items-start gap-4 flex-wrap">
               <div className="flex flex-col gap-1">
                 <h3
                   style={{
@@ -149,7 +142,7 @@ export default function MetricsSection() {
                     lineHeight: '1.1em',
                   }}
                 >
-                  +42 hrs
+                  ~8 hrs
                 </h3>
                 <p
                   style={{
@@ -158,7 +151,7 @@ export default function MetricsSection() {
                     color: 'rgba(255,255,255,0.7)',
                   }}
                 >
-                  Time Saved
+                  Saved weekly
                 </p>
               </div>
               <div className="flex flex-col gap-1">
@@ -171,7 +164,7 @@ export default function MetricsSection() {
                     lineHeight: '1.1em',
                   }}
                 >
-                  98.6%
+                  0 min
                 </h3>
                 <p
                   style={{
@@ -180,7 +173,7 @@ export default function MetricsSection() {
                     color: 'rgba(255,255,255,0.7)',
                   }}
                 >
-                  Success Rate
+                  On session notes
                 </p>
               </div>
               <div className="flex flex-col gap-1">
@@ -193,7 +186,7 @@ export default function MetricsSection() {
                     lineHeight: '1.1em',
                   }}
                 >
-                  $1.8k
+                  100%
                 </h3>
                 <p
                   style={{
@@ -202,33 +195,210 @@ export default function MetricsSection() {
                     color: 'rgba(255,255,255,0.7)',
                   }}
                 >
-                  Monthly Value
+                  Actions captured
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Right: Chart */}
-          <div
-            className="hidden md:flex flex-col gap-4 flex-shrink-0"
-            style={{
-              width: '400px',
-              height: '400px',
-              justifyContent: 'center',
-            }}
-          >
-            <Image
-              src="https://framerusercontent.com/images/sqw7nifq8S0UF5pSA3rJ5hv2k.png"
-              alt="Efficiency Chart"
-              width={800}
-              height={800}
-              style={{
-                objectFit: 'cover',
-                width: '100%',
-                height: '100%',
-                borderRadius: '16px',
-              }}
-            />
+          {/* Right: Before vs After bars */}
+          <div className="flex flex-col gap-5 w-full md:w-[420px] md:flex-shrink-0">
+            {/* Legend */}
+            <div style={{ display: 'flex', gap: '16px', marginBottom: '4px' }}>
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <div
+                  style={{
+                    width: '10px',
+                    height: '10px',
+                    borderRadius: '2px',
+                    backgroundColor: 'rgba(255,255,255,0.2)',
+                  }}
+                />
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 500,
+                    color: 'rgba(255,255,255,0.4)',
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  BEFORE
+                </span>
+              </div>
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <div
+                  style={{
+                    width: '10px',
+                    height: '10px',
+                    borderRadius: '2px',
+                    backgroundColor: 'rgb(106,235,201)',
+                  }}
+                />
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 500,
+                    color: 'rgba(255,255,255,0.4)',
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  AFTER
+                </span>
+              </div>
+            </div>
+
+            {tasks.map((task, i) => {
+              const beforePct = (task.before / MAX_TIME) * 100;
+              const afterPct = (task.after / MAX_TIME) * 100;
+              const saved =
+                task.before === 0
+                  ? 100
+                  : Math.round(
+                      ((task.before - task.after) / task.before) * 100
+                    );
+
+              return (
+                <div
+                  key={i}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                  }}
+                >
+                  {/* Row header */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: '16px',
+                        fontWeight: 600,
+                        color: '#ffffff',
+                      }}
+                    >
+                      {task.label}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        color: 'rgb(106,235,201)',
+                        backgroundColor: 'rgba(106,235,201,0.12)',
+                        borderRadius: '6px',
+                        padding: '3px 10px',
+                      }}
+                    >
+                      -{saved}%
+                    </span>
+                  </div>
+
+                  {/* Before bar */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        flex: 1,
+                        height: '16px',
+                        backgroundColor: 'rgba(255,255,255,0.06)',
+                        borderRadius: '6px',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: `${beforePct}%`,
+                          height: '100%',
+                          background:
+                            'linear-gradient(90deg, rgba(255,255,255,0.45), rgba(255,255,255,0.25))',
+                          borderRadius: '6px',
+                        }}
+                      />
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        color: 'rgba(255,255,255,0.5)',
+                        width: '46px',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {task.before} min
+                    </span>
+                  </div>
+
+                  {/* After bar */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        flex: 1,
+                        height: '16px',
+                        backgroundColor: 'rgba(255,255,255,0.06)',
+                        borderRadius: '6px',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {task.after > 0 && (
+                        <div
+                          style={{
+                            width: `${afterPct}%`,
+                            height: '100%',
+                            background:
+                              'linear-gradient(90deg, rgb(106,235,201), rgb(22,167,129))',
+                            borderRadius: '6px',
+                          }}
+                        />
+                      )}
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        color: 'rgb(106,235,201)',
+                        width: '46px',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {task.after === 0 ? '0 min' : `${task.after} min`}
+                    </span>
+                  </div>
+
+                  {/* Tag caption — always below, consistent position */}
+                  {task.tag && (
+                    <span
+                      style={{
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: 'rgba(106,235,201,0.6)',
+                        letterSpacing: '0.08em',
+                      }}
+                    >
+                      ✦ {task.tag}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

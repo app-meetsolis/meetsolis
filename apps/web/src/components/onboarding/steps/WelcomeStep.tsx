@@ -5,7 +5,7 @@
 
 'use client';
 
-import { Video, Users, MessageSquare, Calendar } from 'lucide-react';
+import { Brain, Users, MessageSquare, FileText } from 'lucide-react';
 
 export function WelcomeStep() {
   return (
@@ -22,20 +22,22 @@ export function WelcomeStep() {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="p-4 bg-primary-50 rounded-lg">
-          <Video className="w-8 h-8 text-primary-600 mb-2" />
-          <h4 className="font-semibold text-gray-900 mb-1">HD Video Calls</h4>
+          <Users className="w-8 h-8 text-primary-600 mb-2" />
+          <h4 className="font-semibold text-gray-900 mb-1">Client Cards</h4>
           <p className="text-sm text-gray-600">
-            Crystal-clear video conferences with up to 100 participants
+            Persistent memory for each coaching client — goals, history,
+            breakthroughs
           </p>
         </div>
 
         <div className="p-4 bg-[#f0fdf9] rounded-lg">
-          <Users className="w-8 h-8 text-[#16a780] mb-2" />
+          <FileText className="w-8 h-8 text-[#16a780] mb-2" />
           <h4 className="font-semibold text-gray-900 mb-1">
-            Team Collaboration
+            Transcript Upload
           </h4>
           <p className="text-sm text-gray-600">
-            Work together with shared whiteboards and screen sharing
+            Upload session notes or audio — MeetSolis transcribes and processes
+            automatically
           </p>
         </div>
 
@@ -43,24 +45,28 @@ export function WelcomeStep() {
           <MessageSquare className="w-8 h-8 text-purple-600 mb-2" />
           <h4 className="font-semibold text-gray-900 mb-1">AI Summaries</h4>
           <p className="text-sm text-gray-600">
-            Automatic meeting notes and action items powered by AI
+            Auto-generated session summaries, action items, and key discussion
+            points
           </p>
         </div>
 
         <div className="p-4 bg-orange-50 rounded-lg">
-          <Calendar className="w-8 h-8 text-orange-600 mb-2" />
-          <h4 className="font-semibold text-gray-900 mb-1">Easy Scheduling</h4>
+          <Brain className="w-8 h-8 text-orange-600 mb-2" />
+          <h4 className="font-semibold text-gray-900 mb-1">
+            Solis Intelligence
+          </h4>
           <p className="text-sm text-gray-600">
-            Integrate with your calendar and send invites effortlessly
+            Ask anything about any client&apos;s history — instant, cited
+            answers
           </p>
         </div>
       </div>
 
       <div className="bg-gray-50 rounded-lg p-4">
         <p className="text-sm text-gray-700">
-          <strong>Next steps:</strong> We&apos;ll help you set up your devices,
-          create your profile, and schedule your first meeting. The whole
-          process takes less than 5 minutes!
+          <strong>Next steps:</strong> Add your first client, upload a session
+          transcript, and let MeetSolis handle the rest. Setup takes under 2
+          minutes.
         </p>
       </div>
     </div>

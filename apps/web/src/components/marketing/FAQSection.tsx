@@ -34,9 +34,9 @@ export default function FAQSection() {
 
   return (
     <section
-      className="w-full flex flex-col items-center"
+      className="w-full flex flex-col items-center px-4 py-10 sm:px-8 md:px-16"
       id="faq"
-      style={{ padding: '64px', backgroundColor: 'rgb(248,249,250)' }}
+      style={{ backgroundColor: 'rgb(248,249,250)' }}
     >
       <div className="w-full max-w-[700px] flex flex-col gap-16">
         {/* Header */}
@@ -45,9 +45,9 @@ export default function FAQSection() {
             <span className="section-badge">FAQ</span>
             <h2
               style={{
-                fontSize: '48px',
+                fontSize: 'clamp(28px, 5vw, 48px)',
                 fontWeight: 600,
-                letterSpacing: '-3px',
+                letterSpacing: 'clamp(-1px, -0.4vw, -3px)',
                 lineHeight: '1em',
                 color: '#000000',
                 textAlign: 'center',

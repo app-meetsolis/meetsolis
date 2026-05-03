@@ -60,10 +60,10 @@ export default function AboutPage() {
             We&apos;d love to hear from you. Whether you have questions,
             feedback, or just want to say hello, reach out at{' '}
             <a
-              href="mailto:hello@meetsolis.com"
+              href="mailto:hari@meetsolis.com"
               className="text-primary hover:underline"
             >
-              hello@meetsolis.com
+              hari@meetsolis.com
             </a>
           </p>
         </div>

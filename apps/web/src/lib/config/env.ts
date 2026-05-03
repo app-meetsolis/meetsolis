@@ -72,11 +72,6 @@ const envSchema = z.object({
   HEALTH_CHECK_INTERVAL: z.string().default('60000'),
   ENABLE_SERVICE_MONITORING: z.string().default('true'),
 
-  // WebRTC Configuration
-  TURN_SERVER_URL: z.string().optional(),
-  TURN_SERVER_USERNAME: z.string().optional(),
-  TURN_SERVER_CREDENTIAL: z.string().optional(),
-
   // Application Configuration
   NEXT_PUBLIC_APP_URL: z.string().default('http://localhost:3000'),
 
@@ -169,12 +164,6 @@ export const config = {
     publicSentryDsn: env.NEXT_PUBLIC_SENTRY_DSN,
     appVersion: env.NEXT_PUBLIC_APP_VERSION,
     slackWebhook: env.SLACK_WEBHOOK_URL,
-  },
-
-  webrtc: {
-    turnServerUrl: env.TURN_SERVER_URL,
-    turnServerUsername: env.TURN_SERVER_USERNAME,
-    turnServerCredential: env.TURN_SERVER_CREDENTIAL,
   },
 
   auth: {

@@ -122,11 +122,9 @@ export default function RefundPage() {
               <h3>3. How to Request a Refund</h3>
               <p>
                 To request a refund, email us at{' '}
-                <a href="mailto:appmeetsolis@gmail.com">
-                  appmeetsolis@gmail.com
-                </a>{' '}
-                with the subject line{' '}
-                <strong>&quot;Refund Request&quot;</strong> and include:
+                <a href="mailto:hari@meetsolis.com">hari@meetsolis.com</a> with
+                the subject line <strong>&quot;Refund Request&quot;</strong> and
+                include:
               </p>
               <ul className="marker:text-slate-400">
                 <li>Your account email address.</li>
@@ -172,10 +170,7 @@ export default function RefundPage() {
               <p>
                 If you have questions about this Refund Policy, please{' '}
                 <Link href="/contact">contact us</Link> or email{' '}
-                <a href="mailto:appmeetsolis@gmail.com">
-                  appmeetsolis@gmail.com
-                </a>
-                .
+                <a href="mailto:hari@meetsolis.com">hari@meetsolis.com</a>.
               </p>
             </div>
           </div>

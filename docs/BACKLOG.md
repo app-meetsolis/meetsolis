@@ -105,6 +105,18 @@
 | ID | Issue | Introduced | Priority | Effort |
 |----|-------|------------|----------|--------|
 | TECH-001 | Jest test failures — OpenAI runtime shim crashes in Node.js | Story 3.4 | Medium | 1–2h |
+| TECH-002 | SidebarCard uses mock plan + onboarding data — wire to real APIs | new-website-design | Medium | 2–3h |
+
+### TECH-002 Detail
+**Symptom:** `SidebarCard.tsx` renders using `MOCK_PLAN`, `MOCK_CLIENTS_USED`, `MOCK_TRANSCRIPTS_USED`, `MOCK_STEPS_DONE` constants.
+**Impact:** Card always shows "Free plan" regardless of actual user subscription. Usage bars show hardcoded values.
+**Fix:**
+1. Add `plan` + usage counters to `User` type (or a separate `useSubscription` hook hitting `/api/subscription`)
+2. Add `onboarding_steps_done` to user metadata or a dedicated `/api/onboarding/progress` endpoint
+3. Replace mock constants in `SidebarCard.tsx` with real data
+**Files:** `apps/web/src/components/dashboard/SidebarCard.tsx`, `packages/shared/src/types/auth.ts`, new API route needed
+
+---
 
 ### TECH-001 Detail
 **Symptom:** 40 of 84 test suites fail. `openai/_shims/web-runtime.ts` initializes browser APIs on import; Jest/Node has no browser runtime.

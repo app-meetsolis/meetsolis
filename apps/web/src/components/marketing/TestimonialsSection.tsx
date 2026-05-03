@@ -195,8 +195,8 @@ function TestimonialCard({
 export default function TestimonialsSection() {
   return (
     <section
-      className="w-full flex flex-col items-center relative"
-      style={{ padding: '64px', backgroundColor: 'rgb(248,249,250)' }}
+      className="w-full flex flex-col items-center relative px-4 py-10 sm:px-8 md:px-16"
+      style={{ backgroundColor: 'rgb(248,249,250)' }}
     >
       {/* Background image */}
       <div
@@ -223,9 +223,9 @@ export default function TestimonialsSection() {
             <span className="section-badge">LOVED BY 200+ TEAMS WORLDWIDE</span>
             <h2
               style={{
-                fontSize: '48px',
+                fontSize: 'clamp(28px, 5vw, 48px)',
                 fontWeight: 600,
-                letterSpacing: '-3px',
+                letterSpacing: 'clamp(-1px, -0.4vw, -3px)',
                 lineHeight: '1em',
                 color: '#000000',
                 textAlign: 'center',
@@ -251,53 +251,17 @@ export default function TestimonialsSection() {
 
         {/* Testimonials Grid */}
         <div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 overflow-hidden"
           style={{
-            display: 'flex',
-            gap: '12px',
             maskImage:
-              'linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 35%)',
+              'linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 25%)',
             WebkitMaskImage:
-              'linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 35%)',
-            overflow: 'hidden',
+              'linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 25%)',
           }}
         >
-          {/* Column 1 */}
-          <div
-            style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '10px',
-            }}
-          >
-            <TestimonialCard testimonial={testimonials[0]} />
-            <TestimonialCard testimonial={testimonials[1]} />
-          </div>
-          {/* Column 2 */}
-          <div
-            style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '10px',
-            }}
-          >
-            <TestimonialCard testimonial={testimonials[2]} />
-            <TestimonialCard testimonial={testimonials[3]} />
-            <TestimonialCard testimonial={testimonials[4]} />
-          </div>
-          {/* Column 3 */}
-          <div
-            style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '10px',
-            }}
-          >
-            <TestimonialCard testimonial={testimonials[5]} />
-            <TestimonialCard testimonial={testimonials[6]} />
-          </div>
+          {testimonials.map((t, i) => (
+            <TestimonialCard key={i} testimonial={t} />
+          ))}
         </div>
       </div>
     </section>

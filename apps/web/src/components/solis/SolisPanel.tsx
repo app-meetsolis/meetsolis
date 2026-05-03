@@ -116,51 +116,58 @@ export function SolisPanel({ clientId, clientName }: SolisPanelProps) {
               : 'Ask anything about your clients...'
           }
           disabled={mutation.isPending}
-          className="min-h-[72px] resize-none bg-white text-[#1A1A1A] placeholder:text-[#9CA3AF]"
+          className="min-h-[72px] resize-none bg-muted border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-primary/30 focus-visible:border-primary/40"
           rows={3}
         />
         <Button
           onClick={handleSubmit}
           disabled={!query.trim() || mutation.isPending}
-          className="h-[72px] shrink-0 bg-[#001F3F] px-3 hover:bg-[#003366]"
+          className="h-[72px] shrink-0 bg-primary text-primary-foreground font-semibold hover:bg-primary/85 px-4 disabled:opacity-40"
         >
           <Send className="h-4 w-4" />
-          <span className="ml-1.5 hidden sm:inline">Ask Solis</span>
+          <span className="ml-1.5 hidden sm:inline">Ask</span>
         </Button>
       </div>
 
-      {/* Suggested chips — hidden after first answer */}
+      {/* Suggested chips */}
       {!result && (
         <div className="flex flex-wrap gap-2">
           {chips.map(chip => (
-            <button
+            <Button
               key={chip}
+              variant="outline"
+              size="sm"
               onClick={() => handleChipClick(chip)}
               disabled={mutation.isPending}
-              className="rounded-md border border-dashed border-[#9CA3AF] px-3 py-1.5 text-sm text-[#6B7280] transition-colors hover:border-[#001F3F] hover:text-[#001F3F] disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-full border-border text-muted-foreground hover:border-accent hover:text-secondary-foreground disabled:opacity-40"
             >
               {chip}
-            </button>
+            </Button>
           ))}
         </div>
       )}
 
       {/* Loading state */}
       {mutation.isPending && (
-        <div className="flex items-center gap-2 text-sm text-[#6B7280]">
-          <Loader2 className="h-4 w-4 animate-spin text-[#001F3F]" />
+        <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin text-primary" />
           <span>Solis is thinking…</span>
         </div>
       )}
 
       {/* Answer */}
       {result && (
-        <div className="rounded-lg border border-gray-200 border-l-2 border-l-[#001F3F]/20 bg-white p-4">
+        <div
+          className="rounded-[12px] border border-border bg-muted p-4"
+          style={{ borderLeftWidth: 2, borderLeftColor: 'var(--primary)' }}
+        >
           <div className="mb-3 flex items-center gap-1.5">
-            <Sparkles className="h-4 w-4 text-[#001F3F]" />
-            <span className="text-sm font-medium text-[#1A1A1A]">Answer</span>
+            <Sparkles className="h-4 w-4 text-primary" />
+            <span className="text-[13px] font-semibold text-foreground">
+              Answer
+            </span>
           </div>
-          <div className="prose prose-sm max-w-none text-[#1A1A1A]">
+          <div className="prose prose-sm max-w-none prose-invert text-secondary-foreground prose-p:text-secondary-foreground prose-strong:text-foreground prose-li:text-secondary-foreground">
             <ReactMarkdown>{result.answer}</ReactMarkdown>
           </div>
         </div>
@@ -169,7 +176,9 @@ export function SolisPanel({ clientId, clientName }: SolisPanelProps) {
       {/* Citations */}
       {result && result.citations.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-sm font-medium text-[#6B7280]">Sources</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            Sources
+          </p>
           <ul className="space-y-1">
             {result.citations.map(citation => {
               const label = `${format(parseISO(citation.session_date), 'MMM d, yyyy')} — ${citation.title}`;
@@ -178,12 +187,14 @@ export function SolisPanel({ clientId, clientName }: SolisPanelProps) {
                   {clientId ? (
                     <Link
                       href={`/clients/${clientId}/sessions/${citation.session_id}`}
-                      className="text-sm text-[#001F3F] hover:underline"
+                      className="text-[12px] text-primary hover:opacity-70 transition-opacity"
                     >
                       {label}
                     </Link>
                   ) : (
-                    <span className="text-sm text-[#6B7280]">{label}</span>
+                    <span className="text-[12px] text-muted-foreground">
+                      {label}
+                    </span>
                   )}
                 </li>
               );
@@ -194,7 +205,7 @@ export function SolisPanel({ clientId, clientName }: SolisPanelProps) {
 
       {/* Usage counter */}
       {usageData && (
-        <p className="text-xs text-[#9CA3AF]">
+        <p className="text-[11px] text-muted-foreground">
           {usageData.tier === 'free'
             ? `${usageData.query_count} of 75 lifetime queries used`
             : `${usageData.query_count} of 2,000 monthly queries used`}
