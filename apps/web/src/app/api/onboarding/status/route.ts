@@ -66,7 +66,7 @@ function getSupabaseClient() {
 export async function GET(req: NextRequest) {
   try {
     // CSRF Protection via Clerk JWT validation
-    const { userId } = auth();
+    const { userId } = await auth();
 
     if (!userId) {
       return NextResponse.json(
@@ -144,7 +144,7 @@ export async function GET(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     // CSRF Protection via Clerk JWT validation
-    const { userId } = auth();
+    const { userId } = await auth();
 
     if (!userId) {
       return NextResponse.json(
