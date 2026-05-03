@@ -34,7 +34,12 @@ export const metadata: Metadata = {
   description:
     'Professional video conferencing solution for freelancers and small agencies',
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: '/apple-touch-icon.png',
   },
   verification: {
     google: '9ToQdsgxF7pmAOXOO27NUO4BazNBzUoZTKRSLBn3iRI',
