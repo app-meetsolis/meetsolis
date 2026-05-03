@@ -45,6 +45,7 @@ export const metadata: Metadata = {
 };
 
 import { NoiseOverlay } from '@/components/marketing/layout/NoiseOverlay';
+import { MobileGate } from '@/components/common/MobileGate';
 
 export default function RootLayout({
   children,
@@ -71,7 +72,9 @@ export default function RootLayout({
         <NoiseOverlay />
         <DebugLoggerInit />
         <AnalyticsProvider>
-          <Providers>{children}</Providers>
+          <Providers>
+            <MobileGate>{children}</MobileGate>
+          </Providers>
           <CookieConsent />
         </AnalyticsProvider>
         <Analytics />
