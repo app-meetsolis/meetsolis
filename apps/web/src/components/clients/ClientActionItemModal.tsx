@@ -2,8 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   ClientActionItem,
   ActionItemCreateSchema,
@@ -40,8 +45,6 @@ export function ClientActionItemModal({
       setError(null);
     }
   }, [isOpen, item]);
-
-  if (!isOpen) return null;
 
   const isValid =
     description.trim().length > 0 && description.trim().length <= 500;
@@ -115,33 +118,21 @@ export function ClientActionItemModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={e => {
-        if (e.target === e.currentTarget && !isSaving) onClose();
-      }}
+    <Dialog
+      open={isOpen}
+      onOpenChange={open => !isSaving && !open && onClose()}
     >
-      <div className="w-full max-w-md rounded-lg bg-white shadow-xl">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b px-6 py-4">
-          <h2 className="text-lg font-semibold text-[#1A1A1A]">
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>
             {isEdit ? 'Edit action item' : 'Add action item'}
-          </h2>
-          <button
-            onClick={onClose}
-            className="rounded p-1 text-[#6B7280] hover:bg-gray-100"
-            aria-label="Close"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+          </DialogTitle>
+        </DialogHeader>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="px-6 py-4">
-          {/* Description */}
-          <div className="mb-4">
-            <label className="mb-1.5 block text-sm font-medium text-[#1A1A1A]">
-              Description <span className="text-red-500">*</span>
+        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-foreground">
+              Description <span className="text-red-400">*</span>
             </label>
             <textarea
               value={description}
@@ -149,27 +140,26 @@ export function ClientActionItemModal({
               maxLength={500}
               rows={3}
               placeholder="What needs to be done?"
-              className="w-full resize-none rounded-md border border-gray-200 px-3 py-2 text-sm text-[#1A1A1A] placeholder:text-[#9CA3AF] focus:border-[#001F3F] focus:outline-none focus:ring-1 focus:ring-[#001F3F]"
+              className="w-full resize-none rounded-lg border border-border bg-muted px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/30"
               required
             />
-            <p className="mt-1 text-right text-xs text-[#9CA3AF]">
+            <p className="mt-1 text-right text-xs text-muted-foreground">
               {description.length}/500
             </p>
           </div>
 
-          {/* Assigned To */}
-          <div className="mb-6">
-            <label className="mb-1.5 block text-sm font-medium text-[#1A1A1A]">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-foreground">
               Assigned to
             </label>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => setAssignee('coach')}
-                className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                   assignee === 'coach'
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-gray-200 text-[#6B7280] hover:border-gray-300'
+                    ? 'border-primary/40 bg-primary/10 text-primary'
+                    : 'border-border text-muted-foreground hover:border-border hover:bg-muted'
                 }`}
               >
                 Coach
@@ -177,10 +167,10 @@ export function ClientActionItemModal({
               <button
                 type="button"
                 onClick={() => setAssignee('client')}
-                className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                   assignee === 'client'
-                    ? 'border-green-500 bg-green-50 text-green-700'
-                    : 'border-gray-200 text-[#6B7280] hover:border-gray-300'
+                    ? 'border-primary/40 bg-primary/10 text-primary'
+                    : 'border-border text-muted-foreground hover:border-border hover:bg-muted'
                 }`}
               >
                 Client
@@ -188,10 +178,9 @@ export function ClientActionItemModal({
             </div>
           </div>
 
-          {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-400">{error}</p>}
 
-          {/* Actions */}
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pt-2">
             <Button
               type="button"
               variant="outline"
@@ -205,7 +194,7 @@ export function ClientActionItemModal({
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

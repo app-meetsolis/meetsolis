@@ -1,12 +1,6 @@
 /**
  * ClientModal Component
  * Story 2.3: Add/Edit Client Modal - Task 1
- *
- * Modal for adding/editing clients with:
- * - Create/Edit modes
- * - Form validation
- * - Unsaved changes confirmation
- * - Auto-close on save
  */
 
 'use client';
@@ -38,16 +32,10 @@ export function ClientModal({
   const [isDirty, setIsDirty] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Reset dirty state when modal opens/closes
   useEffect(() => {
-    if (!isOpen) {
-      setIsDirty(false);
-    }
+    if (!isOpen) setIsDirty(false);
   }, [isOpen]);
 
-  /**
-   * Handle modal close with confirmation if unsaved changes
-   */
   const handleClose = () => {
     if (isDirty && !isSubmitting) {
       const confirmed = window.confirm(
@@ -58,9 +46,6 @@ export function ClientModal({
     onClose();
   };
 
-  /**
-   * Handle successful form submission
-   */
   const handleSuccess = () => {
     setIsDirty(false);
     onClose();
@@ -68,9 +53,9 @@ export function ClientModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-[#1A1A1A]">
+          <DialogTitle className="text-[20px] font-bold text-foreground">
             {mode === 'create' ? 'Add Client' : 'Edit Client'}
           </DialogTitle>
           <DialogDescription className="sr-only">

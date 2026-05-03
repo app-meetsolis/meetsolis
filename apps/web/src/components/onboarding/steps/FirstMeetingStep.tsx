@@ -6,7 +6,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Calendar, Clock, Users, Video, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import {
+  Calendar,
+  Clock,
+  Users,
+  Video,
+  CheckCircle2,
+  Loader2,
+  AlertCircle,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -29,7 +37,7 @@ export function FirstMeetingStep({ onSave }: FirstMeetingStepProps) {
     title: 'My First Meeting',
     date: new Date().toISOString().split('T')[0],
     time: '10:00',
-    participants: ''
+    participants: '',
   });
 
   const handleCreateMeeting = async () => {
@@ -38,7 +46,9 @@ export function FirstMeetingStep({ onSave }: FirstMeetingStepProps) {
 
     try {
       // Combine date and time into ISO string for scheduled_start
-      const scheduledStart = new Date(`${meetingData.date}T${meetingData.time}`).toISOString();
+      const scheduledStart = new Date(
+        `${meetingData.date}T${meetingData.time}`
+      ).toISOString();
 
       const data: MeetingData = {
         title: meetingData.title,
@@ -69,34 +79,41 @@ export function FirstMeetingStep({ onSave }: FirstMeetingStepProps) {
 
         <div>
           <h3 className="text-2xl font-bold text-gray-900 mb-2">
-            🎉 Congratulations!
+            🎉 You&apos;re all set!
           </h3>
           <p className="text-gray-600">
-            You've successfully set up your MeetSolis account.
-            You're ready to host amazing video conferences!
+            Your MeetSolis account is ready. Start building your client memory.
           </p>
         </div>
 
         <div className="bg-primary-50 rounded-lg p-6 space-y-3">
-          <h4 className="font-semibold text-primary-900">What's Next?</h4>
+          <h4 className="font-semibold text-primary-900">What&apos;s Next?</h4>
           <ul className="text-sm text-primary-800 space-y-2">
             <li className="flex items-start gap-2">
               <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              <span>Invite team members to join your meetings</span>
+              <span>Add your coaching clients to build their Client Cards</span>
             </li>
             <li className="flex items-start gap-2">
               <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              <span>Explore the whiteboard and screen sharing features</span>
+              <span>
+                Upload a session transcript to generate your first AI summary
+              </span>
             </li>
             <li className="flex items-start gap-2">
               <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              <span>Set up your calendar integration for easy scheduling</span>
+              <span>
+                Ask Solis Intelligence questions about any client&apos;s history
+              </span>
             </li>
           </ul>
         </div>
 
         <p className="text-sm text-gray-600">
-          Need help? Check out our <a href="/help" className="text-primary-600 hover:underline">Help Center</a> or reach out to support.
+          Need help? Check out our{' '}
+          <a href="/help" className="text-primary-600 hover:underline">
+            Help Center
+          </a>{' '}
+          or reach out to support.
         </p>
       </div>
     );
@@ -109,7 +126,8 @@ export function FirstMeetingStep({ onSave }: FirstMeetingStepProps) {
           Create Your First Meeting
         </h3>
         <p className="text-gray-600">
-          Let's test everything with a demo meeting. You can skip this and create your first real meeting later.
+          Let&apos;s test everything with a demo meeting. You can skip this and
+          create your first real meeting later.
         </p>
       </div>
 
@@ -125,7 +143,9 @@ export function FirstMeetingStep({ onSave }: FirstMeetingStepProps) {
             type="text"
             placeholder="e.g., Team Standup"
             value={meetingData.title}
-            onChange={(e) => setMeetingData({ ...meetingData, title: e.target.value })}
+            onChange={e =>
+              setMeetingData({ ...meetingData, title: e.target.value })
+            }
           />
         </div>
 
@@ -140,7 +160,9 @@ export function FirstMeetingStep({ onSave }: FirstMeetingStepProps) {
             <Input
               type="date"
               value={meetingData.date}
-              onChange={(e) => setMeetingData({ ...meetingData, date: e.target.value })}
+              onChange={e =>
+                setMeetingData({ ...meetingData, date: e.target.value })
+              }
             />
           </div>
 
@@ -154,7 +176,9 @@ export function FirstMeetingStep({ onSave }: FirstMeetingStepProps) {
             <Input
               type="time"
               value={meetingData.time}
-              onChange={(e) => setMeetingData({ ...meetingData, time: e.target.value })}
+              onChange={e =>
+                setMeetingData({ ...meetingData, time: e.target.value })
+              }
             />
           </div>
         </div>
@@ -166,10 +190,7 @@ export function FirstMeetingStep({ onSave }: FirstMeetingStepProps) {
               Invite Participants (Optional)
             </div>
           </label>
-          <Input
-            type="email"
-            placeholder="email@example.com"
-          />
+          <Input type="email" placeholder="email@example.com" />
           <p className="text-xs text-gray-500 mt-1">
             You can add more participants later
           </p>
@@ -202,7 +223,8 @@ export function FirstMeetingStep({ onSave }: FirstMeetingStepProps) {
 
       <div className="bg-primary-50 rounded-lg p-4">
         <p className="text-sm text-primary-700">
-          <strong>Tip:</strong> Once created, you'll get a unique meeting link that you can share with participants.
+          <strong>Tip:</strong> Once created, you&apos;ll get a unique meeting
+          link that you can share with participants.
         </p>
       </div>
     </div>

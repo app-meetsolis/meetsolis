@@ -20,7 +20,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Skeleton } from '@/components/ui/skeleton';
 
 interface UserProfileProps {
   className?: string;
@@ -43,10 +42,10 @@ export function UserProfile({ className }: UserProfileProps) {
   if (isLoading) {
     return (
       <div className="flex items-center gap-3">
-        <Skeleton className="h-10 w-10 rounded-full" />
+        <div className="skeleton rounded-md h-10 w-10 rounded-full" />
         <div className="hidden flex-col gap-1 md:flex">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-3 w-32" />
+          <div className="skeleton rounded-md h-4 w-24" />
+          <div className="skeleton rounded-md h-3 w-32" />
         </div>
       </div>
     );

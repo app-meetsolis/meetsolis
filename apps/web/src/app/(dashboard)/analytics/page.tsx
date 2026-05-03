@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Analytics Dashboard Page
  * Displays key metrics, user activity, and performance data
  */
@@ -28,7 +28,6 @@ import {
   Cell,
 } from 'recharts';
 import type { AnalyticsDashboardMetrics } from '@meetsolis/shared';
-import { Skeleton } from '@/components/ui/skeleton';
 
 const COLORS = ['#001F3F', '#3A6EA5', '#7FB3D5', '#C6E2F0'];
 
@@ -87,7 +86,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <Skeleton className="h-10 w-20" />
+              <div className="skeleton rounded-md h-10 w-20" />
             ) : (
               <div>
                 <p className="text-3xl font-bold">
@@ -110,7 +109,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <Skeleton className="h-10 w-20" />
+              <div className="skeleton rounded-md h-10 w-20" />
             ) : (
               <div>
                 <p className="text-3xl font-bold">
@@ -133,7 +132,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <Skeleton className="h-10 w-20" />
+              <div className="skeleton rounded-md h-10 w-20" />
             ) : (
               <div>
                 <p className="text-3xl font-bold">
@@ -156,7 +155,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <Skeleton className="h-10 w-20" />
+              <div className="skeleton rounded-md h-10 w-20" />
             ) : (
               <div>
                 <p className="text-3xl font-bold">
@@ -179,7 +178,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <Skeleton className="h-[300px] w-full" />
+              <div className="skeleton rounded-md h-[300px] w-full" />
             ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart
@@ -207,7 +206,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <Skeleton className="h-[300px] w-full" />
+              <div className="skeleton rounded-md h-[300px] w-full" />
             ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart
@@ -243,7 +242,7 @@ export default function AnalyticsPage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <Skeleton className="h-[200px] w-full" />
+            <div className="skeleton rounded-md h-[200px] w-full" />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="border rounded-lg p-4">
@@ -294,7 +293,7 @@ export default function AnalyticsPage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <Skeleton className="h-[300px] w-full" />
+            <div className="skeleton rounded-md h-[300px] w-full" />
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>

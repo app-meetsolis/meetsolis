@@ -34,7 +34,7 @@ export function ActionItemCard({
 
   return (
     <div
-      className="flex items-start gap-3 rounded-md px-3 py-2.5 transition-colors hover:bg-gray-50"
+      className="flex items-start gap-3 rounded-md px-3 py-2.5 transition-colors hover:bg-muted"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -50,7 +50,7 @@ export function ActionItemCard({
 
       <div className="min-w-0 flex-1">
         <p
-          className={`text-sm ${isCompleted ? 'text-[#9CA3AF] line-through' : 'text-[#1A1A1A]'}`}
+          className={`text-sm ${isCompleted ? 'text-muted-foreground line-through' : 'text-foreground'}`}
         >
           {item.description}
         </p>
@@ -59,8 +59,8 @@ export function ActionItemCard({
           <span
             className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
               item.assignee === 'coach'
-                ? 'bg-blue-100 text-blue-700'
-                : 'bg-green-100 text-green-700'
+                ? 'bg-primary/10 text-primary border border-primary/40'
+                : 'bg-primary/10 text-primary border border-primary/40'
             }`}
           >
             {item.assignee === 'coach' ? 'Coach' : 'Client'}
@@ -72,7 +72,7 @@ export function ActionItemCard({
         <div className="flex shrink-0 items-center gap-1">
           <button
             onClick={() => onEdit(item)}
-            className="rounded p-1 text-[#6B7280] hover:bg-gray-100 hover:text-[#1A1A1A]"
+            className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
             aria-label="Edit action item"
           >
             <Pencil className="h-3.5 w-3.5" />
@@ -81,7 +81,7 @@ export function ActionItemCard({
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <button
-                className="rounded p-1 text-[#6B7280] hover:bg-red-50 hover:text-red-600"
+                className="rounded p-1 text-muted-foreground hover:bg-red-500/10 hover:text-red-500"
                 aria-label="Delete action item"
               >
                 <Trash2 className="h-3.5 w-3.5" />

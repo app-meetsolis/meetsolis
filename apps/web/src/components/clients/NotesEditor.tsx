@@ -89,13 +89,13 @@ export function NotesEditor({ clientId, initialNotes }: NotesEditorProps) {
 
   const isEmpty = !content.trim();
 
-  // ── View mode ──────────────────────────────────────────────────────────────
+  // â"€â"€ View mode â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
   if (!isEditing) {
     if (isEmpty) {
       return (
         <button
           onClick={() => setIsEditing(true)}
-          className="w-full rounded-lg border-2 border-dashed border-gray-200 bg-white p-6 text-center text-sm text-[#9CA3AF] transition hover:border-gray-300 hover:text-[#6B7280]"
+          className="w-full rounded-[12px] border-2 border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground transition hover:border-border/60 hover:text-foreground"
         >
           Click to add notes about this client
         </button>
@@ -103,7 +103,7 @@ export function NotesEditor({ clientId, initialNotes }: NotesEditorProps) {
     }
 
     return (
-      <div className="group relative rounded-lg bg-white p-6 shadow-sm">
+      <div className="group relative rounded-[12px] bg-card p-6 shadow-sm">
         <Button
           variant="ghost"
           size="sm"
@@ -114,18 +114,18 @@ export function NotesEditor({ clientId, initialNotes }: NotesEditorProps) {
           Edit
         </Button>
 
-        <div className="prose prose-sm max-w-none text-[#374151]">
+        <div className="prose prose-sm max-w-none text-foreground">
           <ReactMarkdown>{content}</ReactMarkdown>
         </div>
       </div>
     );
   }
 
-  // ── Edit mode ──────────────────────────────────────────────────────────────
+  // â"€â"€ Edit mode â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
   const isAtLimit = content.length >= MAX_CHARS;
 
   return (
-    <div className="rounded-lg bg-white p-6 shadow-sm">
+    <div className="rounded-[12px] bg-card p-6 shadow-sm">
       <textarea
         ref={textareaRef}
         value={content}
@@ -133,17 +133,17 @@ export function NotesEditor({ clientId, initialNotes }: NotesEditorProps) {
         onBlur={handleBlur}
         placeholder="Write notes in markdown format..."
         rows={12}
-        className="w-full resize-y rounded-md border border-gray-200 bg-[#FAFAFA] p-3 text-sm text-[#1A1A1A] placeholder-[#9CA3AF] focus:border-[#001F3F] focus:outline-none focus:ring-1 focus:ring-[#001F3F]"
+        className="w-full resize-y rounded-md border border-border bg-muted p-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/30"
       />
 
       {/* Footer: status + counter + done button */}
       <div className="mt-2 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           {isSaving && (
-            <span className="text-xs text-[#9CA3AF]">Saving...</span>
+            <span className="text-xs text-muted-foreground">Saving...</span>
           )}
           <span
-            className={`text-xs ${isAtLimit ? 'font-medium text-red-500' : 'text-[#9CA3AF]'}`}
+            className={`text-xs ${isAtLimit ? 'font-medium text-red-500' : 'text-muted-foreground'}`}
           >
             {content.length.toLocaleString()}/{MAX_CHARS.toLocaleString()}
             {isAtLimit && ' — limit reached'}

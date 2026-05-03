@@ -227,15 +227,15 @@ export function SessionUploadModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="relative w-full max-w-lg rounded-xl bg-white shadow-xl">
+      <div className="relative w-full max-w-lg rounded-[12px] bg-card shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-          <h2 className="text-base font-semibold text-[#1A1A1A]">
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <h2 className="text-base font-semibold text-foreground">
             Upload Session Transcript
           </h2>
           <button
             onClick={onClose}
-            className="rounded p-1 text-[#6B7280] hover:bg-gray-100"
+            className="rounded p-1 text-muted-foreground hover:bg-muted"
             aria-label="Close"
           >
             <X className="h-4 w-4" />
@@ -244,14 +244,14 @@ export function SessionUploadModal({
 
         <form onSubmit={handleSubmit} className="space-y-5 px-6 py-5">
           {/* Mode tabs */}
-          <div className="flex gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1">
+          <div className="flex gap-1 rounded-lg border border-border bg-muted p-1">
             <button
               type="button"
               onClick={() => setMode('file')}
               className={`flex flex-1 items-center justify-center gap-2 rounded-md py-1.5 text-sm font-medium transition-colors ${
                 mode === 'file'
-                  ? 'bg-white text-[#1A1A1A] shadow-sm'
-                  : 'text-[#6B7280] hover:text-[#1A1A1A]'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <Upload className="h-3.5 w-3.5" />
@@ -262,8 +262,8 @@ export function SessionUploadModal({
               onClick={() => setMode('paste')}
               className={`flex flex-1 items-center justify-center gap-2 rounded-md py-1.5 text-sm font-medium transition-colors ${
                 mode === 'paste'
-                  ? 'bg-white text-[#1A1A1A] shadow-sm'
-                  : 'text-[#6B7280] hover:text-[#1A1A1A]'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <FileText className="h-3.5 w-3.5" />
@@ -274,8 +274,8 @@ export function SessionUploadModal({
               onClick={() => setMode('audio')}
               className={`flex flex-1 items-center justify-center gap-2 rounded-md py-1.5 text-sm font-medium transition-colors ${
                 mode === 'audio'
-                  ? 'bg-white text-[#1A1A1A] shadow-sm'
-                  : 'text-[#6B7280] hover:text-[#1A1A1A]'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <Mic className="h-3.5 w-3.5" />
@@ -289,19 +289,19 @@ export function SessionUploadModal({
               <Label>Transcript File</Label>
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center transition-colors hover:border-gray-300 hover:bg-gray-100"
+                className="flex cursor-pointer flex-col items-center justify-center rounded-[12px] border-2 border-dashed border-border bg-muted px-4 py-8 text-center transition-colors hover:border-border hover:bg-accent"
               >
-                <Upload className="mb-2 h-6 w-6 text-[#6B7280]" />
+                <Upload className="mb-2 h-6 w-6 text-muted-foreground" />
                 {file ? (
-                  <p className="text-sm font-medium text-[#1A1A1A]">
+                  <p className="text-sm font-medium text-foreground">
                     {file.name}
                   </p>
                 ) : (
                   <>
-                    <p className="text-sm font-medium text-[#1A1A1A]">
+                    <p className="text-sm font-medium text-foreground">
                       Click to select file
                     </p>
-                    <p className="mt-0.5 text-xs text-[#9CA3AF]">
+                    <p className="mt-0.5 text-xs text-muted-foreground">
                       .txt or .docx — max 25MB
                     </p>
                   </>
@@ -327,7 +327,7 @@ export function SessionUploadModal({
                   className={`text-xs ${
                     pasteText.length > MAX_PASTE_CHARS
                       ? 'text-red-500'
-                      : 'text-[#9CA3AF]'
+                      : 'text-muted-foreground'
                   }`}
                 >
                   {pasteText.length.toLocaleString()} /{' '}
@@ -350,19 +350,19 @@ export function SessionUploadModal({
               <Label>Audio / Video Recording</Label>
               <div
                 onClick={() => audioInputRef.current?.click()}
-                className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center transition-colors hover:border-gray-300 hover:bg-gray-100"
+                className="flex cursor-pointer flex-col items-center justify-center rounded-[12px] border-2 border-dashed border-border bg-muted px-4 py-8 text-center transition-colors hover:border-border hover:bg-accent"
               >
-                <Mic className="mb-2 h-6 w-6 text-[#6B7280]" />
+                <Mic className="mb-2 h-6 w-6 text-muted-foreground" />
                 {audioFile ? (
-                  <p className="text-sm font-medium text-[#1A1A1A]">
+                  <p className="text-sm font-medium text-foreground">
                     {audioFile.name}
                   </p>
                 ) : (
                   <>
-                    <p className="text-sm font-medium text-[#1A1A1A]">
+                    <p className="text-sm font-medium text-foreground">
                       Click to select audio or video file
                     </p>
-                    <p className="mt-0.5 text-xs text-[#9CA3AF]">
+                    <p className="mt-0.5 text-xs text-muted-foreground">
                       .mp3, .mp4, .m4a, .wav, .webm — max 500MB
                     </p>
                   </>
@@ -379,13 +379,13 @@ export function SessionUploadModal({
                 <p className="text-xs text-red-500">{audioFileError}</p>
               )}
               {uploadProgress !== null && (
-                <p className="text-xs text-[#6B7280]">
+                <p className="text-xs text-muted-foreground">
                   {uploadProgress < 100
                     ? 'Uploading…'
                     : 'Upload complete — creating session…'}
                 </p>
               )}
-              <p className="text-xs text-[#9CA3AF]">
+              <p className="text-xs text-muted-foreground">
                 File uploads directly to secure storage. Transcription begins
                 automatically.
               </p>

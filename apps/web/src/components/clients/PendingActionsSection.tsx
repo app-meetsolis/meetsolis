@@ -94,15 +94,15 @@ export function PendingActionsSection({
   }
 
   return (
-    <section className="rounded-lg border border-gray-200 bg-white">
+    <section className="rounded-[12px] border border-border bg-card">
       {/* Section header */}
-      <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold text-[#1A1A1A]">
+          <h2 className="text-base font-semibold text-foreground">
             Pending Actions
           </h2>
           {actionItems.length > 0 && (
-            <span className="rounded-full bg-[#E8E4DD] px-2 py-0.5 text-xs font-medium text-[#6B7280]">
+            <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
               {actionItems.length}
             </span>
           )}
@@ -118,7 +118,7 @@ export function PendingActionsSection({
         {isLoading && (
           <div className="space-y-2 px-2 py-3">
             {[1, 2].map(i => (
-              <div key={i} className="h-8 animate-pulse rounded bg-gray-100" />
+              <div key={i} className="h-8 animate-pulse rounded bg-muted" />
             ))}
           </div>
         )}
@@ -130,7 +130,7 @@ export function PendingActionsSection({
         )}
 
         {!isLoading && !isError && actionItems.length === 0 && (
-          <p className="px-3 py-6 text-center text-sm text-[#9CA3AF]">
+          <p className="px-3 py-6 text-center text-sm text-muted-foreground">
             No pending actions — great work!
           </p>
         )}

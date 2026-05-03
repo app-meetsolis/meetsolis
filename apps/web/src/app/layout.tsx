@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Outfit, DM_Sans } from 'next/font/google';
+import { Outfit, DM_Sans, Instrument_Serif } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/react';
 import { cn } from '@/lib/utils';
 import { SpeedInsights } from '@vercel/speed-insights/next';
@@ -18,6 +18,14 @@ const outfit = Outfit({
 const dmSans = DM_Sans({
   subsets: ['latin'],
   variable: '--font-dm-sans',
+  display: 'swap',
+});
+
+const instrumentSerif = Instrument_Serif({
+  weight: '400',
+  style: ['normal', 'italic'],
+  subsets: ['latin'],
+  variable: '--font-serif',
   display: 'swap',
 });
 
@@ -46,9 +54,20 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn(outfit.variable, dmSans.variable, 'scroll-smooth')}
+      className={cn(
+        outfit.variable,
+        dmSans.variable,
+        instrumentSerif.variable,
+        'scroll-smooth'
+      )}
     >
       <body className={cn(dmSans.className, 'antialiased')}>
+        {/* Apply dark class before paint to prevent flash */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var t=localStorage.getItem('ms-theme');if(t==='dark'||(t==null&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}})()`,
+          }}
+        />
         <NoiseOverlay />
         <DebugLoggerInit />
         <AnalyticsProvider>

@@ -28,12 +28,12 @@ export function ClientSearchEmpty({
   });
 
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-[#D1D5DB] bg-white p-12 text-center">
+    <div className="flex flex-col items-center justify-center rounded-[12px] border-2 border-dashed border-border bg-card p-12 text-center">
       <div className="mx-auto max-w-md">
-        <h3 className="mb-2 text-lg font-semibold text-[#1A1A1A]">
+        <h3 className="mb-2 text-lg font-semibold text-foreground">
           No clients found
         </h3>
-        <p className="mb-6 text-sm text-[#6B7280]">
+        <p className="mb-6 text-sm text-muted-foreground">
           No clients found matching &apos;{sanitizedQuery}&apos;
         </p>
         <Button onClick={onClearSearch} variant="outline">

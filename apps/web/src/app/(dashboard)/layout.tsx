@@ -22,7 +22,7 @@ export default function DashboardLayout({
     <>
       <UserTracking />
       <ErrorBoundary>
-        <div className="flex h-screen bg-[#E8E4DD]">
+        <div className="flex h-screen bg-background">
           <LeftSidebar
             isMobileOpen={isMobileOpen}
             onClose={() => setIsMobileOpen(false)}
@@ -31,15 +31,15 @@ export default function DashboardLayout({
           {/* Content area */}
           <div className="flex flex-1 flex-col min-w-0">
             {/* Mobile top bar */}
-            <div className="flex h-12 shrink-0 items-center border-b border-gray-200 bg-white px-4 md:hidden">
+            <div className="flex h-12 shrink-0 items-center border-b border-border bg-card px-4 md:hidden">
               <button
                 onClick={() => setIsMobileOpen(true)}
-                className="text-[#6B7280] hover:text-[#1A1A1A]"
+                className="text-[#4e5b6d] hover:text-[#000000]"
                 aria-label="Open navigation"
               >
                 <Menu className="h-5 w-5" />
               </button>
-              <span className="ml-3 text-lg font-bold text-[#001F3F]">
+              <span className="ml-3 text-lg font-bold text-foreground">
                 MeetSolis
               </span>
             </div>

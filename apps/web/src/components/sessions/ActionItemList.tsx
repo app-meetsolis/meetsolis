@@ -139,14 +139,14 @@ export function ActionItemList({ sessionId, clientId }: ActionItemListProps) {
 
   return (
     <div className="mt-3">
-      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[#6B7280]">
+      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
         Action Items
       </p>
 
       {isLoading && (
         <div className="space-y-1.5">
           {[1, 2].map(i => (
-            <div key={i} className="h-7 animate-pulse rounded bg-gray-100" />
+            <div key={i} className="h-7 animate-pulse rounded bg-muted" />
           ))}
         </div>
       )}
@@ -156,7 +156,7 @@ export function ActionItemList({ sessionId, clientId }: ActionItemListProps) {
       )}
 
       {!isLoading && !isError && items.length === 0 && (
-        <p className="text-xs text-[#9CA3AF]">No action items yet.</p>
+        <p className="text-xs text-muted-foreground">No action items yet.</p>
       )}
 
       {!isLoading &&

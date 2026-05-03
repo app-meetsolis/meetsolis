@@ -1,11 +1,6 @@
 /**
  * TierLimitDialog Component
  * Story 2.3: Add/Edit Client Modal - Task 6
- *
- * Warning dialog when client limit is reached:
- * - Shows current limit (e.g., 3/3 for free tier)
- * - Upgrade button linking to /pricing
- * - Cancel button
  */
 
 'use client';
@@ -44,19 +39,19 @@ export function TierLimitDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md bg-card border-border">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <div className="rounded-full bg-red-100 p-3">
-              <AlertCircle className="h-6 w-6 text-red-600" />
+            <div className="rounded-full bg-red-400/15 p-3">
+              <AlertCircle className="h-6 w-6 text-red-400" />
             </div>
-            <DialogTitle className="text-xl font-bold text-[#1A1A1A]">
+            <DialogTitle className="text-[18px] font-bold text-foreground">
               Client Limit Reached
             </DialogTitle>
           </div>
-          <DialogDescription className="pt-4 text-base text-[#6B7280]">
+          <DialogDescription className="pt-4 text-[13px] text-muted-foreground">
             You&apos;ve reached your client limit ({currentCount}/{maxClients}).
-            Upgrade to Pro for 50 clients.
+            Upgrade to Pro for unlimited clients.
           </DialogDescription>
         </DialogHeader>
 
@@ -64,12 +59,7 @@ export function TierLimitDialog({
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button
-            onClick={handleUpgrade}
-            className="bg-[#001F3F] hover:bg-[#003366]"
-          >
-            Upgrade
-          </Button>
+          <Button onClick={handleUpgrade}>Upgrade to Pro</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

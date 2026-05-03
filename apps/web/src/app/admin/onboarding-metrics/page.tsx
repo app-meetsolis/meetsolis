@@ -15,7 +15,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Download, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
@@ -275,15 +274,15 @@ export default function OnboardingMetricsPage() {
   if (isLoading) {
     return (
       <div className="p-8 space-y-8">
-        <Skeleton className="h-10 w-64" />
+        <div className="animate-pulse rounded-md bg-muted h-10 w-64" />
         <div className="grid gap-6 md:grid-cols-3">
           {[1, 2, 3].map(i => (
-            <Skeleton key={i} className="h-32" />
+            <div key={i} className="animate-pulse rounded-md bg-muted h-32" />
           ))}
         </div>
         <div className="grid gap-6 md:grid-cols-2">
           {[1, 2].map(i => (
-            <Skeleton key={i} className="h-96" />
+            <div key={i} className="animate-pulse rounded-md bg-muted h-96" />
           ))}
         </div>
       </div>

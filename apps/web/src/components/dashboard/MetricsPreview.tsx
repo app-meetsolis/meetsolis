@@ -7,7 +7,6 @@
 
 import { Clock, Users, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 
 interface MetricCardProps {
   title: string;
@@ -51,11 +50,11 @@ export function MetricsPreview({ isLoading = false }: MetricsPreviewProps) {
         {[1, 2, 3].map(i => (
           <Card key={i}>
             <CardHeader className="pb-2">
-              <Skeleton className="h-4 w-32" />
+              <div className="skeleton rounded-md h-4 w-32" />
             </CardHeader>
             <CardContent>
-              <Skeleton className="h-8 w-16" />
-              <Skeleton className="mt-2 h-3 w-24" />
+              <div className="skeleton rounded-md h-8 w-16" />
+              <div className="skeleton rounded-md mt-2 h-3 w-24" />
             </CardContent>
           </Card>
         ))}

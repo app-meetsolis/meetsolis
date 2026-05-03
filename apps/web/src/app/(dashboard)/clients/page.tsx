@@ -151,14 +151,18 @@ function ClientsPageContent() {
     !isLoading && !isError && filteredAndSortedClients.length > 0;
 
   return (
-    <div className="min-h-screen bg-[#E8E4DD]">
+    <div className="min-h-screen">
       <Toaster position="top-right" duration={3000} />
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 flex items-center justify-between">
+      <div className="container mx-auto px-6 py-6">
+        <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-[#1A1A1A]">Clients</h1>
-            <p className="mt-2 text-sm text-[#6B7280]">Your coaching clients</p>
+            <h1 className="text-[22px] font-bold tracking-[-0.02em] text-foreground">
+              Clients
+            </h1>
+            <p className="mt-0.5 text-[13px] text-muted-foreground">
+              Your coaching clients
+            </p>
           </div>
           <Button className="flex items-center gap-2" onClick={handleAddClient}>
             <Plus className="h-4 w-4" />

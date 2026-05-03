@@ -43,17 +43,17 @@ export function SessionCard({ session, clientId, onRetry }: SessionCardProps) {
 
   if (session.status === 'processing') {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white px-4 py-4">
+      <div className="rounded-[12px] border border-border bg-card px-4 py-4">
         <div className="flex items-center gap-3">
-          <Loader2 className="h-4 w-4 animate-spin text-[#6B7280]" />
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           <div>
-            <p className="text-sm font-medium text-[#1A1A1A]">
+            <p className="text-sm font-medium text-foreground">
               {session.title}
             </p>
-            <p className="text-xs text-[#6B7280]">{formattedDate}</p>
+            <p className="text-xs text-muted-foreground">{formattedDate}</p>
           </div>
         </div>
-        <p className="mt-2 text-xs text-[#9CA3AF]">
+        <p className="mt-2 text-xs text-muted-foreground">
           {session.transcript_audio_url && !session.transcript_text
             ? 'Transcribing audio…'
             : 'AI is processing your session…'}
@@ -64,13 +64,13 @@ export function SessionCard({ session, clientId, onRetry }: SessionCardProps) {
 
   if (session.status === 'error') {
     return (
-      <div className="rounded-lg border border-red-200 bg-white px-4 py-4">
+      <div className="rounded-[12px] border border-red-400/20 bg-card px-4 py-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-sm font-medium text-[#1A1A1A]">
+            <p className="text-sm font-medium text-foreground">
               {session.title}
             </p>
-            <p className="text-xs text-[#6B7280]">{formattedDate}</p>
+            <p className="text-xs text-muted-foreground">{formattedDate}</p>
             <p className="mt-1 text-xs text-red-600">
               AI processing failed. Please retry.
             </p>
@@ -78,7 +78,7 @@ export function SessionCard({ session, clientId, onRetry }: SessionCardProps) {
           <Button
             variant="outline"
             size="sm"
-            className="shrink-0 border-red-200 text-red-600 hover:bg-red-50"
+            className="shrink-0 border-red-400/20 text-red-500 hover:bg-red-500/10"
             onClick={() => onRetry(session.id)}
           >
             Retry
@@ -93,25 +93,27 @@ export function SessionCard({ session, clientId, onRetry }: SessionCardProps) {
   const extraTopics = (session.key_topics?.length ?? 0) - 3;
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white">
+    <div className="rounded-[12px] border border-border bg-card">
       {/* Header — clickable to toggle */}
       <button
-        className="w-full px-4 py-4 text-left text-[#1A1A1A]"
+        className="w-full px-4 py-4 text-left text-foreground"
         onClick={() => setIsExpanded(prev => !prev)}
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-[#9CA3AF]">{formattedDate}</span>
+              <span className="text-xs text-muted-foreground">
+                {formattedDate}
+              </span>
               {!!actionItems.length && (
                 <ActionCountBadge actionItems={actionItems} />
               )}
             </div>
-            <p className="mt-0.5 text-sm font-semibold text-[#1A1A1A]">
+            <p className="mt-0.5 text-sm font-semibold text-foreground">
               {session.title}
             </p>
             {!isExpanded && session.summary && (
-              <p className="mt-1 text-xs text-[#6B7280] line-clamp-2">
+              <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
                 {session.summary.slice(0, 150)}
               </p>
             )}
@@ -130,7 +132,7 @@ export function SessionCard({ session, clientId, onRetry }: SessionCardProps) {
               </div>
             )}
           </div>
-          <span className="mt-0.5 shrink-0 text-[#9CA3AF]">
+          <span className="mt-0.5 shrink-0 text-muted-foreground">
             {isExpanded ? (
               <ChevronUp className="h-4 w-4" />
             ) : (
@@ -142,9 +144,9 @@ export function SessionCard({ session, clientId, onRetry }: SessionCardProps) {
 
       {/* Expanded body */}
       {isExpanded && (
-        <div className="border-t border-gray-100 px-4 pb-4 pt-3">
+        <div className="border-t border-border px-4 pb-4 pt-3">
           {session.summary && (
-            <p className="text-sm text-[#1A1A1A]">{session.summary}</p>
+            <p className="text-sm text-foreground">{session.summary}</p>
           )}
 
           {(session.key_topics?.length ?? 0) > 0 && (
@@ -162,7 +164,7 @@ export function SessionCard({ session, clientId, onRetry }: SessionCardProps) {
           {hasTranscript && (
             <Link
               href={`/clients/${clientId}/sessions/${session.id}`}
-              className="mt-3 inline-block text-xs font-medium text-blue-600 hover:underline"
+              className="mt-3 inline-block text-xs font-medium text-primary hover:underline"
             >
               View Full Transcript →
             </Link>

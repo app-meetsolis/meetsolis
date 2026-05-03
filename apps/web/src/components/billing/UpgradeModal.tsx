@@ -57,28 +57,32 @@ export function UpgradeModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md bg-card border-border">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <div className="rounded-full bg-red-100 p-3">
-              <AlertCircle className="h-6 w-6 text-red-600" />
+            <div className="rounded-full bg-red-400/15 p-3">
+              <AlertCircle className="h-6 w-6 text-red-400" />
             </div>
-            <DialogTitle className="text-xl font-bold text-[#1A1A1A]">
+            <DialogTitle className="text-[18px] font-bold text-foreground">
               {content.title}
             </DialogTitle>
           </div>
-          <DialogDescription className="pt-4 text-base text-[#6B7280]">
+          <DialogDescription className="pt-4 text-[13px] text-muted-foreground">
             {content.description}
           </DialogDescription>
         </DialogHeader>
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={handleSeeFeatures}>
+          <Button
+            variant="outline"
+            onClick={handleSeeFeatures}
+            className="border-border bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent"
+          >
             See all Pro features
           </Button>
           <Button
             onClick={handleUpgrade}
-            className="bg-[#001F3F] hover:bg-[#003366]"
+            className="bg-primary text-primary-foreground font-semibold hover:bg-primary/85"
           >
             Upgrade to Pro — $99/month
           </Button>

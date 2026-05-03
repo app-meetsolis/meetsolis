@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Session } from '@meetsolis/shared';
 import { SessionCard } from '@/components/sessions/SessionCard';
@@ -23,7 +22,10 @@ function TimelineSkeletons() {
   return (
     <div className="space-y-3">
       {[0, 1, 2].map(i => (
-        <Skeleton key={i} className="h-20 w-full rounded-lg" />
+        <div
+          key={i}
+          className="skeleton rounded-md h-20 w-full rounded-[12px]"
+        />
       ))}
     </div>
   );
@@ -59,10 +61,10 @@ export function SessionTimeline({ clientId }: SessionTimelineProps) {
   }
 
   return (
-    <section className="rounded-lg border border-gray-200 bg-white">
+    <section className="rounded-[12px] border border-border bg-card">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-        <h2 className="text-base font-semibold text-[#1A1A1A]">Sessions</h2>
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <h2 className="text-base font-semibold text-foreground">Sessions</h2>
         {(sessions?.length ?? 0) > 0 && (
           <Button
             variant="outline"
@@ -79,7 +81,7 @@ export function SessionTimeline({ clientId }: SessionTimelineProps) {
           <TimelineSkeletons />
         ) : !sessions?.length ? (
           <div className="flex flex-col items-center py-8 text-center">
-            <p className="text-sm text-[#6B7280]">
+            <p className="text-sm text-muted-foreground">
               No sessions yet. Upload your first session transcript to get
               started.
             </p>

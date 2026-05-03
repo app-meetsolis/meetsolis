@@ -177,24 +177,30 @@ export function ClientForm({
       )}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Name (Required) */}
-        <div className="space-y-2">
-          <Label htmlFor="name" className="text-sm font-medium text-[#1A1A1A]">
-            Name <span className="text-red-500">*</span>
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="name"
+            className="text-[12px] font-medium text-muted-foreground"
+          >
+            Name <span className="text-red-400">*</span>
           </Label>
           <Input
             id="name"
             {...register('name')}
             placeholder="Sarah Johnson"
-            className={errors.name ? 'border-red-500' : ''}
+            className={errors.name ? 'border-red-500/60' : ''}
           />
           {errors.name && (
-            <p className="text-sm text-red-500">{errors.name.message}</p>
+            <p className="text-[11px] text-red-400">{errors.name.message}</p>
           )}
         </div>
 
         {/* Coaching Goal */}
-        <div className="space-y-2">
-          <Label htmlFor="goal" className="text-sm font-medium text-[#1A1A1A]">
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="goal"
+            className="text-[12px] font-medium text-muted-foreground"
+          >
             Coaching Goal
           </Label>
           <Textarea
@@ -202,72 +208,83 @@ export function ClientForm({
             {...register('goal')}
             placeholder="e.g. Transition to CTO role, improve executive presence"
             rows={2}
+            className="resize-none"
           />
           {errors.goal && (
-            <p className="text-sm text-red-500">{errors.goal.message}</p>
+            <p className="text-[11px] text-red-400">{errors.goal.message}</p>
           )}
         </div>
 
-        {/* Coaching Start Date */}
-        <div className="space-y-2">
-          <Label
-            htmlFor="start_date"
-            className="text-sm font-medium text-[#1A1A1A]"
-          >
-            Coaching Start Date
-          </Label>
-          <Input id="start_date" type="date" {...register('start_date')} />
-          {errors.start_date && (
-            <p className="text-sm text-red-500">{errors.start_date.message}</p>
-          )}
+        {/* Row: Start Date + Company */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="start_date"
+              className="text-[12px] font-medium text-muted-foreground"
+            >
+              Coaching Start Date
+            </Label>
+            <Input
+              id="start_date"
+              type="date"
+              {...register('start_date')}
+              className="[color-scheme:dark]"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="company"
+              className="text-[12px] font-medium text-muted-foreground"
+            >
+              Company
+            </Label>
+            <Input
+              id="company"
+              {...register('company')}
+              placeholder="Acme Corp"
+            />
+          </div>
         </div>
 
-        {/* Company */}
-        <div className="space-y-2">
-          <Label
-            htmlFor="company"
-            className="text-sm font-medium text-[#1A1A1A]"
-          >
-            Company
-          </Label>
-          <Input
-            id="company"
-            {...register('company')}
-            placeholder="Acme Corp"
-          />
-        </div>
-
-        {/* Role */}
-        <div className="space-y-2">
-          <Label htmlFor="role" className="text-sm font-medium text-[#1A1A1A]">
-            Role
-          </Label>
-          <Input id="role" {...register('role')} placeholder="CEO" />
-        </div>
-
-        {/* Website */}
-        <div className="space-y-2">
-          <Label
-            htmlFor="website"
-            className="text-sm font-medium text-[#1A1A1A]"
-          >
-            Website
-          </Label>
-          <Input
-            id="website"
-            type="url"
-            {...register('website')}
-            placeholder="https://example.com"
-            className={errors.website ? 'border-red-500' : ''}
-          />
-          {errors.website && (
-            <p className="text-sm text-red-500">{errors.website.message}</p>
-          )}
+        {/* Row: Role + Website */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="role"
+              className="text-[12px] font-medium text-muted-foreground"
+            >
+              Role
+            </Label>
+            <Input id="role" {...register('role')} placeholder="CEO" />
+          </div>
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="website"
+              className="text-[12px] font-medium text-muted-foreground"
+            >
+              Website
+            </Label>
+            <Input
+              id="website"
+              type="url"
+              {...register('website')}
+              placeholder="https://example.com"
+              className={errors.website ? 'border-red-500/60' : ''}
+            />
+            {errors.website && (
+              <p className="text-[11px] text-red-400">
+                {errors.website.message}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Notes */}
-        <div className="space-y-2">
-          <Label htmlFor="notes" className="text-sm font-medium text-[#1A1A1A]">
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="notes"
+            className="text-[12px] font-medium text-muted-foreground"
+          >
             Notes
           </Label>
           <Textarea
@@ -275,11 +292,12 @@ export function ClientForm({
             {...register('notes')}
             placeholder="Any additional context about this client..."
             rows={3}
+            className="resize-none"
           />
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 pt-4">
+        <div className="flex justify-end gap-3 pt-2">
           <Button
             type="button"
             variant="outline"
@@ -288,11 +306,7 @@ export function ClientForm({
           >
             Cancel
           </Button>
-          <Button
-            type="submit"
-            disabled={!isValid || isSubmitting}
-            className="bg-[#001F3F] hover:bg-[#003366]"
-          >
+          <Button type="submit" disabled={!isValid || isSubmitting}>
             {isSubmitting ? 'Saving...' : 'Save'}
           </Button>
         </div>

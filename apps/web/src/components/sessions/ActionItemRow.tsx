@@ -38,18 +38,12 @@ export function ActionItemRow({
         className="shrink-0"
       />
       <span
-        className={`flex-1 text-sm text-[#1A1A1A] ${isCompleted ? 'line-through opacity-50' : ''}`}
+        className={`flex-1 text-sm text-foreground ${isCompleted ? 'line-through opacity-50' : ''}`}
       >
         {item.description}
       </span>
       {item.assignee && (
-        <span
-          className={`shrink-0 rounded-full px-1.5 py-0.5 text-xs font-medium ${
-            item.assignee === 'coach'
-              ? 'bg-blue-100 text-blue-700'
-              : 'bg-green-100 text-green-700'
-          }`}
-        >
+        <span className="shrink-0 rounded-full px-1.5 py-0.5 text-xs font-medium bg-primary/10 text-primary">
           {item.assignee === 'coach' ? 'Coach' : 'Client'}
         </span>
       )}

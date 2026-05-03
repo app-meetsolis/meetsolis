@@ -29,8 +29,6 @@ import { ClaudeAIService } from './services/ai/claude-ai-service';
 // Real services will be imported when implemented
 // import { ClerkAuthService } from './services/real/clerk-auth-service';
 // import { SupabaseService } from './services/real/supabase-service';
-// import { OpenAIService } from './services/real/openai-service';
-// import { DeepLTranslationService } from './services/real/deepl-service';
 // import { TwilioSMSService } from './services/real/twilio-service';
 // import { PostHogAnalyticsService } from './services/real/posthog-service';
 
@@ -142,11 +140,8 @@ export class ServiceFactory {
       if (config.useMockServices) {
         this.instances.set('translation', new MockTranslationService());
       } else {
-        // Real DeepL service would be created here
-        // this.instances.set('translation', new DeepLTranslationService());
-        throw new Error(
-          'Real DeepL translation service not yet implemented. Set USE_MOCK_SERVICES=true'
-        );
+        // Translation not in v3 MVP scope — use mock
+        this.instances.set('translation', new MockTranslationService());
       }
     }
 

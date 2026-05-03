@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MeetSolis — Dashboard V3</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070B12;--s1:#0D1117;--s2:#111820;--s3:#1A2332;
+  --b:#1E2D40;--b2:#243447;
+  --t:#E8F1F8;--ts:#B8D0E8;--tm:#7A9AB5;--td:#4A6A85;
+  --g:#22C55E;--am:#F59E0B;--rd:#EF4444;--vi:#A78BFA;--bl:#3B82F6;
+}
+html{height:100%;overflow:hidden;background:#070B12}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);display:flex;font-size:15px;line-height:1.5;zoom:1.1;width:calc(100vw / 1.1);height:calc(100vh / 1.1);overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sb{width:60px;flex-shrink:0;background:var(--s1);border-right:1px solid var(--b);display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:4px}
+.logo{width:34px;height:34px;background:var(--g);border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;cursor:pointer}
+.si{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s;color:var(--tm)}
+.si:hover{background:var(--s3);color:var(--ts)}
+.si.act{background:#0D2218;color:var(--g)}
+.sb-bot{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:6px}
+.ava{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#1E3A5F,#2D5A8E);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--ts);cursor:pointer}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* ── TOPBAR ── */
+.topbar{height:54px;flex-shrink:0;background:var(--s1);border-bottom:1px solid var(--b);display:flex;align-items:center;gap:12px;padding:0 22px}
+.search{display:flex;align-items:center;gap:8px;background:var(--s2);border:1px solid var(--b);border-radius:9px;padding:0 13px;height:34px;max-width:320px;flex:1}
+.search svg{color:var(--td);flex-shrink:0}
+.search input{background:none;border:none;outline:none;color:var(--t);font-size:13.5px;font-family:inherit;width:100%}
+.search input::placeholder{color:var(--td)}
+.tb-r{margin-left:auto;display:flex;align-items:center;gap:10px}
+.date{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--tm);letter-spacing:.02em}
+.dvdr{width:1px;height:20px;background:var(--b)}
+.pill{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--tm);background:var(--s2);border:1px solid var(--b);border-radius:20px;padding:4px 10px 4px 8px}
+.pt{width:28px;height:3px;background:var(--b2);border-radius:3px;overflow:hidden}
+.pf{height:100%;border-radius:3px;background:var(--g)}
+.pf.am{background:var(--am)}
+.bell{width:34px;height:34px;border-radius:9px;background:var(--s2);border:1px solid var(--b);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--tm);position:relative}
+.bell:hover{color:var(--ts)}
+.bdot{position:absolute;top:6px;right:6px;width:7px;height:7px;background:var(--g);border-radius:50%;border:2px solid var(--s1)}
+
+/* ── GREETING ── */
+.greet{flex-shrink:0;padding:20px 24px 16px;border-bottom:1px solid var(--b);display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.gh{font-size:22px;font-weight:600;letter-spacing:-.03em;color:var(--t)}
+.gs{font-size:13.5px;color:var(--tm);margin-top:4px;line-height:1.6}
+.gs b{color:var(--ts);font-weight:500}
+.gs .wa{color:var(--am)}
+.gbtns{display:flex;gap:8px;flex-shrink:0;align-items:center}
+.btn{height:32px;padding:0 16px;border-radius:8px;font-size:13px;font-weight:500;font-family:inherit;cursor:pointer;border:none;display:flex;align-items:center;gap:6px;transition:.15s;white-space:nowrap}
+.bp{background:var(--g);color:#000}
+.bp:hover{filter:brightness(1.1)}
+.bg{background:var(--s2);color:var(--ts);border:1px solid var(--b)}
+.bg:hover{border-color:var(--b2);color:var(--t)}
+
+/* ── SCROLL AREA ── */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:4px}
+
+/* ── PAGE BODY ── */
+.body{flex:1;overflow-y:auto;padding:22px 24px 32px}
+
+/* ── METRIC CARDS ── */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.mc{background:var(--s1);border:1px solid var(--b);border-radius:12px;padding:16px 18px;cursor:pointer;transition:.15s;position:relative;overflow:hidden}
+.mc:hover{border-color:var(--b2);transform:translateY(-1px)}
+.mc::before{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;border-radius:12px 12px 0 0}
+.mc.green::before{background:var(--g)}
+.mc.blue::before{background:var(--bl)}
+.mc.amber::before{background:var(--am)}
+.mc.violet::before{background:var(--vi)}
+.mc-label{font-size:11px;font-weight:600;color:var(--td);text-transform:uppercase;letter-spacing:.09em;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.mc-val{font-size:18px;font-weight:600;color:var(--t);letter-spacing:-.02em;line-height:1.2;margin-bottom:4px}
+.mc-sub{font-size:12px;color:var(--tm)}
+.mc-sub .hi{font-weight:500}
+.mc-sub .hi.g{color:var(--g)}
+.mc-sub .hi.am{color:var(--am)}
+/* mini sparkline in metric card */
+.mc-spark{display:flex;align-items:flex-end;gap:2.5px;height:20px;margin-top:10px}
+.msp{width:5px;border-radius:2px}
+
+/* ── RECENT CLIENTS ROW ── */
+.cli-row{display:flex;align-items:center;gap:8px;margin-bottom:18px;padding:12px 16px;background:var(--s1);border:1px solid var(--b);border-radius:12px}
+.cli-row-label{font-size:11px;font-weight:600;color:var(--td);text-transform:uppercase;letter-spacing:.09em;margin-right:4px;white-space:nowrap}
+.chip{display:flex;align-items:center;gap:7px;padding:6px 12px;background:var(--s2);border:1px solid var(--b);border-radius:20px;cursor:pointer;transition:.15s;font-size:13px}
+.chip:hover{border-color:var(--b2);background:var(--s3)}
+.chip.ov{border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.04)}
+.chip.ov:hover{border-color:rgba(245,158,11,.4)}
+.cdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.cname{font-weight:500;color:var(--ts)}
+.cdays{font-size:11px;color:var(--td);font-family:'JetBrains Mono',monospace}
+.chip.ov .cdays{color:var(--am)}
+.all-btn{margin-left:auto;font-size:12px;font-weight:500;font-family:inherit;color:var(--tm);background:none;border:1px solid var(--b);border-radius:8px;padding:5px 12px;cursor:pointer;transition:.15s;white-space:nowrap}
+.all-btn:hover{color:var(--ts);border-color:var(--b2)}
+
+/* ── MAIN COLUMNS ── */
+.cols{display:grid;grid-template-columns:58fr 42fr;gap:16px;align-items:start}
+.col-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.col-lbl{font-size:12px;font-weight:600;color:var(--td);text-transform:uppercase;letter-spacing:.09em}
+.col-ct{font-size:12px;color:var(--td);font-family:'JetBrains Mono',monospace}
+
+/* ── SESSION CARDS ── */
+.sc-list{display:flex;flex-direction:column;gap:10px}
+.sc{background:var(--s1);border:1px solid var(--b);border-radius:12px;overflow:hidden;cursor:pointer;transition:.15s}
+.sc:hover{border-color:var(--b2);transform:translateY(-1px)}
+.sc-stripe{height:3px}
+.sc-body{padding:14px 16px 16px}
+.sc-meta{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.sc-date{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--td)}
+.sc-sep{width:3px;height:3px;border-radius:50%;background:var(--b2)}
+.sc-cli{font-size:11.5px;font-weight:600}
+.sc-sn{font-size:11px;color:var(--td);margin-left:auto;font-family:'JetBrains Mono',monospace}
+.sc-title{font-size:14px;font-weight:500;color:var(--ts);margin-bottom:6px;line-height:1.4}
+.sc-exc{font-size:12.5px;color:var(--td);line-height:1.6;margin-bottom:12px}
+.sc-footer{display:flex;align-items:center;justify-content:space-between}
+.ac-badge{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--tm);background:var(--s2);border:1px solid var(--b);border-radius:20px;padding:3px 10px}
+.ac-badge svg{width:13px;height:13px}
+.sc-solis{font-size:12px;font-weight:500;color:var(--g);background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.18);border-radius:7px;padding:4px 11px;cursor:pointer;transition:.15s;font-family:inherit}
+.sc-solis:hover{background:rgba(34,197,94,.14)}
+
+/* ── ACTION ITEMS ── */
+.ac-sec{display:flex;flex-direction:column;gap:0}
+.ac-filters{display:flex;gap:6px;margin-bottom:14px}
+.fbtn{height:26px;padding:0 11px;font-size:11.5px;font-weight:500;font-family:inherit;background:var(--s2);border:1px solid var(--b);border-radius:7px;color:var(--tm);cursor:pointer;display:flex;align-items:center;gap:4px;transition:.15s}
+.fbtn:hover{color:var(--ts);border-color:var(--b2)}
+.ag{margin-bottom:14px}
+.ag-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.ag-name{font-size:13px;font-weight:600;color:var(--ts);display:flex;align-items:center;gap:7px}
+.ag-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.ag-ct{font-size:11px;color:var(--td);font-family:'JetBrains Mono',monospace}
+.ai{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--b)}
+.ai:last-child{border-bottom:none}
+.ai-chk{width:16px;height:16px;border-radius:4px;border:1.5px solid;flex-shrink:0;margin-top:2px;cursor:pointer;transition:.15s}
+.ai-chk:hover{opacity:.7}
+.ai-txt{font-size:13px;color:var(--tm);line-height:1.5;flex:1}
+/* overdue action */
+.ai.ov .ai-txt{color:var(--am)}
+
+/* selection bar */
+.sel-bar{display:none;position:sticky;bottom:16px;left:0;right:0;background:var(--s2);border:1px solid var(--b2);border-radius:10px;padding:10px 16px;align-items:center;gap:12px;margin-top:12px;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.sel-bar.show{display:flex}
+.sel-ct{font-size:13px;color:var(--ts);font-weight:500}
+.sel-done{height:30px;padding:0 14px;background:var(--g);color:#000;border:none;border-radius:7px;font-size:12.5px;font-weight:600;font-family:inherit;cursor:pointer}
+.sel-cancel{height:30px;padding:0 14px;background:none;color:var(--tm);border:1px solid var(--b);border-radius:7px;font-size:12.5px;font-family:inherit;cursor:pointer}
+
+/* divider */
+.ac-divider{border:none;border-top:1px solid var(--b);margin:16px 0}
+
+/* ── RECOMMENDED ── */
+.rec-sec{margin-top:4px}
+.rec-lbl{font-size:11px;font-weight:600;color:var(--td);text-transform:uppercase;letter-spacing:.09em;margin-bottom:10px}
+.rec{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--b)}
+.rec:last-child{border-bottom:none}
+.rec-ic{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+.rec-main{font-size:13px;color:var(--tm);line-height:1.45}
+.rec-sub{font-size:11px;color:var(--td);margin-top:2px}
+
+/* ── DIALOG OVERLAY ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:flex-start;justify-content:center;padding-top:120px;backdrop-filter:blur(4px)}
+.overlay.open{display:flex}
+.dialog{background:var(--s1);border:1px solid var(--b2);border-radius:14px;width:520px;max-height:500px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.6)}
+.dlg-head{padding:18px 20px 14px;border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.dlg-title{font-size:15px;font-weight:600;color:var(--t)}
+.dlg-sub{font-size:12px;color:var(--td);margin-top:2px}
+.dlg-close{width:28px;height:28px;border-radius:7px;background:var(--s2);border:1px solid var(--b);color:var(--tm);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;font-family:inherit}
+.dlg-close:hover{color:var(--t)}
+.dlg-body{overflow-y:auto;padding:8px 0}
+.dlg-row{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--b);cursor:pointer;transition:.12s}
+.dlg-row:last-child{border-bottom:none}
+.dlg-row:hover{background:var(--s2)}
+.dlg-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.dlg-info{flex:1;min-width:0}
+.dlg-name{font-size:14px;font-weight:500;color:var(--t)}
+.dlg-sess{font-size:12px;color:var(--td);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dlg-meta{display:flex;align-items:center;gap:8px;margin-top:4px}
+.dlg-days{font-size:11px;font-family:'JetBrains Mono',monospace}
+.dlg-acs{font-size:11px;color:var(--td)}
+.dlg-btns{display:flex;gap:7px;flex-shrink:0}
+.dlg-btn{height:28px;padding:0 12px;font-size:11.5px;font-weight:500;font-family:inherit;border-radius:7px;cursor:pointer;white-space:nowrap;transition:.15s}
+.dlg-btn.outline{background:var(--s2);color:var(--ts);border:1px solid var(--b)}
+.dlg-btn.outline:hover{border-color:var(--b2)}
+.dlg-btn.green{background:rgba(34,197,94,.1);color:var(--g);border:1px solid rgba(34,197,94,.22)}
+.dlg-btn.green:hover{background:rgba(34,197,94,.18)}
+.dlg-btn.amber{background:rgba(245,158,11,.1);color:var(--am);border:1px solid rgba(245,158,11,.22)}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sb">
+  <div class="logo">
+    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#000" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+  </div>
+  <div class="si act" title="Dashboard">
+    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+  </div>
+  <div class="si" title="Clients">
+    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+  </div>
+  <div class="si" title="Sessions">
+    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+  </div>
+  <div class="si" title="Solis Intelligence">
+    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+  </div>
+  <div class="sb-bot">
+    <div class="si" title="Settings">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+    </div>
+    <div class="ava">H</div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="search">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+      <input placeholder="Search clients, sessions, insights…">
+    </div>
+    <div class="tb-r">
+      <span class="date">Monday, Apr 28 · 2026</span>
+      <div class="dvdr"></div>
+      <div class="pill">
+        <div class="pt"><div class="pf" style="width:72%"></div></div>
+        <span>18 / 25 transcripts</span>
+      </div>
+      <div class="pill">
+        <div class="pt"><div class="pf am" style="width:42%"></div></div>
+        <span>847 / 2k queries</span>
+      </div>
+      <div class="dvdr"></div>
+      <div class="bell">
+        <div class="bdot"></div>
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCROLLABLE BODY -->
+  <div class="body">
+
+    <!-- GREETING -->
+    <div class="greet" style="background:var(--s1);border:1px solid var(--b);border-radius:12px;margin-bottom:18px;padding:18px 22px">
+      <div>
+        <div class="gh">Good morning, Hari.</div>
+        <div class="gs">
+          Last session: <b>Sarah Chen · Apr 26</b> &nbsp;·&nbsp;
+          <b>5 open actions</b> across 4 clients &nbsp;·&nbsp;
+          <span class="wa">⚠ Elena needs attention</span>
+        </div>
+      </div>
+      <div class="gbtns">
+        <button class="btn bg">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+          Upload Session
+        </button>
+        <button class="btn bp">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+          Ask Solis
+        </button>
+      </div>
+    </div>
+
+    <!-- METRIC CARDS -->
+    <div class="metrics">
+      <!-- Last Session -->
+      <div class="mc green">
+        <div class="mc-label">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Last Session
+        </div>
+        <div class="mc-val">Sarah Chen</div>
+        <div class="mc-sub">Apr 26 · <span class="hi g">Session 8</span> · 3 days ago</div>
+        <div class="mc-spark">
+          <div class="msp" style="height:30%;background:var(--b2)"></div>
+          <div class="msp" style="height:50%;background:var(--s3)"></div>
+          <div class="msp" style="height:65%;background:var(--td)"></div>
+          <div class="msp" style="height:82%;background:var(--tm)"></div>
+          <div class="msp" style="height:100%;background:var(--g)"></div>
+        </div>
+      </div>
+      <!-- Open Actions -->
+      <div class="mc blue">
+        <div class="mc-label">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Open Actions
+        </div>
+        <div class="mc-val">5 remaining</div>
+        <div class="mc-sub">Across <span class="hi" style="color:var(--bl)">4 clients</span> · 1 overdue</div>
+        <div class="mc-spark">
+          <div class="msp" style="height:100%;background:var(--b2)"></div>
+          <div class="msp" style="height:80%;background:var(--b2)"></div>
+          <div class="msp" style="height:60%;background:var(--s3)"></div>
+          <div class="msp" style="height:40%;background:var(--td)"></div>
+          <div class="msp" style="height:30%;background:var(--bl)"></div>
+        </div>
+      </div>
+      <!-- Needs Attention -->
+      <div class="mc amber">
+        <div class="mc-label">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#F59E0B" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9.303 3.376c.866 1.5-.217 3.374-1.948 3.374H4.645c-1.73 0-2.813-1.874-1.948-3.374l7.303-12.748c.866-1.5 3.032-1.5 3.898 0l7.303 12.748zM12 15.75h.007v.008H12v-.008z"/></svg>
+          Needs Attention
+        </div>
+        <div class="mc-val" style="color:var(--am)">Elena Vasquez</div>
+        <div class="mc-sub"><span class="hi am">21 days</span> since last session</div>
+        <div class="mc-spark">
+          <div class="msp" style="height:70%;background:var(--b2)"></div>
+          <div class="msp" style="height:85%;background:var(--b2)"></div>
+          <div class="msp" style="height:30%;background:#2E1F08"></div>
+          <div class="msp" style="height:12%;background:#1E1506"></div>
+          <div class="msp" style="height:5%;background:#1A1204"></div>
+        </div>
+      </div>
+      <!-- Pending Uploads -->
+      <div class="mc violet">
+        <div class="mc-label">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+          Pending Uploads
+        </div>
+        <div class="mc-val">2 sessions</div>
+        <div class="mc-sub">Awaiting <span class="hi" style="color:var(--vi)">transcript</span> upload</div>
+        <div class="mc-spark">
+          <div class="msp" style="height:40%;background:var(--b2)"></div>
+          <div class="msp" style="height:60%;background:var(--s3)"></div>
+          <div class="msp" style="height:80%;background:var(--td)"></div>
+          <div class="msp" style="height:60%;background:var(--td)"></div>
+          <div class="msp" style="height:90%;background:var(--vi)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECENT CLIENTS ROW -->
+    <div class="cli-row">
+      <span class="cli-row-label">Clients</span>
+      <div class="chip" onclick="openDialog()">
+        <div class="cdot" style="background:#22C55E"></div>
+        <span class="cname">Sarah</span>
+        <span class="cdays">3d</span>
+      </div>
+      <div class="chip" onclick="openDialog()">
+        <div class="cdot" style="background:#3B82F6"></div>
+        <span class="cname">Marcus</span>
+        <span class="cdays">7d</span>
+      </div>
+      <div class="chip" onclick="openDialog()">
+        <div class="cdot" style="background:#A78BFA"></div>
+        <span class="cname">Priya</span>
+        <span class="cdays">12d</span>
+      </div>
+      <div class="chip" onclick="openDialog()">
+        <div class="cdot" style="background:#4A6A85"></div>
+        <span class="cname">David</span>
+        <span class="cdays">18d</span>
+      </div>
+      <div class="chip ov" onclick="openDialog()">
+        <div class="cdot" style="background:#F59E0B"></div>
+        <span class="cname">Elena</span>
+        <span class="cdays">21d ⚠</span>
+      </div>
+      <button class="all-btn" onclick="openDialog()">All Clients →</button>
+    </div>
+
+    <!-- MAIN COLUMNS -->
+    <div class="cols">
+
+      <!-- SESSIONS -->
+      <div>
+        <div class="col-head">
+          <span class="col-lbl">Recent Sessions</span>
+          <span class="col-ct">14 total</span>
+        </div>
+        <div class="sc-list">
+
+          <!-- Sarah S.8 -->
+          <div class="sc">
+            <div class="sc-stripe" style="background:#22C55E"></div>
+            <div class="sc-body">
+              <div class="sc-meta">
+                <span class="sc-date">Apr 26</span>
+                <div class="sc-sep"></div>
+                <span class="sc-cli" style="color:#22C55E">Sarah Chen</span>
+                <span class="sc-sn">Session 8</span>
+              </div>
+              <div class="sc-title">Delegation framework &amp; Q2 leadership goals</div>
+              <div class="sc-exc">"I've been holding on too tight — delegation is about trust, not control." Team transition plan finalised. Major mindset shift logged.</div>
+              <div class="sc-footer">
+                <div class="ac-badge">
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  2 open actions
+                </div>
+                <button class="sc-solis">Prepare with Solis ✦</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Marcus S.5 -->
+          <div class="sc">
+            <div class="sc-stripe" style="background:#3B82F6"></div>
+            <div class="sc-body">
+              <div class="sc-meta">
+                <span class="sc-date">Apr 21</span>
+                <div class="sc-sep"></div>
+                <span class="sc-cli" style="color:#3B82F6">Marcus Lee</span>
+                <span class="sc-sn">Session 5</span>
+              </div>
+              <div class="sc-title">Navigating team conflict &amp; engineering culture</div>
+              <div class="sc-exc">Senior engineer conflict de-escalated via structured 1:1 format. Marcus committed to a 30-min weekly team pulse check starting Thursday.</div>
+              <div class="sc-footer">
+                <div class="ac-badge">
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  2 open actions
+                </div>
+                <button class="sc-solis">Prepare with Solis ✦</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Priya S.6 -->
+          <div class="sc">
+            <div class="sc-stripe" style="background:#A78BFA"></div>
+            <div class="sc-body">
+              <div class="sc-meta">
+                <span class="sc-date">Apr 16</span>
+                <div class="sc-sep"></div>
+                <span class="sc-cli" style="color:#A78BFA">Priya Sharma</span>
+                <span class="sc-sn">Session 6</span>
+              </div>
+              <div class="sc-title">Scaling operations without losing culture</div>
+              <div class="sc-exc">Concern: rapid growth is diluting company values. Co-developed a values operationalisation framework for the new hire onboarding process.</div>
+              <div class="sc-footer">
+                <div class="ac-badge">
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  1 open action
+                </div>
+                <button class="sc-solis">Prepare with Solis ✦</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Elena S.3 — overdue -->
+          <div class="sc" style="border-color:rgba(245,158,11,.28)">
+            <div class="sc-stripe" style="background:#F59E0B"></div>
+            <div class="sc-body">
+              <div class="sc-meta">
+                <span class="sc-date">Apr 7</span>
+                <div class="sc-sep"></div>
+                <span class="sc-cli" style="color:#F59E0B">Elena Vasquez</span>
+                <span class="sc-sn">Session 3 · <span style="color:var(--am)">⚠ 21d ago</span></span>
+              </div>
+              <div class="sc-title">Stakeholder alignment &amp; cross-functional influence</div>
+              <div class="sc-exc">Mapped 3 blocking stakeholders. Built an influence matrix and drafted a targeted communication plan for each key relationship.</div>
+              <div class="sc-footer">
+                <div class="ac-badge" style="border-color:rgba(245,158,11,.3);color:var(--am)">
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9.303 3.376c.866 1.5-.217 3.374-1.948 3.374H4.645c-1.73 0-2.813-1.874-1.948-3.374l7.303-12.748c.866-1.5 3.032-1.5 3.898 0l7.303 12.748zM12 15.75h.007v.008H12v-.008z"/></svg>
+                  1 overdue action
+                </div>
+                <button class="sc-solis" style="color:var(--am);background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.22)">Prepare with Solis ✦</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- David S.2 -->
+          <div class="sc">
+            <div class="sc-stripe" style="background:#4A6A85"></div>
+            <div class="sc-body">
+              <div class="sc-meta">
+                <span class="sc-date">Apr 10</span>
+                <div class="sc-sep"></div>
+                <span class="sc-cli" style="color:#7A9AB5">David Kim</span>
+                <span class="sc-sn">Session 2</span>
+              </div>
+              <div class="sc-title">Setting technical vision as a first-time CTO</div>
+              <div class="sc-exc">David's challenge: translating business strategy into technical roadmap. Defined a 90-day plan structure with key milestones and team communication rhythm.</div>
+              <div class="sc-footer">
+                <div class="ac-badge">
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  No open actions
+                </div>
+                <button class="sc-solis">Prepare with Solis ✦</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <!-- /sessions -->
+
+      <!-- ACTION ITEMS -->
+      <div class="ac-sec">
+        <div class="col-head">
+          <span class="col-lbl">Open Actions</span>
+          <span class="col-ct">5 items</span>
+        </div>
+        <div class="ac-filters">
+          <button class="fbtn">
+            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z"/></svg>
+            Filter
+          </button>
+          <button class="fbtn">
+            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5"/></svg>
+            Sort: Client
+          </button>
+        </div>
+
+        <!-- Sarah -->
+        <div class="ag">
+          <div class="ag-head">
+            <div class="ag-name"><div class="ag-dot" style="background:#22C55E"></div>Sarah Chen</div>
+            <span class="ag-ct">2</span>
+          </div>
+          <div class="ai">
+            <div class="ai-chk" style="border-color:#22C55E" onclick="toggleCheck(this)"></div>
+            <span class="ai-txt">Review Q2 goals with direct reports by end of week</span>
+          </div>
+          <div class="ai">
+            <div class="ai-chk" style="border-color:#22C55E" onclick="toggleCheck(this)"></div>
+            <span class="ai-txt">Send delegation framework doc to the team</span>
+          </div>
+        </div>
+
+        <!-- Marcus -->
+        <div class="ag">
+          <div class="ag-head">
+            <div class="ag-name"><div class="ag-dot" style="background:#3B82F6"></div>Marcus Lee</div>
+            <span class="ag-ct">2</span>
+          </div>
+          <div class="ai">
+            <div class="ai-chk" style="border-color:#3B82F6" onclick="toggleCheck(this)"></div>
+            <span class="ai-txt">Follow up with both engineers after their 1:1s this week</span>
+          </div>
+          <div class="ai">
+            <div class="ai-chk" style="border-color:#3B82F6" onclick="toggleCheck(this)"></div>
+            <span class="ai-txt">Schedule first team pulse check for Thursday</span>
+          </div>
+        </div>
+
+        <!-- Elena — overdue -->
+        <div class="ag">
+          <div class="ag-head">
+            <div class="ag-name"><div class="ag-dot" style="background:#F59E0B"></div>Elena Vasquez</div>
+            <span class="ag-ct" style="color:var(--am)">1 ⚠</span>
+          </div>
+          <div class="ai ov">
+            <div class="ai-chk" style="border-color:#F59E0B" onclick="toggleCheck(this)"></div>
+            <span class="ai-txt">Present influence map to VP — overdue since Apr 14</span>
+          </div>
+        </div>
+
+        <!-- Priya -->
+        <div class="ag">
+          <div class="ag-head">
+            <div class="ag-name"><div class="ag-dot" style="background:#A78BFA"></div>Priya Sharma</div>
+            <span class="ag-ct">1</span>
+          </div>
+          <div class="ai">
+            <div class="ai-chk" style="border-color:#A78BFA" onclick="toggleCheck(this)"></div>
+            <span class="ai-txt">Draft values integration checklist for new hire onboarding</span>
+          </div>
+        </div>
+
+        <!-- batch bar -->
+        <div class="sel-bar" id="selBar">
+          <span class="sel-ct" id="selCt">0 selected</span>
+          <button class="sel-done" onclick="markDone()">Mark Complete ✓</button>
+          <button class="sel-cancel" onclick="clearSel()">Cancel</button>
+        </div>
+
+        <hr class="ac-divider">
+
+        <!-- Recommended -->
+        <div class="rec-sec">
+          <div class="rec-lbl">Recommended</div>
+          <div class="rec">
+            <div class="rec-ic" style="background:rgba(245,158,11,.08)">📋</div>
+            <div>
+              <div class="rec-main">Schedule a catch-up with Elena — longest gap in portfolio</div>
+              <div class="rec-sub">21 days · 1 overdue action still open</div>
+            </div>
+          </div>
+          <div class="rec">
+            <div class="rec-ic" style="background:rgba(167,139,250,.08)">⬆</div>
+            <div>
+              <div class="rec-main">Upload Priya's Apr 16 transcript</div>
+              <div class="rec-sub">Session logged · no transcript yet</div>
+            </div>
+          </div>
+          <div class="rec">
+            <div class="rec-ic" style="background:rgba(34,197,94,.08)">✦</div>
+            <div>
+              <div class="rec-main">Prep Sarah's Session 9 with Solis</div>
+              <div class="rec-sub">Explore delegation progress before next meeting</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <!-- /action items -->
+    </div>
+    <!-- /cols -->
+
+  </div>
+  <!-- /body -->
+</div>
+<!-- /main -->
+
+<!-- RECENT CLIENTS DIALOG -->
+<div class="overlay" id="overlay" onclick="closeDialogOutside(event)">
+  <div class="dialog">
+    <div class="dlg-head">
+      <div>
+        <div class="dlg-title">Recent Clients</div>
+        <div class="dlg-sub">Sorted by last session · click to jump</div>
+      </div>
+      <button class="dlg-close" onclick="closeDialog()">✕</button>
+    </div>
+    <div class="dlg-body">
+
+      <div class="dlg-row">
+        <div class="dlg-av" style="background:#22C55E;color:#000">SC</div>
+        <div class="dlg-info">
+          <div class="dlg-name">Sarah Chen</div>
+          <div class="dlg-sess">"Delegation framework &amp; Q2 leadership goals"</div>
+          <div class="dlg-meta">
+            <span class="dlg-days" style="color:#22C55E">3 days ago</span>
+            <span class="dlg-acs">2 open actions</span>
+          </div>
+        </div>
+        <div class="dlg-btns">
+          <button class="dlg-btn outline">View Session</button>
+          <button class="dlg-btn green">Go to Client →</button>
+        </div>
+      </div>
+
+      <div class="dlg-row">
+        <div class="dlg-av" style="background:#3B82F6;color:#fff">ML</div>
+        <div class="dlg-info">
+          <div class="dlg-name">Marcus Lee</div>
+          <div class="dlg-sess">"Navigating team conflict &amp; engineering culture"</div>
+          <div class="dlg-meta">
+            <span class="dlg-days" style="color:#3B82F6">7 days ago</span>
+            <span class="dlg-acs">2 open actions</span>
+          </div>
+        </div>
+        <div class="dlg-btns">
+          <button class="dlg-btn outline">View Session</button>
+          <button class="dlg-btn green">Go to Client →</button>
+        </div>
+      </div>
+
+      <div class="dlg-row">
+        <div class="dlg-av" style="background:#A78BFA;color:#000">PS</div>
+        <div class="dlg-info">
+          <div class="dlg-name">Priya Sharma</div>
+          <div class="dlg-sess">"Scaling operations without losing culture"</div>
+          <div class="dlg-meta">
+            <span class="dlg-days" style="color:#A78BFA">12 days ago</span>
+            <span class="dlg-acs">1 open action</span>
+          </div>
+        </div>
+        <div class="dlg-btns">
+          <button class="dlg-btn outline">View Session</button>
+          <button class="dlg-btn green">Go to Client →</button>
+        </div>
+      </div>
+
+      <div class="dlg-row">
+        <div class="dlg-av" style="background:#3A4F63;color:var(--ts)">DK</div>
+        <div class="dlg-info">
+          <div class="dlg-name">David Kim</div>
+          <div class="dlg-sess">"Setting technical vision as a first-time CTO"</div>
+          <div class="dlg-meta">
+            <span class="dlg-days" style="color:var(--td)">18 days ago</span>
+            <span class="dlg-acs">No open actions</span>
+          </div>
+        </div>
+        <div class="dlg-btns">
+          <button class="dlg-btn outline">View Session</button>
+          <button class="dlg-btn green">Go to Client →</button>
+        </div>
+      </div>
+
+      <div class="dlg-row">
+        <div class="dlg-av" style="background:#F59E0B;color:#000">EV</div>
+        <div class="dlg-info">
+          <div class="dlg-name">Elena Vasquez <span style="font-size:11px;color:var(--am);font-weight:400">⚠ Needs attention</span></div>
+          <div class="dlg-sess">"Stakeholder alignment &amp; cross-functional influence"</div>
+          <div class="dlg-meta">
+            <span class="dlg-days" style="color:#F59E0B">21 days ago</span>
+            <span class="dlg-acs" style="color:var(--am)">1 overdue action</span>
+          </div>
+        </div>
+        <div class="dlg-btns">
+          <button class="dlg-btn outline">View Session</button>
+          <button class="dlg-btn amber">Prepare with Solis</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- SOLIS FAB -->
+<button
+  title="Ask Solis"
+  style="position:fixed;bottom:28px;right:28px;z-index:200;width:52px;height:52px;border-radius:50%;background:var(--g);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 24px rgba(34,197,94,.4);transition:.2s"
+  onmouseenter="this.style.transform='scale(1.1)';this.style.boxShadow='0 8px 32px rgba(34,197,94,.55)'"
+  onmouseleave="this.style.transform='scale(1)';this.style.boxShadow='0 4px 24px rgba(34,197,94,.4)'"
+>
+  <svg width="21" height="21" fill="none" viewBox="0 0 24 24" stroke="#000" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+</button>
+
+<script>
+// dialog
+function openDialog(){document.getElementById('overlay').classList.add('open')}
+function closeDialog(){document.getElementById('overlay').classList.remove('open')}
+function closeDialogOutside(e){if(e.target===document.getElementById('overlay'))closeDialog()}
+
+// action item check + batch bar
+let selected=new Set()
+function toggleCheck(el){
+  const ai=el.closest('.ai')
+  const id=Array.from(document.querySelectorAll('.ai-chk')).indexOf(el)
+  if(selected.has(id)){
+    selected.delete(id)
+    el.style.background=''
+    ai.style.opacity='1'
+  } else {
+    selected.add(id)
+    el.style.background=el.style.borderColor.replace(')',',0.25)').replace('rgb','rgba')
+    ai.style.opacity='.7'
+  }
+  const bar=document.getElementById('selBar')
+  const ct=document.getElementById('selCt')
+  ct.textContent=selected.size+' selected'
+  bar.classList.toggle('show',selected.size>0)
+}
+function markDone(){
+  selected.forEach(id=>{
+    const chks=document.querySelectorAll('.ai-chk')
+    const ai=chks[id].closest('.ai')
+    ai.style.display='none'
+  })
+  clearSel()
+}
+function clearSel(){
+  document.querySelectorAll('.ai-chk').forEach((el,i)=>{
+    el.style.background=''
+    el.closest('.ai').style.opacity='1'
+  })
+  selected.clear()
+  document.getElementById('selBar').classList.remove('show')
+}
+</script>
+</body>
+</html>
