@@ -9,6 +9,21 @@ jest.mock('openai', () => ({
   })),
 }));
 
+// Mock dodopayments SDK globally (same Node.js environment issue as openai)
+jest.mock('dodopayments', () => {
+  const mockClient = {
+    payments: { create: jest.fn() },
+    checkoutSessions: { create: jest.fn() },
+    webhooks: {
+      unwrap: jest.fn(),
+      unsafeUnwrap: jest.fn(),
+    },
+  };
+  const DodoPayments = jest.fn(() => mockClient);
+  DodoPayments._mockClient = mockClient;
+  return { __esModule: true, default: DodoPayments };
+});
+
 // Mock Next.js router
 jest.mock('next/router', () => ({
   useRouter() {

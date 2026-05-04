@@ -9,3 +9,4 @@ export * from './database';
 export * from './dashboard';
 export * from './errors';
 export * from './analytics';
+export * from './billing';
