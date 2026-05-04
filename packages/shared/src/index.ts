@@ -5,6 +5,7 @@ export * from './types/database';
 export * from './types/dashboard';
 export * from './types/errors';
 export * from './types/analytics';
+export * from './types/billing';
 
 // Constants
 export * from './constants/services';

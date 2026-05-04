@@ -6,9 +6,12 @@ import {
   SMSService,
   AnalyticsService,
   TranscriptionService,
+  BillingService,
 } from '@meetsolis/shared';
 import { serviceConfig } from './config/services';
 import { config } from './config/env';
+import { DodoBillingService } from './services/billing/dodo-billing-service';
+import { PlaceholderBillingService } from './services/billing/placeholder-billing-service';
 
 // Mock services
 import { MockTranscriptionService } from './services/mock/mock-transcription-service';
@@ -133,6 +136,33 @@ export class ServiceFactory {
     return this.instances.get('transcription');
   }
 
+  static createBillingService(): BillingService {
+    if (!this.instances.has('billing')) {
+      const billingProvider = config.billing.provider;
+      if (billingProvider === 'dodo') {
+        if (!config.billing.dodoApiKey)
+          throw new Error(
+            'DODO_PAYMENTS_API_KEY required when BILLING_PROVIDER=dodo'
+          );
+        if (!config.billing.dodoWebhookKey)
+          throw new Error(
+            'DODO_PAYMENTS_WEBHOOK_KEY required when BILLING_PROVIDER=dodo'
+          );
+        this.instances.set(
+          'billing',
+          new DodoBillingService(
+            config.billing.dodoApiKey,
+            config.billing.dodoWebhookKey,
+            config.billing.dodoEnvironment as 'test_mode' | 'live_mode'
+          )
+        );
+      } else {
+        this.instances.set('billing', new PlaceholderBillingService());
+      }
+    }
+    return this.instances.get('billing');
+  }
+
   static createTranslationService(): TranslationService {
     if (!this.instances.has('translation')) {
       const config = serviceConfig.getConfig();
@@ -194,6 +224,7 @@ export class ServiceFactory {
       translation: this.instances.get('translation'),
       sms: this.instances.get('sms'),
       analytics: this.instances.get('analytics'),
+      billing: this.instances.get('billing'),
     };
   }
 
@@ -245,6 +276,7 @@ export class ServiceFactory {
       this.createTranslationService();
       this.createSMSService();
       this.createAnalyticsService();
+      this.createBillingService();
 
       // Validate configuration
       const credentialValidation = serviceConfig.validateCredentials();
