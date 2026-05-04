@@ -48,13 +48,13 @@
 
 ### Test 6 — UpgradeModal CTAs (requires Test 4 or 1 to trigger modal)
 - "See all Pro features" → navigates to `/pricing`
-- "Upgrade to Pro — $99/month" → navigates to `/api/stripe/checkout?plan=monthly` (404 until Story 5.1)
+- "Upgrade to Pro — $99/month" → navigates to `/api/billing/checkout?plan=monthly` (404 until Story 5.1)
 
 ---
 
-## Blocked (needs Story 5.1 — Stripe)
+## Blocked (needs Story 5.1 — Dodo Payments)
 
 - Pro tier: 25 AI sessions/month enforced
 - Pro tier: monthly reset when `transcript_reset_at` > 30 days ago
 - Pro tier: 2,000 queries/month enforced
-- UpgradeModal Stripe CTA returns 200 (not 404)
+- UpgradeModal Dodo Payments CTA returns 200 (not 404)

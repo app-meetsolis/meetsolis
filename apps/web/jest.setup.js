@@ -1,5 +1,14 @@
 import '@testing-library/jest-dom';
 
+// TECH-001: openai/_shims/web-runtime.ts initializes browser APIs on import,
+// crashing Node.js test environment. Mock the entire openai module globally.
+jest.mock('openai', () => ({
+  OpenAI: jest.fn(() => ({
+    chat: { completions: { create: jest.fn() } },
+    embeddings: { create: jest.fn() },
+  })),
+}));
+
 // Mock Next.js router
 jest.mock('next/router', () => ({
   useRouter() {

@@ -82,7 +82,7 @@
 
 | Story | Title | Priority | Effort | Dependencies |
 |-------|-------|----------|--------|--------------|
-| **5.1** | Stripe Integration ($99/mo, $948/yr) | P0 | 1 day | 4.4 (usage tracking exists) |
+| **5.1** | Dodo Payments Integration ($99/mo, $948/yr) | P0 | 1 day | 4.4 (usage tracking exists) |
 | **5.2** | Tier Enforcement Middleware | P0 | 0.5 days | 5.1 |
 | **5.3** | Pricing Page ($99/$948) | P1 | 0.5 days | — |
 | **5.4** | Settings Page (Profile & Billing) | P1 | 1 day | 5.1 |

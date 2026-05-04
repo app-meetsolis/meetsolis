@@ -47,7 +47,7 @@ export function UpgradeModal({
   const content = LIMIT_CONTENT[limitType];
 
   const handleUpgrade = () => {
-    window.location.href = '/api/stripe/checkout?plan=monthly';
+    window.location.href = '/api/billing/checkout?plan=monthly';
   };
 
   const handleSeeFeatures = () => {

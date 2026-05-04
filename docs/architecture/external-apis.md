@@ -137,31 +137,28 @@ Return JSON format.
 
 ## Payment & Billing (MVP)
 
-### Stripe API
+### Dodo Payments API
 
-- **Purpose:** Subscription billing for Pro tier ($29/mo, $249/yr)
-- **Documentation:** https://stripe.com/docs/api
-- **Base URL(s):** https://api.stripe.com/v1
-- **Authentication:** Bearer token (Secret key)
-- **Rate Limits:** 100 requests/second
+- **Purpose:** Subscription billing for Pro tier ($99/mo)
+- **Documentation:** https://docs.dodopayments.com
+- **Base URL(s):** `https://test.dodopayments.com` (test) / `https://live.dodopayments.com` (live)
+- **Authentication:** `Authorization: Bearer DODO_PAYMENTS_API_KEY`
+- **Rate Limits:** See Dodo docs
 
 **Key Endpoints Used:**
-- `POST /customers` - Create Stripe customer for new user
-- `POST /checkout/sessions` - Create checkout session for Pro upgrade
-- `POST /billing_portal/sessions` - Manage subscription (cancel, update payment)
-- Webhooks: `customer.subscription.created`, `customer.subscription.deleted`, `invoice.payment_succeeded`
+- `POST /checkouts` — create hosted checkout session for Pro upgrade
+- Webhooks: `payment.succeeded`, `subscription.active`, `subscription.cancelled`, `subscription.expired`, `subscription.on_hold`, `payment.failed`
 
 **Integration Notes:**
-- Store `stripe_customer_id` and `stripe_subscription_id` in `user_preferences` table
+- Store `dodo_customer_id` and `dodo_subscription_id` in `subscriptions` table
 - Use webhooks to sync subscription status
-- Implement webhook signature verification for security
-- Support both monthly ($29) and annual ($249) plans
-- Handle failed payments gracefully (allow 3-day grace period)
+- Implement webhook signature verification using `DODO_PAYMENTS_WEBHOOK_KEY`
+- Webhook URL: `https://meetsolis.com/api/billing/webhook`
+- Monthly only for MVP ($99/mo); annual ($948/yr) deferred to post-MVP
 
 **Pricing Configuration:**
-- Free Tier: $0 (3 clients, 3 AI meetings/month, 100 AI queries)
-- Pro Tier: $29/month (50 clients, 20 AI meetings/month, 1000 AI queries)
-- Annual Pro: $249/year (same limits, save $99)
+- Free Tier: $0 (3 clients, 5 lifetime transcripts, 75 queries)
+- Pro Tier: $99/month (unlimited clients, 25 transcripts/mo, 2000 queries)
 
 ---
 

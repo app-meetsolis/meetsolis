@@ -76,15 +76,15 @@
 ## Payment Infrastructure
 
 Payment processing is abstracted via `BILLING_PROVIDER` environment variable:
-- `stripe` (default): Stripe Checkout + webhooks + customer portal
+- `dodo` (production): Dodo Payments Checkout + webhooks
 - `placeholder` (dev): Simulates upgrade, no real payment
 
 This allows switching payment processors without code changes if needed.
 
-### Stripe Configuration
-- Pro Monthly: `STRIPE_PRICE_MONTHLY` (Stripe Price ID, $99)
-- Pro Annual: `STRIPE_PRICE_ANNUAL` (Stripe Price ID, $948)
-- Webhooks handled: `checkout.session.completed`, `invoice.paid`, `customer.subscription.updated`, `customer.subscription.deleted`
+### Dodo Payments Configuration
+- Pro Monthly: `DODO_PRODUCT_ID_MONTHLY` (Dodo Product ID, $99)
+- Pro Annual: `DODO_PRODUCT_ID_ANNUAL` (Dodo Product ID, $948)
+- Webhooks handled: `payment.succeeded`, `subscription.active`, `subscription.cancelled`, `subscription.failed`
 
 ## Launch Strategy
 

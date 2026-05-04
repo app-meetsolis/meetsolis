@@ -11,7 +11,7 @@
 
 ## Epic Overview
 
-Build billing infrastructure (Stripe), free vs pro tier enforcement, settings, onboarding, and polish features required for MVP launch.
+Build billing infrastructure (Dodo Payments), free vs pro tier enforcement, settings, onboarding, and polish features required for MVP launch.
 
 **Goal:** Enable coaches to sign up for free, experience value, and upgrade to Pro ($99/mo or $948/yr).
 
@@ -19,31 +19,30 @@ Build billing infrastructure (Stripe), free vs pro tier enforcement, settings, o
 
 ## User Stories
 
-### Story 5.1: Stripe Integration & Subscription Management
+### Story 5.1: Dodo Payments Integration & Subscription Management
 
 **As a** user
-**I want to** subscribe to Pro tier via Stripe
+**I want to** subscribe to Pro tier via Dodo Payments
 **So that** I can access unlimited features
 
 **Acceptance Criteria:**
-- [ ] Stripe account created and configured
-- [ ] Products created in Stripe:
+- [ ] Dodo Payments account created and configured
+- [ ] Products created in Dodo Payments dashboard:
   - Pro Monthly: $99/month
   - Pro Annual: $948/year
-- [ ] Stripe Checkout integration:
-  - User clicks "Upgrade to Pro" → Redirect to Stripe Checkout
-  - After payment → Redirect back with session_id
-  - Webhook handles checkout.session.completed
-- [ ] Subscription status stored in subscriptions table (tier: 'free' | 'pro', stripe_customer_id, stripe_subscription_id)
-- [ ] Webhook endpoint: POST /api/stripe/webhook
+- [ ] Dodo Payments Checkout integration:
+  - User clicks "Upgrade to Pro" → Redirect to Dodo Payments checkout
+  - After payment → Redirect back with payment confirmation
+  - Webhook handles payment.succeeded
+- [ ] Subscription status stored in subscriptions table (tier: 'free' | 'pro', dodo_customer_id, dodo_subscription_id)
+- [ ] Webhook endpoint: POST /api/billing/webhook
 - [ ] Handle webhook events:
-  - checkout.session.completed → Create subscription
-  - customer.subscription.updated → Update status
-  - customer.subscription.deleted → Downgrade to free
-  - invoice.payment_failed → Send notification
-- [ ] Cancel subscription: Users can cancel via Stripe portal
-- [ ] Stripe Customer Portal integration (manage billing)
-- [ ] `BILLING_PROVIDER` env var abstraction: `stripe` (production) | `placeholder` (local dev, skips all Stripe calls)
+  - payment.succeeded → Create/activate subscription
+  - subscription.active → Confirm pro access
+  - subscription.cancelled → Downgrade to free
+  - subscription.failed → Send notification
+- [ ] Cancel subscription: Users can cancel via billing portal or settings page
+- [ ] `BILLING_PROVIDER` env var abstraction: `dodo` (production) | `placeholder` (local dev, skips all payment calls)
 
 **Estimated Effort:** 1 day
 
@@ -232,7 +231,7 @@ Build billing infrastructure (Stripe), free vs pro tier enforcement, settings, o
 **Acceptance Criteria:**
 - [ ] Confirmation dialog with "DELETE" input
 - [ ] Cascade delete all user data
-- [ ] Cancel Stripe subscription
+- [ ] Cancel Dodo Payments subscription
 
 **Estimated Effort:** 0.5 days
 
@@ -288,7 +287,7 @@ Build billing infrastructure (Stripe), free vs pro tier enforcement, settings, o
 
 ## Epic Success Criteria
 
-- [ ] Users can upgrade to Pro via Stripe ($99/mo or $948/yr)
+- [ ] Users can upgrade to Pro via Dodo Payments ($99/mo or $948/yr)
 - [ ] Free/Pro tier limits enforced
 - [ ] GDPR compliant (export + delete)
 - [ ] Performance >90 Lighthouse
@@ -298,7 +297,7 @@ Build billing infrastructure (Stripe), free vs pro tier enforcement, settings, o
 
 ## Definition of Done
 
-- [ ] Stripe integration working (live mode)
+- [ ] Dodo Payments integration working (live mode)
 - [ ] Free/Pro tiers enforced
 - [ ] Onboarding smooth (<5 min to first aha moment)
 - [ ] Performance acceptable

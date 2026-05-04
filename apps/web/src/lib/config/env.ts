@@ -26,11 +26,14 @@ const envSchema = z.object({
   DEEPGRAM_API_KEY: z.string().optional(),
 
   // Billing Provider (abstracted)
-  BILLING_PROVIDER: z.enum(['placeholder', 'stripe']).default('placeholder'),
-  STRIPE_SECRET_KEY: z.string().optional(),
-  STRIPE_WEBHOOK_SECRET: z.string().optional(),
-  STRIPE_PRICE_MONTHLY: z.string().optional(),
-  STRIPE_PRICE_ANNUAL: z.string().optional(),
+  BILLING_PROVIDER: z.enum(['placeholder', 'dodo']).default('placeholder'),
+  DODO_PAYMENTS_API_KEY: z.string().optional(),
+  DODO_PAYMENTS_WEBHOOK_KEY: z.string().optional(),
+  DODO_PAYMENTS_ENVIRONMENT: z
+    .enum(['test_mode', 'live_mode'])
+    .default('test_mode'),
+  DODO_PRODUCT_ID_MONTHLY: z.string().optional(),
+  DODO_PRODUCT_ID_ANNUAL: z.string().optional(),
 
   // Communication Services
   TWILIO_ACCOUNT_SID: z.string().optional(),
@@ -136,10 +139,11 @@ export const config = {
 
   billing: {
     provider: env.BILLING_PROVIDER,
-    stripeSecretKey: env.STRIPE_SECRET_KEY,
-    stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
-    stripePriceMonthly: env.STRIPE_PRICE_MONTHLY,
-    stripePriceAnnual: env.STRIPE_PRICE_ANNUAL,
+    dodoApiKey: env.DODO_PAYMENTS_API_KEY,
+    dodoWebhookKey: env.DODO_PAYMENTS_WEBHOOK_KEY,
+    dodoEnvironment: env.DODO_PAYMENTS_ENVIRONMENT,
+    dodoProductIdMonthly: env.DODO_PRODUCT_ID_MONTHLY,
+    dodoProductIdAnnual: env.DODO_PRODUCT_ID_ANNUAL,
   },
 
   twilio: {

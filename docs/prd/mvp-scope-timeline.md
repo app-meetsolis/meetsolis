@@ -20,7 +20,7 @@
 6. Solis Intelligence Q&A with hybrid RAG
 7. Action item tracking (extract + manual)
 8. Usage limits enforcement (free: 3 clients, 5 lifetime sessions, 75 lifetime queries)
-9. Stripe billing & subscriptions ($99/mo Pro)
+9. Dodo Payments billing & subscriptions ($99/mo Pro)
 10. 5-step onboarding flow with sample transcript
 11. Landing page (executive coach positioning)
 
