@@ -35,7 +35,6 @@ export async function POST(req: NextRequest) {
         const { customer_id, subscription_id, product_id, user_id } =
           event.data;
 
-        // Try lookup by customer_id first, fall back to user_id from metadata
         let row: { user_id: string } | null = null;
 
         if (customer_id) {
@@ -80,10 +79,7 @@ export async function POST(req: NextRequest) {
         } else {
           console.error(
             '[billing/webhook] no subscription row found for event',
-            {
-              customer_id,
-              user_id,
-            }
+            { customer_id, user_id }
           );
         }
         break;
