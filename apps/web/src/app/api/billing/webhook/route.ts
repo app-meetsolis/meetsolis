@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import * as Sentry from '@sentry/nextjs';
 import { ServiceFactory } from '@/lib/service-factory';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { config } from '@/lib/config/env';
@@ -8,23 +9,45 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   const payload = await req.text();
+  const webhookId = req.headers.get('webhook-id') ?? '';
 
-  // Standard Webhooks spec requires all 3 headers for signature verification
   const webhookHeaders = {
-    'webhook-id': req.headers.get('webhook-id') ?? '',
+    'webhook-id': webhookId,
     'webhook-timestamp': req.headers.get('webhook-timestamp') ?? '',
     'webhook-signature': req.headers.get('webhook-signature') ?? '',
   };
 
+  Sentry.addBreadcrumb({
+    category: 'billing.webhook',
+    message: 'received',
+    level: 'info',
+    data: { webhook_id: webhookId },
+  });
+
   const billing = ServiceFactory.createBillingService();
 
   if (!billing.verifyWebhook(payload, webhookHeaders)) {
-    console.error('[billing/webhook] invalid signature — rejecting');
+    Sentry.captureMessage('billing.webhook signature invalid', {
+      level: 'warning',
+      tags: { webhook_id: webhookId },
+    });
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
   const event = billing.parseWebhookEvent(payload);
   const supabase = getSupabaseServerClient();
+
+  Sentry.addBreadcrumb({
+    category: 'billing.webhook',
+    message: `event ${event.type}`,
+    level: 'info',
+    data: {
+      type: event.type,
+      customer_id: event.data.customer_id,
+      subscription_id: event.data.subscription_id,
+      has_user_id: !!event.data.user_id,
+    },
+  });
 
   try {
     switch (event.type) {
@@ -34,23 +57,23 @@ export async function POST(req: NextRequest) {
           event.data;
 
         if (!user_id) {
-          console.error(
-            '[billing/webhook] missing user_id in metadata',
-            event.data
-          );
+          Sentry.captureMessage('billing.webhook missing user_id in metadata', {
+            level: 'warning',
+            tags: { type: event.type, webhook_id: webhookId },
+            extra: { customer_id, subscription_id },
+          });
           return NextResponse.json({ received: true });
         }
 
-        // Validate product_id matches our configured products. Defends against
-        // forged/spoofed events activating pro plan via arbitrary products.
         const allowedProducts = [config.billing.dodoProductIdMonthly].filter(
           Boolean
         ) as string[];
         if (product_id && !allowedProducts.includes(product_id)) {
-          console.error(
-            '[billing/webhook] product_id not recognized — refusing upgrade',
-            { product_id }
-          );
+          Sentry.captureMessage('billing.webhook product_id not recognized', {
+            level: 'warning',
+            tags: { type: event.type, webhook_id: webhookId },
+            extra: { product_id, allowed: allowedProducts },
+          });
           return NextResponse.json({ received: true });
         }
 
@@ -70,13 +93,26 @@ export async function POST(req: NextRequest) {
           .upsert(upsertPayload, { onConflict: 'user_id' });
 
         if (error) {
-          console.error('[billing/webhook] upsert error:', error.message);
+          Sentry.captureException(new Error(error.message), {
+            tags: {
+              type: event.type,
+              webhook_id: webhookId,
+              op: 'subscription.upsert',
+            },
+            extra: { user_id, customer_id },
+          });
           return NextResponse.json(
             { error: 'Internal error' },
             { status: 500 }
           );
         }
-        console.log('[billing/webhook] upgraded user:', user_id);
+
+        Sentry.addBreadcrumb({
+          category: 'billing.webhook',
+          message: 'upgraded user',
+          level: 'info',
+          data: { user_id },
+        });
         break;
       }
 
@@ -101,6 +137,13 @@ export async function POST(req: NextRequest) {
             .update(updatePayload)
             .eq('user_id', user_id);
         }
+
+        Sentry.addBreadcrumb({
+          category: 'billing.webhook',
+          message: 'downgraded to free',
+          level: 'info',
+          data: { subscription_id, user_id },
+        });
         break;
       }
 
@@ -111,6 +154,13 @@ export async function POST(req: NextRequest) {
           .from('subscriptions')
           .update({ status: 'past_due', updated_at: new Date().toISOString() })
           .eq('dodo_subscription_id', subscription_id);
+
+        Sentry.addBreadcrumb({
+          category: 'billing.webhook',
+          message: 'subscription on hold',
+          level: 'warning',
+          data: { subscription_id },
+        });
         break;
       }
 
@@ -120,10 +170,9 @@ export async function POST(req: NextRequest) {
         break;
     }
   } catch (err) {
-    console.error(
-      '[billing/webhook]',
-      err instanceof Error ? err.message : err
-    );
+    Sentry.captureException(err, {
+      tags: { type: event.type, webhook_id: webhookId },
+    });
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 
