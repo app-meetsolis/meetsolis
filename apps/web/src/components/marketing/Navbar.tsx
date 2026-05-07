@@ -27,18 +27,14 @@ const Logo = () => (
       alt="MeetSolis logo"
       width={32}
       height={32}
-      style={{
-        borderRadius: '6px',
-        filter: 'invert(1)',
-        mixBlendMode: 'multiply',
-      }}
+      style={{ borderRadius: '6px' }}
     />
     <span
       style={{
         fontSize: '17px',
         fontWeight: 700,
         letterSpacing: '-0.03em',
-        color: '#000',
+        color: '#d9f0e5',
         fontFamily: 'var(--font-outfit)',
         lineHeight: 1,
       }}
@@ -94,7 +90,7 @@ export default function SiteNavbar() {
                 key={idx}
                 href={item.link}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="text-[#4e5b6d] font-medium text-base hover:text-black transition-colors"
+                className="text-[#9abfad] font-medium text-base hover:text-[#d9f0e5] transition-colors"
               >
                 {item.name}
               </Link>
