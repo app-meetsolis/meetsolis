@@ -21,7 +21,7 @@ export class PlaceholderBillingService implements BillingService {
     };
   }
 
-  verifyWebhook(_payload: string, _signature: string): boolean {
+  verifyWebhook(_payload: string, _headers: Record<string, string>): boolean {
     return true;
   }
 

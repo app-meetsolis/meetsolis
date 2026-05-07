@@ -16,7 +16,7 @@ describe('PlaceholderBillingService', () => {
   });
 
   it('verifyWebhook always returns true', () => {
-    expect(svc.verifyWebhook('payload', 'sig')).toBe(true);
+    expect(svc.verifyWebhook('payload', {})).toBe(true);
   });
 
   it('parseWebhookEvent parses subscription.active', () => {

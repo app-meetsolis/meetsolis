@@ -33,6 +33,6 @@ export interface BillingService {
     successUrl: string,
     cancelUrl: string
   ): Promise<CheckoutSession>;
-  verifyWebhook(payload: string, signature: string): boolean;
+  verifyWebhook(payload: string, headers: Record<string, string>): boolean;
   parseWebhookEvent(payload: string): WebhookEvent;
 }

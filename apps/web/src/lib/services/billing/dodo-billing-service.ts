@@ -46,13 +46,15 @@ export class DodoBillingService implements BillingService {
     };
   }
 
-  verifyWebhook(payload: string, signature: string): boolean {
+  verifyWebhook(payload: string, headers: Record<string, string>): boolean {
     try {
-      this.client.webhooks.unwrap(payload, {
-        headers: { 'webhook-signature': signature },
-      });
+      this.client.webhooks.unwrap(payload, { headers });
       return true;
-    } catch {
+    } catch (err) {
+      console.error(
+        '[dodo] webhook verify failed:',
+        err instanceof Error ? err.message : err
+      );
       return false;
     }
   }

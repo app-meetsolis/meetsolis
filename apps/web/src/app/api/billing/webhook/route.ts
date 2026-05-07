@@ -1,34 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { ServiceFactory } from '@/lib/service-factory';
-import { config } from '@/lib/config/env';
+import { getSupabaseServerClient } from '@/lib/supabase/server';
 
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   const payload = await req.text();
-  const signature = req.headers.get('webhook-signature') ?? '';
+
+  // Standard Webhooks spec requires all 3 headers for signature verification
+  const webhookHeaders = {
+    'webhook-id': req.headers.get('webhook-id') ?? '',
+    'webhook-timestamp': req.headers.get('webhook-timestamp') ?? '',
+    'webhook-signature': req.headers.get('webhook-signature') ?? '',
+  };
 
   const billing = ServiceFactory.createBillingService();
 
-  const sigValid = billing.verifyWebhook(payload, signature);
-  if (!sigValid) {
-    console.error(
-      '[billing/webhook] signature check failed — proceeding anyway (temp debug)'
-    );
+  if (!billing.verifyWebhook(payload, webhookHeaders)) {
+    console.error('[billing/webhook] invalid signature — rejecting');
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
   const event = billing.parseWebhookEvent(payload);
-  console.log(
-    '[billing/webhook] event:',
-    event.type,
-    JSON.stringify(event.data)
-  );
-
-  const supabase = createClient(
-    config.supabase.url!,
-    config.supabase.serviceRoleKey!
-  );
+  const supabase = getSupabaseServerClient();
 
   try {
     switch (event.type) {
@@ -37,65 +32,44 @@ export async function POST(req: NextRequest) {
         const { customer_id, subscription_id, product_id, user_id } =
           event.data;
 
-        let row: { user_id: string } | null = null;
-
-        if (customer_id) {
-          const { data } = await supabase
-            .from('subscriptions')
-            .select('user_id')
-            .eq('dodo_customer_id', customer_id)
-            .single();
-          row = data;
+        if (!user_id) {
+          console.error(
+            '[billing/webhook] missing user_id in metadata',
+            event.data
+          );
+          return NextResponse.json({ received: true });
         }
 
-        if (!row && user_id) {
-          const { data } = await supabase
-            .from('subscriptions')
-            .select('user_id')
-            .eq('user_id', user_id)
-            .single();
-          row = data;
+        const upsertPayload: Record<string, string | null> = {
+          user_id,
+          plan: 'pro',
+          status: 'active',
+          updated_at: new Date().toISOString(),
+        };
+        if (customer_id) upsertPayload.dodo_customer_id = customer_id;
+        if (subscription_id)
+          upsertPayload.dodo_subscription_id = subscription_id;
+        if (product_id) upsertPayload.dodo_product_id = product_id;
+
+        const { error } = await supabase
+          .from('subscriptions')
+          .upsert(upsertPayload, { onConflict: 'user_id' });
+
+        if (error) {
+          console.error('[billing/webhook] upsert error:', error.message);
+          return NextResponse.json({ error: error.message }, { status: 500 });
         }
-
-        const targetUserId = row?.user_id ?? user_id;
-
-        if (targetUserId) {
-          const upsertPayload: Record<string, string | null> = {
-            user_id: targetUserId,
-            plan: 'pro',
-            status: 'active',
-            updated_at: new Date().toISOString(),
-          };
-          if (customer_id) upsertPayload.dodo_customer_id = customer_id;
-          if (subscription_id)
-            upsertPayload.dodo_subscription_id = subscription_id;
-          if (product_id) upsertPayload.dodo_product_id = product_id;
-
-          const { error } = await supabase
-            .from('subscriptions')
-            .upsert(upsertPayload, { onConflict: 'user_id' });
-
-          if (error) {
-            console.error('[billing/webhook] upsert error:', error.message);
-            return NextResponse.json({ error: error.message }, { status: 500 });
-          }
-          console.log('[billing/webhook] upgraded user:', targetUserId);
-        } else {
-          console.error('[billing/webhook] no user_id — cannot update', {
-            customer_id,
-            user_id,
-          });
-        }
+        console.log('[billing/webhook] upgraded user:', user_id);
         break;
       }
 
       case 'subscription.cancelled':
       case 'subscription.expired': {
-        const { subscription_id, customer_id, user_id } = event.data;
+        const { subscription_id, user_id } = event.data;
 
         const updatePayload = {
           plan: 'free',
-          status: 'cancelled',
+          status: 'canceled',
           updated_at: new Date().toISOString(),
         };
 
@@ -104,11 +78,6 @@ export async function POST(req: NextRequest) {
             .from('subscriptions')
             .update(updatePayload)
             .eq('dodo_subscription_id', subscription_id);
-        } else if (customer_id) {
-          await supabase
-            .from('subscriptions')
-            .update(updatePayload)
-            .eq('dodo_customer_id', customer_id);
         } else if (user_id) {
           await supabase
             .from('subscriptions')
@@ -123,15 +92,13 @@ export async function POST(req: NextRequest) {
         if (!subscription_id) break;
         await supabase
           .from('subscriptions')
-          .update({ status: 'on_hold', updated_at: new Date().toISOString() })
+          .update({ status: 'past_due', updated_at: new Date().toISOString() })
           .eq('dodo_subscription_id', subscription_id);
         break;
       }
 
       case 'subscription.updated':
       case 'payment.failed':
-        break;
-
       default:
         break;
     }
