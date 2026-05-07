@@ -280,7 +280,7 @@ CREATE TABLE usage_tracking (
 Shows when any limit is hit:
 - Title: "You've reached your [free/limit] limit"
 - Context: "Upgrade to Pro for unlimited clients, 25 AI sessions/month, and 2,000 Solis queries/month."
-- CTA: "Upgrade to Pro — $99/month" → Stripe Checkout
+- CTA: "Upgrade to Pro — $99/month" → Dodo Payments Checkout
 - Secondary: "Learn more about Pro"
 
 #### Acceptance Criteria
@@ -316,6 +316,8 @@ AI_PROVIDER=placeholder      # 'placeholder' | 'claude' | 'openai'
 ANTHROPIC_API_KEY=           # Required if AI_PROVIDER=claude
 OPENAI_API_KEY=              # Required if AI_PROVIDER=openai
 
-BILLING_PROVIDER=placeholder # 'placeholder' | 'stripe'
-STRIPE_SECRET_KEY=           # Required if BILLING_PROVIDER=stripe
+BILLING_PROVIDER=placeholder         # 'placeholder' | 'dodo'
+DODO_PAYMENTS_API_KEY=               # Required if BILLING_PROVIDER=dodo
+DODO_PAYMENTS_WEBHOOK_KEY=           # Required if BILLING_PROVIDER=dodo
+DODO_PAYMENTS_ENVIRONMENT=test_mode  # test_mode | live_mode
 ```

@@ -743,7 +743,7 @@ export default function PricingPage() {
                   }}
                 >
                   All payments are 256-bit encrypted and processed securely via
-                  Stripe.
+                  Dodo Payments.
                 </p>
               </div>
             </div>

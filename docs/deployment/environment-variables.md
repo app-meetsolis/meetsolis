@@ -241,51 +241,54 @@ GLADIA_API_KEY=xxx...
 
 ---
 
-### 6. Stripe (Payments) - v2.0 Feature
+### 6. Dodo Payments (Billing)
 
-#### Production Stripe
+#### Production Dodo
 
 ```env
 # .env.production
 
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_xxx...
-STRIPE_SECRET_KEY=sk_live_xxx...
-STRIPE_WEBHOOK_SECRET=whsec_xxx...
+BILLING_PROVIDER=dodo
+DODO_PAYMENTS_API_KEY=your_live_api_key
+DODO_PAYMENTS_WEBHOOK_KEY=your_live_webhook_secret
+DODO_PAYMENTS_ENVIRONMENT=live_mode
+DODO_PRODUCT_ID_MONTHLY=prod_xxx...
 ```
 
 **How to get:**
-1. Go to https://dashboard.stripe.com
-2. **Switch to Live mode** (top-right toggle)
-3. Developers → API Keys:
-   - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` = Publishable key
-   - `STRIPE_SECRET_KEY` = Secret key
-4. Webhooks → Add endpoint:
-   - URL: `https://meetsolis.com/api/webhooks/stripe`
-   - Events: `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`
-   - `STRIPE_WEBHOOK_SECRET` = Signing secret
+1. Go to https://app.dodopayments.com
+2. **Switch to Live mode**
+3. Developer → API Keys → create write-enabled key → `DODO_PAYMENTS_API_KEY`
+4. Developer → Webhooks → Add endpoint:
+   - URL: `https://meetsolis.com/api/billing/webhook`
+   - Events: `payment.succeeded`, `subscription.active`, `subscription.updated`, `subscription.cancelled`, `subscription.expired`, `subscription.on_hold`, `payment.failed`
+   - `DODO_PAYMENTS_WEBHOOK_KEY` = Signing secret
+5. Products → create "MeetSolis Pro Monthly" ($99/mo) → `DODO_PRODUCT_ID_MONTHLY`
 
 ---
 
-#### Staging Stripe
+#### Staging / Local Dev Dodo
 
 ```env
-# .env.staging
+# .env.local (local dev)
 
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxx...
-STRIPE_SECRET_KEY=sk_test_xxx...
-STRIPE_WEBHOOK_SECRET=whsec_xxx...
+BILLING_PROVIDER=dodo
+DODO_PAYMENTS_API_KEY=your_test_api_key
+DODO_PAYMENTS_WEBHOOK_KEY=your_test_webhook_secret
+DODO_PAYMENTS_ENVIRONMENT=test_mode
+DODO_PRODUCT_ID_MONTHLY=prod_test_xxx...
 ```
 
 **How to get:**
-1. Stripe Dashboard → **Switch to Test mode**
-2. Copy test API keys (same location as production)
-3. Webhooks → Use Stripe CLI for local testing:
-   ```bash
-   stripe listen --forward-to localhost:3000/api/webhooks/stripe
-   # Copy webhook secret from output
-   ```
+1. Dodo Dashboard → **Switch to Test mode**
+2. Same steps as production (test keys differ from live keys)
+3. For local webhook testing: use ngrok → `ngrok http 3000`, set webhook URL to `https://YOUR-NGROK.ngrok.io/api/billing/webhook`
 
-**Recommendation:** Always use Stripe Test mode for staging
+**Placeholder mode (no API key needed):**
+```env
+BILLING_PROVIDER=placeholder
+```
+Simulates checkout success locally without any Dodo API calls.
 
 ---
 
