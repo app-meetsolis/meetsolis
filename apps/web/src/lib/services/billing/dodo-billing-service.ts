@@ -67,9 +67,12 @@ export class DodoBillingService implements BillingService {
         product_id?: string;
         payment_id?: string;
         status?: string;
+        metadata?: Record<string, string>;
+        payment_link?: { metadata?: Record<string, string> };
       };
     };
     const data = raw.data ?? {};
+    const metadata = data.metadata ?? data.payment_link?.metadata ?? {};
     return {
       type: raw.type as WebhookEvent['type'],
       data: {
@@ -78,6 +81,7 @@ export class DodoBillingService implements BillingService {
         product_id: data.product_id,
         payment_id: data.payment_id,
         status: data.status,
+        user_id: metadata['user_id'],
       },
     };
   }

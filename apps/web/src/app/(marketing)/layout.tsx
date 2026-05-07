@@ -10,7 +10,7 @@ export default function MarketingLayout({
     <div
       style={{
         fontFamily: 'Geist, Plus Jakarta Sans, sans-serif',
-        backgroundColor: 'rgb(248,249,250)',
+        backgroundColor: '#0b1612',
         minHeight: '100vh',
       }}
     >
