@@ -35,15 +35,6 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
     const sessionId = searchParams.get('session_id');
 
-    if (!clientId) {
-      return NextResponse.json(
-        {
-          error: { code: 'VALIDATION_ERROR', message: 'client_id is required' },
-        },
-        { status: 400 }
-      );
-    }
-
     const userId = await getInternalUserId(getSupabase(), clerkUserId);
     if (!userId) {
       return NextResponse.json(
@@ -54,27 +45,32 @@ export async function GET(request: NextRequest) {
 
     const supabase = getSupabase();
 
-    // Verify client belongs to user
-    const { data: client } = await supabase
-      .from('clients')
-      .select('id')
-      .eq('id', clientId)
-      .eq('user_id', userId)
-      .single();
+    // If client_id provided, verify ownership
+    if (clientId) {
+      const { data: client } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('id', clientId)
+        .eq('user_id', userId)
+        .single();
 
-    if (!client) {
-      return NextResponse.json(
-        { error: { code: 'NOT_FOUND', message: 'Client not found' } },
-        { status: 404 }
-      );
+      if (!client) {
+        return NextResponse.json(
+          { error: { code: 'NOT_FOUND', message: 'Client not found' } },
+          { status: 404 }
+        );
+      }
     }
 
     let query = supabase
       .from('action_items')
       .select('*')
-      .eq('client_id', clientId)
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
+
+    if (clientId) {
+      query = query.eq('client_id', clientId);
+    }
 
     if (status) {
       query = query.eq('status', status);

@@ -68,11 +68,10 @@ export function ClientCard({ client, onEdit, onDelete }: ClientCardProps) {
       role="button"
       tabIndex={0}
       className="group relative flex cursor-pointer flex-col rounded-[12px] bg-card
-        border border-border
-        shadow-sm
+        shadow-card
         transition-all duration-200
         hover:-translate-y-0.5
-        hover:shadow-md hover:border-border
+        hover:shadow-card-hover
         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
     >
       {/* â"€â"€ Actions menu â"€â"€ */}

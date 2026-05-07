@@ -46,6 +46,17 @@ export function DeleteClientDialog({
   const handleDelete = async () => {
     if (!client || !confirmed) return;
     setIsDeleting(true);
+
+    // Optimistic remove from cache
+    const previousClients = queryClient.getQueryData(['clients']);
+    queryClient.setQueryData(['clients'], (old: unknown) =>
+      Array.isArray(old)
+        ? old.filter((c: { id: string }) => c.id !== client.id)
+        : old
+    );
+    onClose();
+    router.push('/clients');
+
     try {
       const response = await fetch(`/api/clients/${client.id}`, {
         method: 'DELETE',
@@ -54,11 +65,11 @@ export function DeleteClientDialog({
         const data = await response.json().catch(() => ({}));
         throw new Error(data?.error?.message || 'Failed to delete client');
       }
-      await queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
       toast.success('Client deleted');
-      onClose();
-      router.push('/clients');
     } catch (err) {
+      // Rollback
+      queryClient.setQueryData(['clients'], previousClients);
       console.error('[DeleteClientDialog] delete error:', err);
       toast.error('Failed to delete client. Please try again.');
       setIsDeleting(false);

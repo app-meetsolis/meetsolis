@@ -31,7 +31,7 @@ export default function DashboardLayout({
           {/* Content area */}
           <div className="flex flex-1 flex-col min-w-0">
             {/* Mobile top bar */}
-            <div className="flex h-12 shrink-0 items-center border-b border-border bg-card px-4 md:hidden">
+            <div className="flex h-12 shrink-0 items-center border-b border-sidebar-border bg-sidebar px-4 md:hidden">
               <button
                 onClick={() => setIsMobileOpen(true)}
                 className="text-[#4e5b6d] hover:text-[#000000]"

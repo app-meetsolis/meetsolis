@@ -10,12 +10,14 @@ import {
   type UsageResponse,
 } from '@meetsolis/shared';
 import { differenceInDays } from 'date-fns';
+import { Upload, Sparkles } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 import { DashboardTopbar } from '@/components/dashboard/DashboardTopbar';
-import { GreetingCard } from '@/components/dashboard/GreetingCard';
-import { MetricCards } from '@/components/dashboard/MetricCards';
-import { RecentClientsChips } from '@/components/dashboard/RecentClientsChips';
+import { StatCards } from '@/components/dashboard/StatCards';
+import { TrendsChart } from '@/components/dashboard/TrendsChart';
 import { SessionsList } from '@/components/dashboard/SessionsList';
-import { ActionItemsSection } from '@/components/dashboard/ActionItemsSection';
+import { ActionItemsAccordion } from '@/components/dashboard/ActionItemsAccordion';
 import { SolisFab } from '@/components/dashboard/SolisFab';
 import type {
   SessionWithClient,
@@ -36,26 +38,28 @@ function greeting() {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { isLoading: authLoading } = useAuth();
   const { data: profile, isLoading: profileLoading } = useUserProfile();
 
-  const { data: clients, isLoading: clientsLoading } = useQuery({
+  const { data: clients = [], isLoading: clientsLoading } = useQuery({
     queryKey: ['clients'],
     queryFn: fetchClients,
   });
+
   const { data: usage } = useQuery<UsageResponse>({
     queryKey: ['usage'],
     queryFn: () => fetch('/api/usage').then(r => r.json()),
     staleTime: 60_000,
   });
 
-  const ids = clients?.map(c => c.id) ?? [];
+  const ids = clients.map(c => c.id);
 
   const { data: sessions = [] } = useQuery<SessionWithClient[]>({
     queryKey: ['dash-sessions', ids],
     queryFn: async () => {
       const rows = await Promise.all(
-        (clients ?? []).map(async c => {
+        clients.map(async c => {
           const r = await fetch(`/api/sessions?client_id=${c.id}`);
           if (!r.ok) return [];
           return ((await r.json()).sessions ?? []).map((s: Session) => ({
@@ -79,13 +83,16 @@ export default function DashboardPage() {
     queryKey: ['dash-actions', ids],
     queryFn: async () => {
       const rows = await Promise.all(
-        (clients ?? []).map(async c => {
+        clients.map(async c => {
           const r = await fetch(
             `/api/action-items?client_id=${c.id}&status=pending`
           );
           if (!r.ok) return [];
           return ((await r.json()).actionItems ?? []).map(
-            (i: ClientActionItem) => ({ ...i, client_name: c.name })
+            (i: ClientActionItem) => ({
+              ...i,
+              client_name: c.name,
+            })
           );
         })
       );
@@ -96,8 +103,7 @@ export default function DashboardPage() {
 
   const firstName = getDisplayName(profile).split(' ')[0];
 
-  // Derive attention client (longest gap ≥14 days)
-  const attentionCandidates = (clients ?? [])
+  const attentionClient = [...clients]
     .filter(
       c =>
         !c.last_session_at ||
@@ -109,44 +115,32 @@ export default function DashboardPage() {
         ? differenceInDays(new Date(), new Date(c.last_session_at))
         : 999,
     }))
-    .sort((a, b) => b.daysSince - a.daysSince);
-  const attentionClient = attentionCandidates[0];
+    .sort((a, b) => b.daysSince - a.daysSince)[0];
 
-  // Derive pending uploads
-  const pendingUploadSessions = sessions.filter(
+  const pendingUploadClient = sessions.find(
     s => !s.transcript_text && !s.transcript_file_url
-  );
-  const pendingUploads = pendingUploadSessions.length;
-  const pendingUploadClient = pendingUploadSessions[0]?.client_name;
-
-  // Next session client (most recent session client for prep recommendation)
+  )?.client_name;
   const nextSessionClient = sessions[0]?.client_name;
-
-  // Action item counts for greeting
-  const uniqueActionClients = new Set(actions.map(a => a.client_id)).size;
 
   if (authLoading || profileLoading || clientsLoading) {
     return (
       <div className="bg-background min-h-full">
         <div className="h-[54px] bg-card border-b border-border" />
         <div className="px-6 py-[22px] space-y-[18px]">
-          <div className="skeleton rounded-[12px] h-[80px]" />
-          <div className="grid grid-cols-4 gap-3">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="skeleton rounded-[12px] h-[110px]" />
+          <div className="skeleton rounded-[12px] h-[60px]" />
+          <div className="grid grid-cols-3 gap-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="skeleton rounded-[12px] h-[140px]" />
             ))}
           </div>
-          <div className="skeleton rounded-[12px] h-[56px]" />
-          <div
-            className="grid gap-4"
-            style={{ gridTemplateColumns: '58fr 42fr' }}
-          >
+          <div className="skeleton rounded-[12px] h-[260px]" />
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2.5">
               {[1, 2, 3].map(i => (
                 <div key={i} className="skeleton rounded-[12px] h-[130px]" />
               ))}
             </div>
-            <div className="skeleton rounded-[12px] h-[400px]" />
+            <div className="skeleton rounded-[12px] h-[380px]" />
           </div>
         </div>
       </div>
@@ -158,33 +152,52 @@ export default function DashboardPage() {
       <DashboardTopbar usage={usage} />
 
       <div className="px-6 py-[22px] pb-10 space-y-[18px]">
-        <GreetingCard
-          greeting={greeting()}
-          firstName={firstName}
-          lastSession={sessions[0]}
-          openActionsCount={actions.length}
-          openActionsClientCount={uniqueActionClients}
-          attentionClient={attentionClient?.name}
-        />
+        {/* Inline greeting */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-[22px] font-semibold tracking-[-0.03em] text-foreground">
+              {greeting()}, {firstName}.
+            </h1>
+            <p className="text-[13px] text-muted-foreground mt-0.5">
+              {sessions.length > 0
+                ? `${sessions.length} session${sessions.length !== 1 ? 's' : ''} · ${actions.length} open action${actions.length !== 1 ? 's' : ''}`
+                : 'No sessions yet — upload your first transcript'}
+            </p>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push('/clients')}
+              className="h-8 px-4 gap-1.5 text-[13px]"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              Upload Session
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => router.push('/intelligence')}
+              className="h-8 px-4 gap-1.5 text-[13px]"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Ask Solis
+            </Button>
+          </div>
+        </div>
 
-        <MetricCards
-          lastSession={sessions[0]}
+        {/* 3 stat cards */}
+        <StatCards
+          clients={clients}
           actions={actions}
           attentionClient={attentionClient}
-          pendingUploads={pendingUploads}
-        />
-
-        <RecentClientsChips
-          clients={clients ?? []}
           sessions={sessions}
-          actions={actions}
         />
 
-        {/* 2-col grid 58/42 */}
-        <div
-          className="grid gap-4"
-          style={{ gridTemplateColumns: '58fr 42fr' }}
-        >
+        {/* Full-width trend chart */}
+        <TrendsChart sessions={sessions} />
+
+        {/* 50/50 bottom */}
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <div className="flex items-center justify-between mb-4">
               <span className="text-[13px] font-semibold text-muted-foreground uppercase tracking-[0.09em]">
@@ -198,12 +211,15 @@ export default function DashboardPage() {
           </div>
 
           <div>
-            <ActionItemsSection
-              actions={actions}
-              attentionClient={attentionClient}
-              pendingUploadClient={pendingUploadClient}
-              nextSessionClient={nextSessionClient}
-            />
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-[13px] font-semibold text-muted-foreground uppercase tracking-[0.09em]">
+                Open Actions
+              </span>
+              <span className="text-[13px] text-muted-foreground font-mono">
+                {actions.length} items
+              </span>
+            </div>
+            <ActionItemsAccordion actions={actions} sessions={sessions} />
           </div>
         </div>
       </div>

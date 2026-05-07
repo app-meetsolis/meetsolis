@@ -43,7 +43,7 @@ export function SessionCard({ session, clientId, onRetry }: SessionCardProps) {
 
   if (session.status === 'processing') {
     return (
-      <div className="rounded-[12px] border border-border bg-card px-4 py-4">
+      <div className="rounded-[12px] bg-card shadow-card px-4 py-4">
         <div className="flex items-center gap-3">
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           <div>
@@ -93,7 +93,7 @@ export function SessionCard({ session, clientId, onRetry }: SessionCardProps) {
   const extraTopics = (session.key_topics?.length ?? 0) - 3;
 
   return (
-    <div className="rounded-[12px] border border-border bg-card">
+    <div className="rounded-[12px] bg-card shadow-card">
       {/* Header — clickable to toggle */}
       <button
         className="w-full px-4 py-4 text-left text-foreground"
