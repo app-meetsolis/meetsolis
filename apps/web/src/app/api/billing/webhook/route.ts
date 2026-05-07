@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ServiceFactory } from '@/lib/service-factory';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { config } from '@/lib/config/env';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -40,6 +41,19 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ received: true });
         }
 
+        // Validate product_id matches our configured products. Defends against
+        // forged/spoofed events activating pro plan via arbitrary products.
+        const allowedProducts = [config.billing.dodoProductIdMonthly].filter(
+          Boolean
+        ) as string[];
+        if (product_id && !allowedProducts.includes(product_id)) {
+          console.error(
+            '[billing/webhook] product_id not recognized — refusing upgrade',
+            { product_id }
+          );
+          return NextResponse.json({ received: true });
+        }
+
         const upsertPayload: Record<string, string | null> = {
           user_id,
           plan: 'pro',
@@ -57,7 +71,10 @@ export async function POST(req: NextRequest) {
 
         if (error) {
           console.error('[billing/webhook] upsert error:', error.message);
-          return NextResponse.json({ error: error.message }, { status: 500 });
+          return NextResponse.json(
+            { error: 'Internal error' },
+            { status: 500 }
+          );
         }
         console.log('[billing/webhook] upgraded user:', user_id);
         break;
@@ -103,10 +120,11 @@ export async function POST(req: NextRequest) {
         break;
     }
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : 'Webhook processing failed';
-    console.error('[billing/webhook]', message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error(
+      '[billing/webhook]',
+      err instanceof Error ? err.message : err
+    );
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });

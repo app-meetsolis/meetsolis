@@ -46,8 +46,22 @@ export function UpgradeModal({
 }: UpgradeModalProps) {
   const content = LIMIT_CONTENT[limitType];
 
-  const handleUpgrade = () => {
-    window.location.href = '/api/billing/checkout?plan=monthly';
+  const handleUpgrade = async () => {
+    try {
+      const res = await fetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: 'monthly' }),
+      });
+      const data = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok || !data.url) {
+        console.error('Checkout failed:', data.error);
+        return;
+      }
+      window.location.href = data.url;
+    } catch (err) {
+      console.error('Checkout error:', err);
+    }
   };
 
   const handleSeeFeatures = () => {
