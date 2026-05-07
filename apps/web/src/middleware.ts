@@ -12,9 +12,11 @@ const isPublicRoute = createRouteMatcher([
   '/about',
   '/privacy',
   '/terms',
+  '/pricing',
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/api/webhooks(.*)',
+  '/api/billing/webhook',
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
@@ -29,7 +31,8 @@ export default clerkMiddleware(async (auth, req) => {
     req.nextUrl.pathname.startsWith('/admin') ||
     req.nextUrl.pathname.startsWith('/onboarding') ||
     (req.nextUrl.pathname.startsWith('/api/') &&
-      !req.nextUrl.pathname.startsWith('/api/webhooks'));
+      !req.nextUrl.pathname.startsWith('/api/webhooks') &&
+      req.nextUrl.pathname !== '/api/billing/webhook');
 
   if (isProtectedRoute && !userId) {
     const signInUrl = new URL('/sign-in', req.url);
@@ -66,7 +69,8 @@ export default clerkMiddleware(async (auth, req) => {
   // Rate limiting for API routes
   if (
     req.nextUrl.pathname.startsWith('/api/') &&
-    !req.nextUrl.pathname.startsWith('/api/webhooks/')
+    !req.nextUrl.pathname.startsWith('/api/webhooks/') &&
+    req.nextUrl.pathname !== '/api/billing/webhook'
   ) {
     const limiterType = getRateLimiterForRoute(req.nextUrl.pathname);
     try {
