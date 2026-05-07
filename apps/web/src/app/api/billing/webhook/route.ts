@@ -57,32 +57,34 @@ export async function POST(req: NextRequest) {
           row = data;
         }
 
-        if (row) {
-          const updatePayload: Record<string, string | null> = {
+        const targetUserId = row?.user_id ?? user_id;
+
+        if (targetUserId) {
+          const upsertPayload: Record<string, string | null> = {
+            user_id: targetUserId,
             plan: 'pro',
             status: 'active',
             updated_at: new Date().toISOString(),
           };
-          if (customer_id) updatePayload.dodo_customer_id = customer_id;
+          if (customer_id) upsertPayload.dodo_customer_id = customer_id;
           if (subscription_id)
-            updatePayload.dodo_subscription_id = subscription_id;
-          if (product_id) updatePayload.dodo_product_id = product_id;
+            upsertPayload.dodo_subscription_id = subscription_id;
+          if (product_id) upsertPayload.dodo_product_id = product_id;
 
           const { error } = await supabase
             .from('subscriptions')
-            .update(updatePayload)
-            .eq('user_id', row.user_id);
+            .upsert(upsertPayload, { onConflict: 'user_id' });
 
           if (error) {
-            console.error('[billing/webhook] update error:', error.message);
+            console.error('[billing/webhook] upsert error:', error.message);
             return NextResponse.json({ error: error.message }, { status: 500 });
           }
-          console.log('[billing/webhook] upgraded user:', row.user_id);
+          console.log('[billing/webhook] upgraded user:', targetUserId);
         } else {
-          console.error(
-            '[billing/webhook] no subscription row found for event',
-            { customer_id, user_id }
-          );
+          console.error('[billing/webhook] no user_id — cannot update', {
+            customer_id,
+            user_id,
+          });
         }
         break;
       }
