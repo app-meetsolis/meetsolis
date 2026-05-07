@@ -3,7 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 import { ServiceFactory } from '@/lib/service-factory';
 import { config } from '@/lib/config/env';
 
-// Disable body parsing — webhook signature verification requires raw body
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
@@ -13,10 +12,16 @@ export async function POST(req: NextRequest) {
   const billing = ServiceFactory.createBillingService();
 
   if (!billing.verifyWebhook(payload, signature)) {
+    console.error('[billing/webhook] invalid signature');
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
   const event = billing.parseWebhookEvent(payload);
+  console.log(
+    '[billing/webhook] event:',
+    event.type,
+    JSON.stringify(event.data)
+  );
 
   const supabase = createClient(
     config.supabase.url!,
@@ -25,66 +30,106 @@ export async function POST(req: NextRequest) {
 
   try {
     switch (event.type) {
-      case 'subscription.active': {
-        const { customer_id, subscription_id, product_id } = event.data;
-        if (!customer_id || !subscription_id) break;
+      case 'subscription.active':
+      case 'payment.succeeded': {
+        const { customer_id, subscription_id, product_id, user_id } =
+          event.data;
 
-        // Find user by dodo_customer_id (may not exist on first activation)
-        const { data: existing } = await supabase
-          .from('subscriptions')
-          .select('user_id')
-          .eq('dodo_customer_id', customer_id)
-          .single();
+        // Try lookup by customer_id first, fall back to user_id from metadata
+        let row: { user_id: string } | null = null;
 
-        if (existing) {
-          await supabase
+        if (customer_id) {
+          const { data } = await supabase
             .from('subscriptions')
-            .update({
-              plan: 'pro',
-              status: 'active',
-              dodo_subscription_id: subscription_id,
-              dodo_product_id: product_id ?? null,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('dodo_customer_id', customer_id);
+            .select('user_id')
+            .eq('dodo_customer_id', customer_id)
+            .single();
+          row = data;
+        }
+
+        if (!row && user_id) {
+          const { data } = await supabase
+            .from('subscriptions')
+            .select('user_id')
+            .eq('user_id', user_id)
+            .single();
+          row = data;
+        }
+
+        if (row) {
+          const updatePayload: Record<string, string | null> = {
+            plan: 'pro',
+            status: 'active',
+            updated_at: new Date().toISOString(),
+          };
+          if (customer_id) updatePayload.dodo_customer_id = customer_id;
+          if (subscription_id)
+            updatePayload.dodo_subscription_id = subscription_id;
+          if (product_id) updatePayload.dodo_product_id = product_id;
+
+          const { error } = await supabase
+            .from('subscriptions')
+            .update(updatePayload)
+            .eq('user_id', row.user_id);
+
+          if (error) {
+            console.error('[billing/webhook] update error:', error.message);
+            return NextResponse.json({ error: error.message }, { status: 500 });
+          }
+          console.log('[billing/webhook] upgraded user:', row.user_id);
+        } else {
+          console.error(
+            '[billing/webhook] no subscription row found for event',
+            {
+              customer_id,
+              user_id,
+            }
+          );
         }
         break;
       }
 
       case 'subscription.cancelled':
       case 'subscription.expired': {
-        const { subscription_id } = event.data;
-        if (!subscription_id) break;
+        const { subscription_id, customer_id, user_id } = event.data;
 
-        await supabase
-          .from('subscriptions')
-          .update({
-            plan: 'free',
-            status: 'cancelled',
-            updated_at: new Date().toISOString(),
-          })
-          .eq('dodo_subscription_id', subscription_id);
+        const updatePayload = {
+          plan: 'free',
+          status: 'cancelled',
+          updated_at: new Date().toISOString(),
+        };
+
+        if (subscription_id) {
+          await supabase
+            .from('subscriptions')
+            .update(updatePayload)
+            .eq('dodo_subscription_id', subscription_id);
+        } else if (customer_id) {
+          await supabase
+            .from('subscriptions')
+            .update(updatePayload)
+            .eq('dodo_customer_id', customer_id);
+        } else if (user_id) {
+          await supabase
+            .from('subscriptions')
+            .update(updatePayload)
+            .eq('user_id', user_id);
+        }
         break;
       }
 
       case 'subscription.on_hold': {
         const { subscription_id } = event.data;
         if (!subscription_id) break;
-
         await supabase
           .from('subscriptions')
-          .update({
-            status: 'on_hold',
-            updated_at: new Date().toISOString(),
-          })
+          .update({ status: 'on_hold', updated_at: new Date().toISOString() })
           .eq('dodo_subscription_id', subscription_id);
         break;
       }
 
-      case 'payment.succeeded':
       case 'subscription.updated':
       case 'payment.failed':
-        // No DB action needed — subscription.active handles state changes
         break;
 
       default:

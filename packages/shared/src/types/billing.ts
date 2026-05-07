@@ -22,6 +22,7 @@ export interface WebhookEvent {
     product_id?: string;
     payment_id?: string;
     status?: string;
+    user_id?: string;
   };
 }
 
