@@ -79,11 +79,11 @@ export default function SessionDetailPage() {
         <p className="mt-1 text-sm text-muted-foreground">{formattedDate}</p>
 
         {transcriptContent ? (
-          <pre className="mt-6 whitespace-pre-wrap overflow-y-auto max-h-[70vh] rounded-lg border border-border bg-card p-4 text-sm text-foreground font-sans">
+          <pre className="mt-6 whitespace-pre-wrap overflow-y-auto max-h-[70vh] rounded-lg bg-card shadow-card p-4 text-sm text-foreground font-sans">
             {transcriptContent}
           </pre>
         ) : (
-          <div className="mt-6 rounded-lg border border-border bg-card px-4 py-8 text-center">
+          <div className="mt-6 rounded-lg bg-card shadow-card px-4 py-8 text-center">
             <p className="text-sm text-muted-foreground">
               No transcript text available.
             </p>

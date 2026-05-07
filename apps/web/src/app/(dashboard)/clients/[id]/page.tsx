@@ -165,7 +165,7 @@ export default function ClientDetailPage() {
         </Button>
 
         {/* -- Profile card -- */}
-        <div className="rounded-[12px] border border-border bg-card px-6 py-5">
+        <div className="rounded-[12px] bg-card shadow-card px-6 py-5">
           <div className="flex items-start justify-between mb-5">
             <div className="flex items-center gap-4">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-[18px] font-bold bg-primary/15 text-primary">
@@ -297,7 +297,7 @@ export default function ClientDetailPage() {
                 </span>
               )}
             </div>
-            <div className="rounded-[12px] border border-border bg-card overflow-hidden">
+            <div className="rounded-[12px] bg-card shadow-card overflow-hidden">
               {allItems.filter(i => !i.completed).length === 0 ? (
                 <div className="flex items-center justify-center gap-2 py-10">
                   <p className="text-[12px] text-foreground/30">

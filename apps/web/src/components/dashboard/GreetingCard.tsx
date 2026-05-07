@@ -26,7 +26,7 @@ export function GreetingCard({
   const router = useRouter();
 
   return (
-    <Card className="rounded-[12px] border-border">
+    <Card className="rounded-[12px] border-0 shadow-card">
       <CardContent className="flex items-start justify-between gap-5 px-[22px] py-[18px]">
         <div>
           <div className="text-[22px] font-semibold tracking-[-0.03em] text-foreground">

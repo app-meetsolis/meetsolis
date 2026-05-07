@@ -17,16 +17,22 @@ import {
   UserCircle,
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { SidebarCard } from './SidebarCard';
 
 const navItems = [
-  { label: 'Home', href: '/dashboard', icon: Home },
-  { label: 'Clients', href: '/clients', icon: Users },
-  { label: 'Intelligence', href: '/intelligence', icon: Sparkles },
-  { label: 'Settings', href: '/settings', icon: Settings },
+  { label: 'Home', href: '/dashboard', icon: Home, badgeKey: 'actions' },
+  { label: 'Clients', href: '/clients', icon: Users, badgeKey: null },
+  {
+    label: 'Intelligence',
+    href: '/intelligence',
+    icon: Sparkles,
+    badgeKey: null,
+  },
+  { label: 'Settings', href: '/settings', icon: Settings, badgeKey: null },
 ];
 
 interface LeftSidebarProps {
@@ -46,6 +52,19 @@ export function LeftSidebar({
   const [collapsed, setCollapsed] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+
+  const { data: actionItemsData } = useQuery({
+    queryKey: ['sidebar-action-count'],
+    queryFn: async () => {
+      const res = await fetch('/api/action-items?status=pending');
+      if (!res.ok) return { actionItems: [] };
+      return res.json();
+    },
+    staleTime: 60_000,
+  });
+  const actionCount: number = actionItemsData?.actionItems?.length ?? 0;
+  const badges: Record<string, number> =
+    actionCount > 0 ? { actions: actionCount } : {};
 
   const handleSignOut = async () => {
     await signOut();
@@ -77,7 +96,7 @@ export function LeftSidebar({
   const sidebarContent = (
     <div
       className={cn(
-        'flex h-full flex-col bg-card border-r border-border transition-[width] duration-200 ease-in-out overflow-hidden',
+        'flex h-full flex-col bg-sidebar border-r border-sidebar-border transition-[width] duration-200 ease-in-out overflow-hidden',
         collapsed ? 'w-14' : 'w-48'
       )}
     >
@@ -124,7 +143,8 @@ export function LeftSidebar({
 
       {/* -- Nav Items -- */}
       <nav className="flex-1 space-y-1 py-3 px-2">
-        {navItems.map(({ label, href, icon: Icon }) => {
+        {navItems.map(({ label, href, icon: Icon, badgeKey }) => {
+          const badgeCount = badgeKey ? (badges[badgeKey] ?? 0) : 0;
           const isActive =
             href === '/dashboard'
               ? pathname === '/dashboard'
@@ -145,7 +165,7 @@ export function LeftSidebar({
                     ? 'h-8 w-8 justify-center'
                     : 'gap-2.5 px-2.5 py-2 w-full',
                   isActive
-                    ? 'text-foreground bg-accent'
+                    ? 'text-foreground bg-accent font-semibold'
                     : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                 )}
               >
@@ -153,7 +173,19 @@ export function LeftSidebar({
                   className={cn('shrink-0', isActive ? 'text-primary' : '')}
                   style={{ width: 15, height: 15 }}
                 />
-                {!collapsed && <span className="truncate">{label}</span>}
+                {!collapsed && (
+                  <span className="flex-1 flex items-center justify-between gap-1 truncate">
+                    <span className="truncate">{label}</span>
+                    {badgeCount > 0 && (
+                      <span className="shrink-0 min-w-[16px] h-4 px-1 rounded-full bg-primary text-[9px] font-bold text-primary-foreground flex items-center justify-center">
+                        {badgeCount > 99 ? '99+' : badgeCount}
+                      </span>
+                    )}
+                  </span>
+                )}
+                {collapsed && badgeCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-primary border border-sidebar" />
+                )}
               </Link>
             </div>
           );
