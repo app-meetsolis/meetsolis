@@ -58,6 +58,9 @@ const envSchema = z.object({
   // Alerting
   SLACK_WEBHOOK_URL: z.string().optional(),
 
+  // Dev/testing overrides
+  ADMIN_BYPASS_LIMITS: z.string().default('false'),
+
   // Service Configuration
   USE_MOCK_SERVICES: z.string().default('true'),
   NEXT_PUBLIC_USE_MOCK_SERVICES: z.string().default('true'),
@@ -99,6 +102,8 @@ export const env = validateEnv();
 // Type-safe environment configuration object
 export const config = {
   // Convert string values to appropriate types
+  adminBypassLimits:
+    env.ADMIN_BYPASS_LIMITS === 'true' && env.NODE_ENV !== 'production',
   useMockServices: env.USE_MOCK_SERVICES === 'true',
   serviceTimeout: parseInt(env.SERVICE_TIMEOUT_MS, 10),
   circuitBreakerThreshold: parseInt(env.CIRCUIT_BREAKER_THRESHOLD, 10),
