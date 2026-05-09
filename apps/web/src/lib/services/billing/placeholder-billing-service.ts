@@ -3,6 +3,7 @@ import type {
   BillingPlan,
   CheckoutSession,
   WebhookEvent,
+  SubscriptionDetails,
 } from '@meetsolis/shared';
 
 export class PlaceholderBillingService implements BillingService {
@@ -27,5 +28,22 @@ export class PlaceholderBillingService implements BillingService {
 
   parseWebhookEvent(payload: string): WebhookEvent {
     return JSON.parse(payload) as WebhookEvent;
+  }
+
+  // eslint-disable-next-line no-unused-vars
+  async cancelSubscription(_id: string): Promise<void> {}
+
+  // eslint-disable-next-line no-unused-vars
+  async resumeSubscription(_id: string): Promise<void> {}
+
+  // eslint-disable-next-line no-unused-vars
+  async retrieveSubscription(_id: string): Promise<SubscriptionDetails> {
+    return {
+      cancel_at_next_billing_date: false,
+      current_period_end: new Date(
+        Date.now() + 30 * 24 * 60 * 60 * 1000
+      ).toISOString(),
+      status: 'active',
+    };
   }
 }

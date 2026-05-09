@@ -41,6 +41,8 @@ export function useAuth(): AuthState {
             video_on_join: true,
           },
         },
+        email_notifications_enabled: true,
+        timezone: 'UTC',
         created_at: clerkUser.createdAt?.toString() ?? new Date().toISOString(),
         updated_at: clerkUser.updatedAt?.toString() ?? new Date().toISOString(),
       }

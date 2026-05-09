@@ -7,9 +7,9 @@
 
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile, getDisplayName } from '@/hooks/useUserProfile';
-import { useClerk } from '@clerk/nextjs';
+import { useClerk, useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
-import { Settings, LogOut, User } from 'lucide-react';
+import { Settings, LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +28,7 @@ interface UserProfileProps {
 export function UserProfile({ className }: UserProfileProps) {
   const { user, isLoading: authLoading } = useAuth();
   const { data: profile, isLoading: profileLoading } = useUserProfile();
+  const { user: clerkUser } = useUser();
   const { signOut } = useClerk();
   const router = useRouter();
 
@@ -72,7 +73,7 @@ export function UserProfile({ className }: UserProfileProps) {
           aria-label="User profile menu"
         >
           <Avatar className="h-10 w-10">
-            <AvatarImage src={undefined} alt={displayName} />
+            <AvatarImage src={clerkUser?.imageUrl} alt={displayName} />
             <AvatarFallback className="bg-[#00A0B0] text-white">
               {initials}
             </AvatarFallback>

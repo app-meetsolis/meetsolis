@@ -462,6 +462,7 @@ export interface Subscription {
   dodo_subscription_id: string | null;
   dodo_product_id: string | null;
   current_period_end: string | null;
+  cancel_at_period_end: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -486,6 +487,8 @@ export interface UsageResponse {
   client_count: number;
   client_limit: number;
   resets_at: string | null;
+  cancel_at_period_end: boolean;
+  current_period_end: string | null;
 }
 
 // =============================================================================

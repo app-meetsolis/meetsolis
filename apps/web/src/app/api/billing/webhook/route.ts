@@ -164,7 +164,40 @@ export async function POST(req: NextRequest) {
         break;
       }
 
-      case 'subscription.updated':
+      case 'subscription.updated': {
+        const { subscription_id } = event.data;
+        if (!subscription_id) break;
+
+        try {
+          const details = await billing.retrieveSubscription(subscription_id);
+          await supabase
+            .from('subscriptions')
+            .update({
+              cancel_at_period_end: details.cancel_at_next_billing_date,
+              ...(details.current_period_end
+                ? { current_period_end: details.current_period_end }
+                : {}),
+              updated_at: new Date().toISOString(),
+            })
+            .eq('dodo_subscription_id', subscription_id);
+
+          Sentry.addBreadcrumb({
+            category: 'billing.webhook',
+            message: 'subscription.updated synced',
+            level: 'info',
+            data: {
+              subscription_id,
+              cancel_at_period_end: details.cancel_at_next_billing_date,
+            },
+          });
+        } catch (retrieveErr) {
+          Sentry.captureException(retrieveErr, {
+            tags: { type: event.type, webhook_id: webhookId, op: 'retrieve' },
+          });
+        }
+        break;
+      }
+
       case 'payment.failed':
       default:
         break;
