@@ -1,5 +1,7 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
+import { useAuth } from '@clerk/nextjs';
+import { toast } from 'sonner';
 
 interface Plan {
   name: string;
@@ -33,7 +35,7 @@ const PLANS: Plan[] = [
     yearly: '$79',
     note: '/month',
     desc: "Everything you need to never forget a client's breakthrough moment.",
-    cta: 'Start Free Trial',
+    cta: '',
     badge: 'Most Popular',
     featured: true,
     features: [
@@ -78,7 +80,38 @@ const reveal = (v: boolean, d: number, y = 36): React.CSSProperties => ({
 export default function NoveraPricing() {
   const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly');
   const [visible, setVisible] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
+  const { isSignedIn } = useAuth();
+
+  const handleProCTA = async () => {
+    if (!isSignedIn) {
+      window.location.href = '/sign-up';
+      return;
+    }
+    setCheckoutLoading(true);
+    try {
+      const plan = billing === 'yearly' ? 'annual' : 'monthly';
+      const res = await fetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan }),
+      });
+      const data = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok || !data.url) {
+        toast.error(
+          'Could not start checkout. Please try again or contact hari@meetsolis.com.'
+        );
+        return;
+      }
+      window.location.href = data.url;
+    } catch (err) {
+      console.error('[checkout] error:', err);
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -256,29 +289,42 @@ export default function NoveraPricing() {
                     </span>
                   )}
                 </div>
-                <div className="flex items-end gap-1">
-                  <span
-                    style={{
-                      fontFamily: 'Petrona, serif',
-                      fontSize: '48px',
-                      fontWeight: 500,
-                      letterSpacing: '-0.04em',
-                      lineHeight: '1em',
-                      color: clr,
-                    }}
-                  >
-                    {billing === 'monthly' ? p.monthly : p.yearly}
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: 'Inter, sans-serif',
-                      fontSize: '14px',
-                      color: muted,
-                      paddingBottom: '6px',
-                    }}
-                  >
-                    {p.note}
-                  </span>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-end gap-1">
+                    <span
+                      style={{
+                        fontFamily: 'Petrona, serif',
+                        fontSize: '48px',
+                        fontWeight: 500,
+                        letterSpacing: '-0.04em',
+                        lineHeight: '1em',
+                        color: clr,
+                      }}
+                    >
+                      {billing === 'monthly' ? p.monthly : p.yearly}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: 'Inter, sans-serif',
+                        fontSize: '14px',
+                        color: muted,
+                        paddingBottom: '6px',
+                      }}
+                    >
+                      {p.note}
+                    </span>
+                  </div>
+                  {billing === 'yearly' && p.featured && (
+                    <span
+                      style={{
+                        fontFamily: 'Inter, sans-serif',
+                        fontSize: '13px',
+                        color: muted,
+                      }}
+                    >
+                      $948 billed annually · Save $240
+                    </span>
+                  )}
                 </div>
                 <p
                   style={{
@@ -292,23 +338,43 @@ export default function NoveraPricing() {
                 >
                   {p.desc}
                 </p>
-                <a
-                  href="#"
-                  className="w-full flex items-center justify-center py-3 rounded-lg font-medium transition-all duration-200 hover:opacity-90"
-                  style={{
-                    backgroundColor: p.featured ? '#1a4d2e' : 'transparent',
-                    color: p.featured ? '#f0ede6' : '#d9f0e5',
-                    border: p.featured
-                      ? 'none'
-                      : '1px solid rgba(45,158,95,0.35)',
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '15px',
-                    fontWeight: 500,
-                    textDecoration: 'none',
-                  }}
-                >
-                  {p.cta}
-                </a>
+                {p.featured ? (
+                  <button
+                    onClick={handleProCTA}
+                    disabled={checkoutLoading}
+                    className="w-full flex items-center justify-center py-3 rounded-lg font-medium transition-all duration-200 hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                    style={{
+                      backgroundColor: '#1a4d2e',
+                      color: '#f0ede6',
+                      border: 'none',
+                      fontFamily: 'Inter, sans-serif',
+                      fontSize: '15px',
+                      fontWeight: 500,
+                    }}
+                  >
+                    {checkoutLoading
+                      ? 'Redirecting…'
+                      : isSignedIn
+                        ? 'Upgrade to Pro'
+                        : 'Get Started'}
+                  </button>
+                ) : (
+                  <a
+                    href="/sign-up"
+                    className="w-full flex items-center justify-center py-3 rounded-lg font-medium transition-all duration-200 hover:opacity-90"
+                    style={{
+                      backgroundColor: 'transparent',
+                      color: '#d9f0e5',
+                      border: '1px solid rgba(45,158,95,0.35)',
+                      fontFamily: 'Inter, sans-serif',
+                      fontSize: '15px',
+                      fontWeight: 500,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    {p.cta}
+                  </a>
+                )}
                 <div className="flex items-center gap-3">
                   <div
                     className="flex-1 h-px"

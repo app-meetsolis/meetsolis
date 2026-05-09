@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   }
 
   const plan = body.plan as BillingPlan | undefined;
-  if (!plan || plan !== 'monthly') {
+  if (!plan || (plan !== 'monthly' && plan !== 'annual')) {
     return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
   }
 

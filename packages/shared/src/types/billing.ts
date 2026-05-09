@@ -1,4 +1,4 @@
-export type BillingPlan = 'monthly';
+export type BillingPlan = 'monthly' | 'annual';
 
 export interface CheckoutSession {
   checkout_url: string;

@@ -1,9 +1,11 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '@clerk/nextjs';
 
 export default function NoveraNavbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { isSignedIn, isLoaded } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -80,44 +82,73 @@ export default function NoveraNavbar() {
         </div>
 
         <div className="hidden md:flex items-center gap-1">
-          <a
-            href="/sign-in"
-            className="px-4 py-2 text-sm rounded-md transition-all duration-200"
-            style={{
-              fontFamily: 'Inter, sans-serif',
-              fontSize: '14px',
-              fontWeight: 400,
-              color: 'rgba(217,240,229,0.65)',
-              backgroundColor: 'transparent',
-              textDecoration: 'none',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#d9f0e5')}
-            onMouseLeave={e =>
-              (e.currentTarget.style.color = 'rgba(217,240,229,0.65)')
-            }
-          >
-            Login
-          </a>
-          <a
-            href="/sign-up"
-            className="px-4 py-2 text-sm rounded-md transition-all duration-200"
-            style={{
-              fontFamily: 'Inter, sans-serif',
-              fontSize: '14px',
-              fontWeight: 500,
-              color: '#d9f0e5',
-              backgroundColor: '#1a6b42',
-              textDecoration: 'none',
-            }}
-            onMouseEnter={e =>
-              (e.currentTarget.style.filter = 'brightness(1.08)')
-            }
-            onMouseLeave={e => (e.currentTarget.style.filter = 'none')}
-            onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.97)')}
-            onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
-          >
-            Get Started
-          </a>
+          {!isLoaded ? null : isSignedIn ? (
+            <a
+              href="/clients"
+              className="px-4 py-2 text-sm rounded-md transition-all duration-200"
+              style={{
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#d9f0e5',
+                backgroundColor: '#1a6b42',
+                textDecoration: 'none',
+              }}
+              onMouseEnter={e =>
+                (e.currentTarget.style.filter = 'brightness(1.08)')
+              }
+              onMouseLeave={e => (e.currentTarget.style.filter = 'none')}
+              onMouseDown={e =>
+                (e.currentTarget.style.transform = 'scale(0.97)')
+              }
+              onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+            >
+              Go to Dashboard
+            </a>
+          ) : (
+            <>
+              <a
+                href="/sign-in"
+                className="px-4 py-2 text-sm rounded-md transition-all duration-200"
+                style={{
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: '14px',
+                  fontWeight: 400,
+                  color: 'rgba(217,240,229,0.65)',
+                  backgroundColor: 'transparent',
+                  textDecoration: 'none',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#d9f0e5')}
+                onMouseLeave={e =>
+                  (e.currentTarget.style.color = 'rgba(217,240,229,0.65)')
+                }
+              >
+                Login
+              </a>
+              <a
+                href="/sign-up"
+                className="px-4 py-2 text-sm rounded-md transition-all duration-200"
+                style={{
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  color: '#d9f0e5',
+                  backgroundColor: '#1a6b42',
+                  textDecoration: 'none',
+                }}
+                onMouseEnter={e =>
+                  (e.currentTarget.style.filter = 'brightness(1.08)')
+                }
+                onMouseLeave={e => (e.currentTarget.style.filter = 'none')}
+                onMouseDown={e =>
+                  (e.currentTarget.style.transform = 'scale(0.97)')
+                }
+                onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+              >
+                Get Started
+              </a>
+            </>
+          )}
         </div>
 
         <button
@@ -179,27 +210,44 @@ export default function NoveraNavbar() {
             </a>
           ))}
           <div className="flex gap-3 mt-4">
-            <a
-              href="/sign-in"
-              className="flex-1 text-center py-2 rounded-md text-sm"
-              style={{
-                color: 'rgba(217,240,229,0.65)',
-                fontFamily: 'Inter, sans-serif',
-              }}
-            >
-              Login
-            </a>
-            <a
-              href="/sign-up"
-              className="flex-1 text-center py-2 rounded-md text-sm font-medium"
-              style={{
-                color: '#d9f0e5',
-                backgroundColor: '#1a6b42',
-                fontFamily: 'Inter, sans-serif',
-              }}
-            >
-              Get Started
-            </a>
+            {!isLoaded ? null : isSignedIn ? (
+              <a
+                href="/clients"
+                className="flex-1 text-center py-2 rounded-md text-sm font-medium"
+                style={{
+                  color: '#d9f0e5',
+                  backgroundColor: '#1a6b42',
+                  fontFamily: 'Inter, sans-serif',
+                }}
+                onClick={() => setMobileOpen(false)}
+              >
+                Go to Dashboard
+              </a>
+            ) : (
+              <>
+                <a
+                  href="/sign-in"
+                  className="flex-1 text-center py-2 rounded-md text-sm"
+                  style={{
+                    color: 'rgba(217,240,229,0.65)',
+                    fontFamily: 'Inter, sans-serif',
+                  }}
+                >
+                  Login
+                </a>
+                <a
+                  href="/sign-up"
+                  className="flex-1 text-center py-2 rounded-md text-sm font-medium"
+                  style={{
+                    color: '#d9f0e5',
+                    backgroundColor: '#1a6b42',
+                    fontFamily: 'Inter, sans-serif',
+                  }}
+                >
+                  Get Started
+                </a>
+              </>
+            )}
           </div>
         </div>
       )}

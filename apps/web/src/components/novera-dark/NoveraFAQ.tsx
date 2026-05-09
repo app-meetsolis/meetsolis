@@ -37,6 +37,21 @@ const faqItems: FAQItem[] = [
     answer:
       'Solis is your AI coaching assistant. Ask it anything about any client — "What has Sarah been working on?" or "Which clients haven\'t met their goals?" — and it searches your entire session history to give you a cited, accurate answer in seconds.',
   },
+  {
+    question: 'Can I cancel anytime?',
+    answer:
+      'Yes. You can cancel your Pro subscription at any time from your account settings — no calls, no forms, no friction. After cancellation, your access continues until the end of the billing period, then automatically reverts to the free tier. Your data is never deleted.',
+  },
+  {
+    question: 'What is your refund policy?',
+    answer:
+      "We offer a 14-day money-back guarantee. If MeetSolis isn't the right fit within your first 14 days on Pro, email us at hari@meetsolis.com and we'll issue a full refund — no questions asked.",
+  },
+  {
+    question: 'Can I downgrade from Pro to Free?',
+    answer:
+      "Yes. Cancel your subscription anytime and your account will revert to the free tier at the end of your billing cycle. Your existing clients and session history are preserved — you'll just be limited to the free plan limits (3 clients, 5 sessions, 75 queries) going forward.",
+  },
 ];
 
 const PlusIcon = () => (
@@ -202,7 +217,7 @@ export default function NoveraFAQ() {
               </p>
             </div>
             <a
-              href="/contact"
+              href="mailto:hari@meetsolis.com"
               className="inline-flex items-center justify-center px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 hover:opacity-90 w-fit"
               style={{
                 backgroundColor: '#1a6b42',

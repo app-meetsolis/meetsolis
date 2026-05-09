@@ -1,5 +1,5 @@
-import Navbar from '@/components/marketing/Navbar';
-import Footer from '@/components/marketing/Footer';
+import NoveraNavbar from '@/components/novera-dark/NoveraNavbar';
+import NoveraFooter from '@/components/novera-dark/NoveraFooter';
 
 export default function MarketingLayout({
   children,
@@ -7,17 +7,10 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div
-      style={{
-        fontFamily: 'Geist, Plus Jakarta Sans, sans-serif',
-        backgroundColor: '#0b1612',
-        minHeight: '100vh',
-      }}
-    >
-      <Navbar />
-      <div style={{ height: '80px' }} />
+    <div style={{ backgroundColor: '#0b1612', minHeight: '100vh' }}>
+      <NoveraNavbar />
       <main>{children}</main>
-      <Footer />
+      <NoveraFooter />
     </div>
   );
 }
