@@ -1,14 +1,26 @@
 /**
- * Usage enforcement — Story 4.4
+ * Usage enforcement — Stories 4.4 + 5.2
  * Server-side limit checks for free/pro tiers.
  */
 
+import * as Sentry from '@sentry/nextjs';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { config } from '@/lib/config/env';
 import {
   UpgradeRequiredError,
   type UsageTracking,
   type SubscriptionPlan,
 } from '@meetsolis/shared';
+
+// ---------------------------------------------------------------------------
+// Admin bypass (dev/test only — disabled in production)
+// ---------------------------------------------------------------------------
+
+function isAdminBypassActive(userId: string): boolean {
+  if (!config.adminBypassLimits) return false;
+  console.log(`[admin] limit check bypassed for ${userId}`);
+  return true;
+}
 
 // ---------------------------------------------------------------------------
 // Limits
@@ -107,6 +119,7 @@ async function maybeResetMonthlyCounter(
 // ---------------------------------------------------------------------------
 
 export async function checkClientLimit(userId: string): Promise<void> {
+  if (isAdminBypassActive(userId)) return;
   const supabase = getSupabaseServerClient();
   const tier = await getUserTier(userId, supabase);
 
@@ -125,6 +138,7 @@ export async function checkClientLimit(userId: string): Promise<void> {
 }
 
 export async function checkTranscriptLimit(userId: string): Promise<void> {
+  if (isAdminBypassActive(userId)) return;
   const supabase = getSupabaseServerClient();
   const tier = await getUserTier(userId, supabase);
   let usage = await getOrCreateUsageTracking(userId, supabase);
@@ -142,6 +156,7 @@ export async function checkTranscriptLimit(userId: string): Promise<void> {
 }
 
 export async function checkQueryLimit(userId: string): Promise<void> {
+  if (isAdminBypassActive(userId)) return;
   const supabase = getSupabaseServerClient();
   const tier = await getUserTier(userId, supabase);
   let usage = await getOrCreateUsageTracking(userId, supabase);
@@ -171,6 +186,9 @@ export async function incrementTranscriptCount(userId: string): Promise<void> {
     .eq('user_id', userId);
 
   if (error) {
+    Sentry.captureException(new Error(error.message), {
+      extra: { userId, type: 'increment_transcript' },
+    });
     throw new Error(`Failed to increment transcript count: ${error.message}`);
   }
 }
@@ -188,6 +206,9 @@ export async function incrementQueryCount(userId: string): Promise<void> {
     .eq('user_id', userId);
 
   if (error) {
+    Sentry.captureException(new Error(error.message), {
+      extra: { userId, type: 'increment_query' },
+    });
     throw new Error(`Failed to increment query count: ${error.message}`);
   }
 }

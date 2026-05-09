@@ -1,5 +1,5 @@
 /**
- * Unit tests for checkUsage.ts — Story 4.4
+ * Unit tests for checkUsage.ts — Stories 4.4 + 5.2
  */
 
 import {
@@ -11,12 +11,14 @@ import {
   LIMITS,
 } from '../checkUsage';
 import { UpgradeRequiredError } from '@meetsolis/shared';
+import * as Sentry from '@sentry/nextjs';
+import { config } from '@/lib/config/env';
+
+jest.mock('@sentry/nextjs', () => ({ captureException: jest.fn() }));
+jest.mock('@/lib/config/env', () => ({ config: { adminBypassLimits: false } }));
 
 // Mock Supabase server client
-const mockSupabase = {
-  from: jest.fn(),
-};
-
+const mockSupabase = { from: jest.fn() };
 jest.mock('@/lib/supabase/server', () => ({
   getSupabaseServerClient: jest.fn(() => mockSupabase),
 }));
@@ -66,6 +68,43 @@ describe('LIMITS', () => {
     expect(LIMITS.pro.clients).toBe(Infinity);
     expect(LIMITS.pro.transcripts).toBe(25);
     expect(LIMITS.pro.queries).toBe(2000);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Admin bypass
+// ---------------------------------------------------------------------------
+
+describe('admin bypass', () => {
+  afterEach(() => {
+    (config as any).adminBypassLimits = false;
+    jest.clearAllMocks();
+  });
+
+  it('bypasses all limit checks when adminBypassLimits=true', async () => {
+    (config as any).adminBypassLimits = true;
+
+    await expect(checkClientLimit('admin-user')).resolves.toBeUndefined();
+    await expect(checkTranscriptLimit('admin-user')).resolves.toBeUndefined();
+    await expect(checkQueryLimit('admin-user')).resolves.toBeUndefined();
+    expect(mockSupabase.from).not.toHaveBeenCalled();
+  });
+
+  it('enforces limits normally when adminBypassLimits=false (production default)', async () => {
+    // config.adminBypassLimits is false by default — mirrors production
+    setupSupabase({
+      subscriptions: {
+        ...makeChain(),
+        maybeSingle: jest.fn().mockResolvedValue({ data: null }),
+      },
+      clients: {
+        ...makeChain(),
+        eq: jest.fn().mockResolvedValue({ count: 0, error: null }),
+      },
+    });
+
+    await expect(checkClientLimit('user-1')).resolves.toBeUndefined();
+    expect(mockSupabase.from).toHaveBeenCalled();
   });
 });
 
@@ -153,12 +192,10 @@ describe('checkTranscriptLimit', () => {
         ...makeChain(),
         upsert: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
-        single: jest
-          .fn()
-          .mockResolvedValue({
-            data: { ...baseUsage, transcript_count: 4 },
-            error: null,
-          }),
+        single: jest.fn().mockResolvedValue({
+          data: { ...baseUsage, transcript_count: 4 },
+          error: null,
+        }),
       },
     });
 
@@ -175,12 +212,10 @@ describe('checkTranscriptLimit', () => {
         ...makeChain(),
         upsert: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
-        single: jest
-          .fn()
-          .mockResolvedValue({
-            data: { ...baseUsage, transcript_count: 5 },
-            error: null,
-          }),
+        single: jest.fn().mockResolvedValue({
+          data: { ...baseUsage, transcript_count: 5 },
+          error: null,
+        }),
       },
     });
 
@@ -203,16 +238,14 @@ describe('checkTranscriptLimit', () => {
         ...makeChain(),
         upsert: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
-        single: jest
-          .fn()
-          .mockResolvedValue({
-            data: {
-              ...baseUsage,
-              transcript_count: 10,
-              transcript_reset_at: recentReset,
-            },
-            error: null,
-          }),
+        single: jest.fn().mockResolvedValue({
+          data: {
+            ...baseUsage,
+            transcript_count: 10,
+            transcript_reset_at: recentReset,
+          },
+          error: null,
+        }),
       },
     });
 
@@ -248,16 +281,14 @@ describe('checkTranscriptLimit', () => {
         return {
           upsert: jest.fn().mockReturnThis(),
           select: jest.fn().mockReturnThis(),
-          single: jest
-            .fn()
-            .mockResolvedValue({
-              data: {
-                ...baseUsage,
-                transcript_count: 10,
-                transcript_reset_at: oldReset,
-              },
-              error: null,
-            }),
+          single: jest.fn().mockResolvedValue({
+            data: {
+              ...baseUsage,
+              transcript_count: 10,
+              transcript_reset_at: oldReset,
+            },
+            error: null,
+          }),
           update: updateMock,
           eq: jest.fn().mockReturnThis(),
         };
@@ -287,12 +318,10 @@ describe('checkQueryLimit', () => {
         ...makeChain(),
         upsert: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
-        single: jest
-          .fn()
-          .mockResolvedValue({
-            data: { ...baseUsage, query_count: 75 },
-            error: null,
-          }),
+        single: jest.fn().mockResolvedValue({
+          data: { ...baseUsage, query_count: 75 },
+          error: null,
+        }),
       },
     });
 
@@ -312,16 +341,14 @@ describe('checkQueryLimit', () => {
         ...makeChain(),
         upsert: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
-        single: jest
-          .fn()
-          .mockResolvedValue({
-            data: {
-              ...baseUsage,
-              query_count: 2000,
-              query_reset_at: recentReset,
-            },
-            error: null,
-          }),
+        single: jest.fn().mockResolvedValue({
+          data: {
+            ...baseUsage,
+            query_count: 2000,
+            query_reset_at: recentReset,
+          },
+          error: null,
+        }),
       },
     });
 
@@ -347,12 +374,10 @@ describe('incrementTranscriptCount', () => {
         return {
           upsert: jest.fn().mockReturnThis(),
           select: jest.fn().mockReturnThis(),
-          single: jest
-            .fn()
-            .mockResolvedValue({
-              data: { ...baseUsage, transcript_count: 3 },
-              error: null,
-            }),
+          single: jest.fn().mockResolvedValue({
+            data: { ...baseUsage, transcript_count: 3 },
+            error: null,
+          }),
           update: updateMock,
           eq: jest.fn().mockReturnThis(),
         };
@@ -378,12 +403,10 @@ describe('incrementTranscriptCount', () => {
         return {
           upsert: jest.fn().mockReturnThis(),
           select: jest.fn().mockReturnThis(),
-          single: jest
-            .fn()
-            .mockResolvedValue({
-              data: { ...baseUsage, transcript_count: 2 },
-              error: null,
-            }),
+          single: jest.fn().mockResolvedValue({
+            data: { ...baseUsage, transcript_count: 2 },
+            error: null,
+          }),
           update: updateMock,
           eq: jest.fn().mockReturnThis(),
         };
@@ -393,6 +416,12 @@ describe('incrementTranscriptCount', () => {
 
     await expect(incrementTranscriptCount('user-1')).rejects.toThrow(
       'Failed to increment transcript count'
+    );
+    expect(Sentry.captureException).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        extra: { userId: 'user-1', type: 'increment_transcript' },
+      })
     );
   });
 });
@@ -409,12 +438,10 @@ describe('incrementQueryCount', () => {
         return {
           upsert: jest.fn().mockReturnThis(),
           select: jest.fn().mockReturnThis(),
-          single: jest
-            .fn()
-            .mockResolvedValue({
-              data: { ...baseUsage, query_count: 10 },
-              error: null,
-            }),
+          single: jest.fn().mockResolvedValue({
+            data: { ...baseUsage, query_count: 10 },
+            error: null,
+          }),
           update: updateMock,
           eq: jest.fn().mockReturnThis(),
         };
@@ -440,12 +467,10 @@ describe('incrementQueryCount', () => {
         return {
           upsert: jest.fn().mockReturnThis(),
           select: jest.fn().mockReturnThis(),
-          single: jest
-            .fn()
-            .mockResolvedValue({
-              data: { ...baseUsage, query_count: 5 },
-              error: null,
-            }),
+          single: jest.fn().mockResolvedValue({
+            data: { ...baseUsage, query_count: 5 },
+            error: null,
+          }),
           update: updateMock,
           eq: jest.fn().mockReturnThis(),
         };
@@ -455,6 +480,12 @@ describe('incrementQueryCount', () => {
 
     await expect(incrementQueryCount('user-1')).rejects.toThrow(
       'Failed to increment query count'
+    );
+    expect(Sentry.captureException).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        extra: { userId: 'user-1', type: 'increment_query' },
+      })
     );
   });
 });
