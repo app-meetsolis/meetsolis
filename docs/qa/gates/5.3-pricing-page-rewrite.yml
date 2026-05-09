@@ -1,0 +1,46 @@
+schema: 1
+story: '5.3'
+story_title: 'Dedicated Pricing Page — Rewrite to Match Landing Theme + FAQ'
+gate: PASS
+status_reason: 'All 12 ACs met, 32 related tests pass, one proactive fix applied (isLoaded guard on navbar). No blocking issues.'
+reviewer: 'Quinn (Test Architect)'
+updated: '2026-05-09T00:00:00Z'
+
+top_issues: []
+waiver: { active: false }
+
+quality_score: 92
+expires: '2026-05-23T00:00:00Z'
+
+evidence:
+  tests_reviewed: 32
+  risks_identified: 3
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    ac_gaps: []
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'Checkout route requires Clerk auth (401 if unauthenticated). Plan validation is explicit double-check (not just TS type cast). Generic error messages returned to client. No CSRF risk (Clerk JWT origin-bound).'
+  performance:
+    status: PASS
+    notes: 'pricing/page.tsx is a server component — SSR. JSON-LD injected inline. No unnecessary client fetching. NoveraPricing/FAQ hydrate on client after SSR shell.'
+  reliability:
+    status: PASS
+    notes: 'handleProCTA has try/finally — checkoutLoading always resets. checkout route has race-safe upsert from 5.1. Annual plan path throws if DODO_PRODUCT_ID_ANNUAL not set (correct fail-fast).'
+  maintainability:
+    status: PASS
+    notes: 'pricing/page.tsx 48 lines. BillingPlan type is single source of truth. Minor tech debt: Pro plan cta field ("Start Free Trial") is now dead code — overridden by button JSX. No impact but confusing.'
+
+recommendations:
+  immediate: []
+  future:
+    - action: 'Add user-facing toast on checkout fetch failure in handleProCTA (currently silent console.error only)'
+      refs: ['apps/web/src/components/novera-dark/NoveraPricing.tsx:105']
+    - action: 'Remove dead cta field from Pro PLANS entry or rename to ctaFallback with comment'
+      refs: ['apps/web/src/components/novera-dark/NoveraPricing.tsx:38']
+    - action: 'Fix /contact link in NoveraFAQ — route does not exist; replace with mailto or remove'
+      refs: ['apps/web/src/components/novera-dark/NoveraFAQ.tsx:220']
+    - action: 'Consider using priceSpecification schema for Offer billing period (billingIncrement is non-standard)'
+      refs: ['apps/web/src/app/(marketing)/pricing/page.tsx:24']

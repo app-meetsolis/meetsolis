@@ -5,6 +5,7 @@ import type {
   CheckoutSession,
   WebhookEvent,
 } from '@meetsolis/shared';
+import { config } from '@/lib/config/env';
 
 export class DodoBillingService implements BillingService {
   private client: DodoPayments;
@@ -28,7 +29,9 @@ export class DodoBillingService implements BillingService {
     cancelUrl: string
   ): Promise<CheckoutSession> {
     const productId =
-      plan === 'monthly' ? process.env.DODO_PRODUCT_ID_MONTHLY : null;
+      plan === 'monthly'
+        ? config.billing.dodoProductIdMonthly
+        : config.billing.dodoProductIdAnnual;
 
     if (!productId)
       throw new Error(`No product ID configured for plan: ${plan}`);
