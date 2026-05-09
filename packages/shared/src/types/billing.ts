@@ -26,6 +26,12 @@ export interface WebhookEvent {
   };
 }
 
+export interface SubscriptionDetails {
+  cancel_at_next_billing_date: boolean;
+  current_period_end?: string | null;
+  status: string;
+}
+
 export interface BillingService {
   createCheckoutSession(
     userId: string,
@@ -35,4 +41,7 @@ export interface BillingService {
   ): Promise<CheckoutSession>;
   verifyWebhook(payload: string, headers: Record<string, string>): boolean;
   parseWebhookEvent(payload: string): WebhookEvent;
+  cancelSubscription(subscriptionId: string): Promise<void>;
+  resumeSubscription(subscriptionId: string): Promise<void>;
+  retrieveSubscription(subscriptionId: string): Promise<SubscriptionDetails>;
 }

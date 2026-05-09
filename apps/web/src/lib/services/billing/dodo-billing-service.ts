@@ -4,6 +4,7 @@ import type {
   BillingPlan,
   CheckoutSession,
   WebhookEvent,
+  SubscriptionDetails,
 } from '@meetsolis/shared';
 import { config } from '@/lib/config/env';
 
@@ -60,6 +61,33 @@ export class DodoBillingService implements BillingService {
       );
       return false;
     }
+  }
+
+  async cancelSubscription(subscriptionId: string): Promise<void> {
+    await this.client.subscriptions.update(subscriptionId, {
+      cancel_at_next_billing_date: true,
+    } as Parameters<typeof this.client.subscriptions.update>[1]);
+  }
+
+  async resumeSubscription(subscriptionId: string): Promise<void> {
+    await this.client.subscriptions.update(subscriptionId, {
+      cancel_at_next_billing_date: false,
+    } as Parameters<typeof this.client.subscriptions.update>[1]);
+  }
+
+  async retrieveSubscription(
+    subscriptionId: string
+  ): Promise<SubscriptionDetails> {
+    const sub = await this.client.subscriptions.retrieve(subscriptionId);
+    const raw = sub as unknown as Record<string, unknown>;
+    return {
+      cancel_at_next_billing_date: Boolean(raw['cancel_at_next_billing_date']),
+      current_period_end:
+        typeof raw['current_period_end'] === 'string'
+          ? raw['current_period_end']
+          : null,
+      status: typeof raw['status'] === 'string' ? raw['status'] : 'unknown',
+    };
   }
 
   parseWebhookEvent(payload: string): WebhookEvent {

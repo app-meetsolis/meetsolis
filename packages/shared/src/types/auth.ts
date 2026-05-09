@@ -37,6 +37,8 @@ export interface User {
   role: UserRole;
   verified_badge: boolean;
   preferences: UserPreferences;
+  email_notifications_enabled: boolean;
+  timezone: string;
   created_at: string;
   updated_at: string;
 }

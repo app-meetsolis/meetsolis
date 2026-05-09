@@ -29,10 +29,10 @@ export async function GET() {
     );
   }
 
-  // Fetch tier
+  // Fetch tier + cancellation state
   const { data: subscription } = await supabase
     .from('subscriptions')
-    .select('plan')
+    .select('plan, cancel_at_period_end, current_period_end')
     .eq('user_id', userId)
     .maybeSingle();
 
@@ -83,6 +83,8 @@ export async function GET() {
     client_count: clientCount ?? 0,
     client_limit: limits.clients === Infinity ? -1 : limits.clients,
     resets_at: resetsAt,
+    cancel_at_period_end: subscription?.cancel_at_period_end ?? false,
+    current_period_end: subscription?.current_period_end ?? null,
   };
 
   return NextResponse.json(response, { status: 200 });
