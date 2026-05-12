@@ -474,6 +474,9 @@ export interface UsageTracking {
   transcript_reset_at: string | null;
   query_count: number;
   query_reset_at: string | null;
+  // Story 6.2 — Recall.ai bot session quota
+  bot_session_count: number;
+  bot_session_count_period_start: string | null;
   created_at: string;
   updated_at: string;
 }

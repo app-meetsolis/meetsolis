@@ -14,7 +14,8 @@
     }
   },
   "crons": [
-    { "path": "/api/calendar/sync-all", "schedule": "0 0 * * *" }
+    { "path": "/api/calendar/sync-all", "schedule": "0 0 * * *" },
+    { "path": "/api/recall/dispatch-pending", "schedule": "*/2 * * * *" }
   ],
   "headers": [
     {

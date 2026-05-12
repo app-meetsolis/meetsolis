@@ -212,3 +212,98 @@ export async function incrementQueryCount(userId: string): Promise<void> {
     throw new Error(`Failed to increment query count: ${error.message}`);
   }
 }
+
+// ---------------------------------------------------------------------------
+// Bot session quota (Story 6.2 — Pro only, 25/month, Dodo billing cycle)
+// ---------------------------------------------------------------------------
+
+export const BOT_SESSION_LIMIT_PRO = 25;
+
+/**
+ * Returns { allowed, used, limit } without throwing.
+ * Free tier → always { allowed: false, used: 0, limit: 0 }.
+ */
+export async function checkBotSessionLimit(
+  userId: string
+): Promise<{ allowed: boolean; used: number; limit: number }> {
+  if (isAdminBypassActive(userId))
+    return { allowed: true, used: 0, limit: BOT_SESSION_LIMIT_PRO };
+
+  const supabase = getSupabaseServerClient();
+  const tier = await getUserTier(userId, supabase);
+
+  if (tier !== 'pro') return { allowed: false, used: 0, limit: 0 };
+
+  const usage = await getOrCreateUsageTracking(userId, supabase);
+
+  // Reset if period_start + 30 days has passed (aligns with billing cycle check)
+  const periodStart = usage.bot_session_count_period_start;
+  const count = usage.bot_session_count ?? 0;
+
+  if (periodStart) {
+    const elapsed = Date.now() - new Date(periodStart).getTime();
+    if (elapsed > THIRTY_DAYS_MS) {
+      await supabase
+        .from('usage_tracking')
+        .update({
+          bot_session_count: 0,
+          bot_session_count_period_start: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('user_id', userId);
+      return { allowed: true, used: 0, limit: BOT_SESSION_LIMIT_PRO };
+    }
+  }
+
+  return {
+    allowed: count < BOT_SESSION_LIMIT_PRO,
+    used: count,
+    limit: BOT_SESSION_LIMIT_PRO,
+  };
+}
+
+export async function incrementBotSessionCount(userId: string): Promise<void> {
+  const supabase = getSupabaseServerClient();
+  const usage = await getOrCreateUsageTracking(userId, supabase);
+  const count = usage.bot_session_count ?? 0;
+
+  const update: Record<string, unknown> = {
+    bot_session_count: count + 1,
+    updated_at: new Date().toISOString(),
+  };
+
+  // Initialise period_start on first increment
+  if (!usage.bot_session_count_period_start) {
+    update.bot_session_count_period_start = new Date().toISOString();
+  }
+
+  const { error } = await supabase
+    .from('usage_tracking')
+    .update(update)
+    .eq('user_id', userId);
+
+  if (error) {
+    Sentry.captureException(new Error(error.message), {
+      extra: { userId, type: 'increment_bot_session' },
+    });
+    throw new Error(`Failed to increment bot_session_count: ${error.message}`);
+  }
+}
+
+/** Called by Dodo webhook on subscription.renewed to reset bot session counter. */
+export async function resetBotSessionCount(userId: string): Promise<void> {
+  const supabase = getSupabaseServerClient();
+
+  const { error } = await supabase
+    .from('usage_tracking')
+    .update({
+      bot_session_count: 0,
+      bot_session_count_period_start: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('user_id', userId);
+
+  if (error) {
+    throw new Error(`Failed to reset bot_session_count: ${error.message}`);
+  }
+}

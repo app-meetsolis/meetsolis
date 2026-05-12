@@ -12,6 +12,12 @@ import {
   Link2,
   Plus,
   ChevronRight,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  Radio,
+  SkipForward,
+  AlertCircle,
 } from 'lucide-react';
 import {
   format,
@@ -24,6 +30,7 @@ import { Button } from '@/components/ui/button';
 import type {
   CalendarConnectionStatus,
   CalendarEventWithClient,
+  RecallBotStatus,
 } from '@meetsolis/shared';
 import { MatchClientModal } from './MatchClientModal';
 
@@ -66,6 +73,115 @@ function PlatformIcon({ link }: { link: string | null }) {
   if (link.includes('zoom.us'))
     return <Video className="h-3.5 w-3.5 text-blue-500" />;
   return <Link2 className="h-3.5 w-3.5 text-muted-foreground" />;
+}
+
+interface BotPillProps {
+  status: string | null;
+  clientId: string | null;
+  eventId: string;
+  isPro: boolean;
+  hasClient: boolean;
+}
+
+function BotPill({
+  status,
+  clientId,
+  eventId,
+  isPro,
+  hasClient,
+}: BotPillProps) {
+  const router = useRouter();
+
+  const openUpload = () => {
+    if (clientId) router.push(`/clients/${clientId}?upload=true`);
+  };
+
+  // Free coach with a matched client — show upgrade CTA
+  if (!isPro && hasClient) {
+    return (
+      <span className="flex items-center gap-1 text-[11px] text-muted-foreground border border-border rounded-full px-2 py-0.5">
+        Pro feature
+      </span>
+    );
+  }
+
+  if (!status) return null;
+
+  const s = status as RecallBotStatus;
+
+  if (s === 'pending' || s === 'joining') {
+    return (
+      <span className="flex items-center gap-1 text-[11px] text-amber-600">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        Bot joining…
+      </span>
+    );
+  }
+
+  if (s === 'in_meeting') {
+    return (
+      <span className="flex items-center gap-1 text-[11px] text-red-500 font-medium">
+        <Radio className="h-3 w-3" />
+        Recording
+      </span>
+    );
+  }
+
+  if (s === 'done') {
+    return (
+      <button
+        onClick={e => {
+          e.stopPropagation();
+          if (clientId) router.push(`/clients/${clientId}`);
+        }}
+        className="flex items-center gap-1 text-[11px] text-emerald-600 hover:underline"
+      >
+        <CheckCircle2 className="h-3 w-3" />
+        Recorded
+      </button>
+    );
+  }
+
+  if (s === 'error') {
+    return (
+      <button
+        onClick={e => {
+          e.stopPropagation();
+          openUpload();
+        }}
+        className="flex items-center gap-1 text-[11px] text-red-500 hover:underline"
+      >
+        <XCircle className="h-3 w-3" />
+        Failed — Upload manually ›
+      </button>
+    );
+  }
+
+  if (s === 'quota_exceeded') {
+    return (
+      <button
+        onClick={e => {
+          e.stopPropagation();
+          openUpload();
+        }}
+        className="flex items-center gap-1 text-[11px] text-orange-500 hover:underline"
+      >
+        <AlertCircle className="h-3 w-3" />
+        Quota reached
+      </button>
+    );
+  }
+
+  if (s === 'skipped') {
+    return (
+      <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+        <SkipForward className="h-3 w-3" />
+        Skipped
+      </span>
+    );
+  }
+
+  return null;
 }
 
 export function UpcomingSessionsCard() {
@@ -231,6 +347,13 @@ export function UpcomingSessionsCard() {
                   </span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                  <BotPill
+                    status={evt.bot_status}
+                    clientId={evt.client_id}
+                    eventId={evt.id}
+                    isPro={false}
+                    hasClient={isMatched}
+                  />
                   <span className="text-[12px] text-muted-foreground font-mono">
                     {formatRelative(evt.start_time)}
                   </span>
