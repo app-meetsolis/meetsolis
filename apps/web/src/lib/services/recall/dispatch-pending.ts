@@ -30,49 +30,75 @@ export async function dispatchPendingBots(): Promise<DispatchResult> {
   const now = new Date();
   const windowEnd = new Date(now.getTime() + 5 * 60 * 1000);
 
-  // Fetch eligible calendar events with user + preferences join
+  // Step 1: simple query on calendar_events (no nested joins — avoids FK issues)
   const { data: events, error } = await supabase
     .from('calendar_events')
-    .select(
-      `
-      id,
-      user_id,
-      client_id,
-      meet_link,
-      start_time,
-      users!inner(id),
-      subscriptions!inner(plan),
-      user_preferences!inner(auto_transcribe_enabled)
-    `
-    )
+    .select('id, user_id, client_id, meet_link, start_time')
     .gte('start_time', now.toISOString())
     .lte('start_time', windowEnd.toISOString())
     .not('client_id', 'is', null)
     .not('meet_link', 'is', null)
     .eq('bot_skipped', false)
-    .is('bot_status', null)
-    .eq('subscriptions.plan', 'pro')
-    .eq('user_preferences.auto_transcribe_enabled', true);
+    .is('bot_status', null);
 
   if (error) {
     console.error('[recall:dispatch] query error', error.message);
     return result;
   }
 
+  console.log(
+    `[recall:dispatch] window=${now.toISOString()}..${windowEnd.toISOString()} eligible_by_time=${events?.length ?? 0}`
+  );
+
   if (!events || events.length === 0) return result;
 
-  // Filter out events that already have a recall_session (idempotency guard)
-  const eventIds = events.map(e => e.id);
+  const userIds = Array.from(new Set(events.map(e => e.user_id as string)));
+
+  // Step 2: Pro users only
+  const { data: proSubs } = await supabase
+    .from('subscriptions')
+    .select('user_id')
+    .in('user_id', userIds)
+    .eq('plan', 'pro')
+    .eq('status', 'active');
+  const proUserIds = new Set((proSubs ?? []).map(s => s.user_id as string));
+
+  // Step 3: auto_transcribe_enabled
+  const { data: prefs } = await supabase
+    .from('user_preferences')
+    .select('user_id, auto_transcribe_enabled')
+    .in('user_id', userIds);
+  // Default to true if row missing
+  const optedOutUserIds = new Set(
+    (prefs ?? [])
+      .filter(p => p.auto_transcribe_enabled === false)
+      .map(p => p.user_id as string)
+  );
+
+  // Step 4: filter
+  const eligible = events.filter(
+    e =>
+      proUserIds.has(e.user_id as string) &&
+      !optedOutUserIds.has(e.user_id as string)
+  );
+
+  console.log(
+    `[recall:dispatch] pro_users=${proUserIds.size} opted_out=${optedOutUserIds.size} eligible_after_filter=${eligible.length}`
+  );
+
+  if (eligible.length === 0) return result;
+
+  // Idempotency guard — exclude events already in recall_sessions
+  const eligibleIds = eligible.map(e => e.id);
   const { data: existing } = await supabase
     .from('recall_sessions')
     .select('calendar_event_id')
-    .in('calendar_event_id', eventIds);
-
+    .in('calendar_event_id', eligibleIds);
   const alreadyDispatched = new Set(
     (existing ?? []).map(r => r.calendar_event_id)
   );
 
-  for (const evt of events) {
+  for (const evt of eligible) {
     if (alreadyDispatched.has(evt.id)) {
       result.skipped++;
       continue;
@@ -80,7 +106,6 @@ export async function dispatchPendingBots(): Promise<DispatchResult> {
 
     const userId = evt.user_id as string;
 
-    // Quota check
     const quota = await checkBotSessionLimit(userId);
     if (!quota.allowed) {
       await supabase
@@ -91,7 +116,7 @@ export async function dispatchPendingBots(): Promise<DispatchResult> {
       continue;
     }
 
-    // Create recall_sessions row first (prevents double-fire via UNIQUE constraint)
+    // Create recall_sessions row first (UNIQUE constraint prevents concurrent double-fire)
     const { error: insertError } = await supabase
       .from('recall_sessions')
       .insert({
@@ -101,13 +126,11 @@ export async function dispatchPendingBots(): Promise<DispatchResult> {
         status: 'pending',
       });
 
-    // Unique constraint violation = already dispatched in a concurrent run
     if (insertError) {
       result.skipped++;
       continue;
     }
 
-    // Call Recall.ai API
     try {
       const bot = await createRecallBot({
         meeting_url: evt.meet_link as string,
@@ -128,6 +151,7 @@ export async function dispatchPendingBots(): Promise<DispatchResult> {
         .eq('id', evt.id);
 
       result.dispatched++;
+      console.log(`[recall:dispatch] dispatched event=${evt.id} bot=${bot.id}`);
     } catch (err) {
       const reason = err instanceof Error ? err.message : String(err);
       console.error(

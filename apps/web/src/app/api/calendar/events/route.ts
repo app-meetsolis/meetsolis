@@ -1,5 +1,6 @@
 /**
- * GET /api/calendar/events — list upcoming calendar events for current user.
+ * GET /api/calendar/events — list calendar events for current user.
+ * Returns past (last 24h) + upcoming, ordered chronologically.
  * Joins with clients for display name. Supports ?limit param.
  */
 
@@ -24,9 +25,10 @@ export async function GET(req: NextRequest) {
 
   const url = new URL(req.url);
   const limitParam = url.searchParams.get('limit');
-  const limit = Math.min(Math.max(parseInt(limitParam ?? '3', 10) || 3, 1), 20);
+  const limit = Math.min(Math.max(parseInt(limitParam ?? '5', 10) || 5, 1), 20);
 
-  const nowIso = new Date().toISOString();
+  const now = new Date();
+  const past = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
 
   const { data, error } = await supabase
     .from('calendar_events')
@@ -34,7 +36,7 @@ export async function GET(req: NextRequest) {
       'id, google_event_id, title, start_time, end_time, attendees, client_id, meet_link, bot_status, bot_skipped, synced_at, created_at, user_id, clients(name)'
     )
     .eq('user_id', userId)
-    .gte('start_time', nowIso)
+    .gte('start_time', past)
     .order('start_time', { ascending: true })
     .limit(limit);
 
