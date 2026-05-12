@@ -40,6 +40,13 @@ async function fetchStatus(): Promise<CalendarConnectionStatus> {
   return res.json();
 }
 
+async function fetchIsPro(): Promise<boolean> {
+  const res = await fetch('/api/usage');
+  if (!res.ok) return false;
+  const body = await res.json();
+  return body.tier === 'pro';
+}
+
 async function fetchEvents(): Promise<CalendarEventWithClient[]> {
   const res = await fetch('/api/calendar/events?limit=3');
   if (!res.ok) return [];
@@ -194,6 +201,11 @@ export function UpcomingSessionsCard() {
   const { data: status, isLoading: statusLoading } = useQuery({
     queryKey: ['calendar-status'],
     queryFn: fetchStatus,
+  });
+
+  const { data: isPro = false } = useQuery({
+    queryKey: ['is-pro'],
+    queryFn: fetchIsPro,
   });
 
   const isConnected = Boolean(status?.connected);
@@ -351,7 +363,7 @@ export function UpcomingSessionsCard() {
                     status={evt.bot_status}
                     clientId={evt.client_id}
                     eventId={evt.id}
-                    isPro={false}
+                    isPro={isPro}
                     hasClient={isMatched}
                   />
                   <span className="text-[12px] text-muted-foreground font-mono">
