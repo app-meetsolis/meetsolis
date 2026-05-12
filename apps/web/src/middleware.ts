@@ -32,6 +32,7 @@ export default clerkMiddleware(async (auth, req) => {
     req.nextUrl.pathname.startsWith('/onboarding') ||
     (req.nextUrl.pathname.startsWith('/api/') &&
       !req.nextUrl.pathname.startsWith('/api/webhooks') &&
+      !req.nextUrl.pathname.startsWith('/api/recall/') &&
       req.nextUrl.pathname !== '/api/billing/webhook');
 
   if (isProtectedRoute && !userId) {
@@ -70,6 +71,7 @@ export default clerkMiddleware(async (auth, req) => {
   if (
     req.nextUrl.pathname.startsWith('/api/') &&
     !req.nextUrl.pathname.startsWith('/api/webhooks/') &&
+    !req.nextUrl.pathname.startsWith('/api/recall/') &&
     req.nextUrl.pathname !== '/api/billing/webhook'
   ) {
     const limiterType = getRateLimiterForRoute(req.nextUrl.pathname);
