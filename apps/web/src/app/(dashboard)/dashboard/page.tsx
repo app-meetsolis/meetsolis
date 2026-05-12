@@ -19,6 +19,7 @@ import { TrendsChart } from '@/components/dashboard/TrendsChart';
 import { SessionsList } from '@/components/dashboard/SessionsList';
 import { ActionItemsAccordion } from '@/components/dashboard/ActionItemsAccordion';
 import { SolisFab } from '@/components/dashboard/SolisFab';
+import { UpcomingSessionsCard } from '@/components/dashboard/UpcomingSessionsCard';
 import type {
   SessionWithClient,
   ActionItemWithClient,
@@ -117,11 +118,6 @@ export default function DashboardPage() {
     }))
     .sort((a, b) => b.daysSince - a.daysSince)[0];
 
-  const pendingUploadClient = sessions.find(
-    s => !s.transcript_text && !s.transcript_file_url
-  )?.client_name;
-  const nextSessionClient = sessions[0]?.client_name;
-
   if (authLoading || profileLoading || clientsLoading) {
     return (
       <div className="bg-background min-h-full">
@@ -184,6 +180,9 @@ export default function DashboardPage() {
             </Button>
           </div>
         </div>
+
+        {/* Upcoming Sessions — Story 6.1 */}
+        <UpcomingSessionsCard />
 
         {/* 3 stat cards */}
         <StatCards

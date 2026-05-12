@@ -44,6 +44,13 @@ const envSchema = z.object({
   GOOGLE_CALENDAR_API_KEY: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_CALENDAR_REDIRECT_URI: z
+    .string()
+    .default('http://localhost:3000/api/calendar/callback'),
+
+  // Security — Story 6.1 (Calendar token encryption + cron auth)
+  CALENDAR_TOKEN_ENCRYPTION_KEY: z.string().optional(),
+  CRON_SECRET: z.string().optional(),
 
   // Analytics and Monitoring
   NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
@@ -161,6 +168,12 @@ export const config = {
     calendarApiKey: env.GOOGLE_CALENDAR_API_KEY,
     clientId: env.GOOGLE_CLIENT_ID,
     clientSecret: env.GOOGLE_CLIENT_SECRET,
+    calendarRedirectUri: env.GOOGLE_CALENDAR_REDIRECT_URI,
+  },
+
+  security: {
+    calendarTokenEncryptionKey: env.CALENDAR_TOKEN_ENCRYPTION_KEY,
+    cronSecret: env.CRON_SECRET,
   },
 
   analytics: {
