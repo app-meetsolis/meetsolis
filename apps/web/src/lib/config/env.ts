@@ -52,6 +52,12 @@ const envSchema = z.object({
   CALENDAR_TOKEN_ENCRYPTION_KEY: z.string().optional(),
   CRON_SECRET: z.string().optional(),
 
+  // Recall.ai — Story 6.2 (Bot integration)
+  RECALL_API_KEY: z.string().optional(),
+  RECALL_WEBHOOK_SECRET: z.string().optional(),
+  RECALL_BOT_NAME: z.string().default('MeetSolis Notetaker'),
+  RECALL_REGION: z.string().default('ap-northeast-1'),
+
   // Analytics and Monitoring
   NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
   NEXT_PUBLIC_POSTHOG_HOST: z.string().optional(),
@@ -174,6 +180,14 @@ export const config = {
   security: {
     calendarTokenEncryptionKey: env.CALENDAR_TOKEN_ENCRYPTION_KEY,
     cronSecret: env.CRON_SECRET,
+  },
+
+  recall: {
+    apiKey: env.RECALL_API_KEY,
+    webhookSecret: env.RECALL_WEBHOOK_SECRET,
+    botName: env.RECALL_BOT_NAME,
+    region: env.RECALL_REGION,
+    baseUrl: `https://${env.RECALL_REGION}.recall.ai/api/v1`,
   },
 
   analytics: {

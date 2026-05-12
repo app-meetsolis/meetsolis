@@ -13,9 +13,7 @@
       "USE_MOCK_SERVICES": "false"
     }
   },
-  "crons": [
-    { "path": "/api/calendar/sync-all", "schedule": "0 0 * * *" }
-  ],
+  "crons": [],
   "headers": [
     {
       "source": "/(.*)",
