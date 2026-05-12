@@ -15,6 +15,8 @@ import {
 } from '@/components/ui/select';
 import { Bell, Clock, Calendar, Shield, ExternalLink } from 'lucide-react';
 import { CURATED_TIMEZONES, getAllTimezones } from '@/lib/constants/timezones';
+import { SectionCard } from './SectionCard';
+import { CalendarIntegration } from './CalendarIntegration';
 
 interface Preferences {
   email_notifications_enabled: boolean;
@@ -48,26 +50,6 @@ async function savePreferences(patch: Partial<Preferences>): Promise<void> {
     body: JSON.stringify(patch),
   });
   if (!res.ok) throw new Error('Save failed');
-}
-
-function SectionCard({
-  icon: Icon,
-  title,
-  children,
-}: {
-  icon: React.ElementType;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-[12px] border border-border bg-card p-5 space-y-4">
-      <div className="flex items-center gap-2">
-        <Icon className="h-4 w-4 text-muted-foreground" />
-        <h3 className="text-[15px] font-semibold text-foreground">{title}</h3>
-      </div>
-      {children}
-    </div>
-  );
 }
 
 function PreferencesLoadingSkeleton() {
@@ -179,6 +161,9 @@ export function PreferencesTab() {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
       {/* Left column */}
       <div className="space-y-4">
+        {/* Integrations (Story 6.1 — Google Calendar) */}
+        <CalendarIntegration />
+
         {/* Notifications */}
         <SectionCard icon={Bell} title="Notifications">
           <div className="flex items-start justify-between gap-4">

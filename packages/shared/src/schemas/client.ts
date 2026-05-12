@@ -12,6 +12,7 @@ export const ClientSchema = z.object({
   name: z.string().min(2).max(100),
   company: z.string().nullable().optional(),
   role: z.string().nullable().optional(),
+  email: z.string().email().nullable().optional().or(z.literal('')),
   goal: z.string().nullable().optional(),
   start_date: z.string().nullable().optional(), // DATE stored as ISO string
   website: z.string().url().nullable().optional().or(z.literal('')),
@@ -26,6 +27,7 @@ export const ClientCreateSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name must be at most 100 characters').trim(),
   company: z.string().trim().optional(),
   role: z.string().trim().optional(),
+  email: z.string().email('Invalid email').trim().optional().or(z.literal('')),
   goal: z.string().trim().optional(),
   start_date: z.string().optional(), // ISO date string e.g. "2026-01-15"
   website: z.string().url('Invalid URL format').trim().optional().or(z.literal('')),
@@ -37,6 +39,7 @@ export const ClientUpdateSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name must be at most 100 characters').trim().optional(),
   company: z.string().trim().nullable().optional(),
   role: z.string().trim().nullable().optional(),
+  email: z.string().email('Invalid email').trim().nullable().optional().or(z.literal('')),
   goal: z.string().trim().nullable().optional(),
   start_date: z.string().nullable().optional(),
   website: z.string().url('Invalid URL format').trim().nullable().optional().or(z.literal('')),
