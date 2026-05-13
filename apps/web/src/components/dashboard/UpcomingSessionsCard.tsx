@@ -55,12 +55,23 @@ async function fetchEvents(): Promise<CalendarEventWithClient[]> {
   return body.events ?? [];
 }
 
-async function triggerSync(): Promise<void> {
+async function triggerSync(): Promise<{
+  fetched: number;
+  upserted: number;
+  matched: number;
+  deleted: number;
+}> {
   const res = await fetch('/api/calendar/sync', { method: 'POST' });
+  const body = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
     throw new Error(body.error || 'Sync failed');
   }
+  return {
+    fetched: body.fetched ?? 0,
+    upserted: body.upserted ?? 0,
+    matched: body.matched ?? 0,
+    deleted: body.deleted ?? 0,
+  };
 }
 
 async function dispatchNow(eventId: string): Promise<{ bot_id: string }> {
@@ -125,8 +136,7 @@ function JoinWithNotetakerButton({
   const mutation = useMutation({
     mutationFn: () => dispatchNow(eventId),
     onSuccess: async () => {
-      toast.success('Notetaker dispatched — joining meeting');
-      if (meetLink) window.open(meetLink, '_blank', 'noopener,noreferrer');
+      toast.success('Notetaker dispatched');
       await queryClient.invalidateQueries({ queryKey: ['calendar-events'] });
     },
     onError: err => {
@@ -134,7 +144,6 @@ function JoinWithNotetakerButton({
     },
   });
 
-  // Show only when: pro + matched + has meet_link + no bot dispatched + within ±10 min of start
   if (!isPro || !hasClient || !meetLink || botStatus) return null;
 
   const minutesToStart = differenceInMinutes(new Date(startTime), new Date());
@@ -147,6 +156,8 @@ function JoinWithNotetakerButton({
       disabled={mutation.isPending}
       onClick={e => {
         e.stopPropagation();
+        // Open meet link SYNCHRONOUSLY — popup blockers require direct user gesture.
+        if (meetLink) window.open(meetLink, '_blank', 'noopener,noreferrer');
         mutation.mutate();
       }}
       className="h-7 gap-1.5 text-[12px] px-2.5"
@@ -184,8 +195,7 @@ function BotPill({
   const retryMutation = useMutation({
     mutationFn: () => dispatchNow(eventId),
     onSuccess: async () => {
-      toast.success('Notetaker dispatched — joining meeting');
-      if (meetLink) window.open(meetLink, '_blank', 'noopener,noreferrer');
+      toast.success('Notetaker dispatched');
       await queryClient.invalidateQueries({ queryKey: ['calendar-events'] });
     },
     onError: err => {
@@ -248,6 +258,8 @@ function BotPill({
         <button
           onClick={e => {
             e.stopPropagation();
+            if (meetLink)
+              window.open(meetLink, '_blank', 'noopener,noreferrer');
             retryMutation.mutate();
           }}
           disabled={retryMutation.isPending}
@@ -328,9 +340,18 @@ export function UpcomingSessionsCard() {
 
   const sync = useMutation({
     mutationFn: triggerSync,
-    onSuccess: async () => {
+    onSuccess: async result => {
       await queryClient.invalidateQueries({ queryKey: ['calendar-events'] });
-      toast.success('Calendar refreshed');
+      const { fetched, upserted, matched, deleted } = result;
+      if (fetched === 0) {
+        toast.warning(
+          'No events returned from Google. Check that the meeting has a Meet link and is on your primary calendar.'
+        );
+      } else {
+        toast.success(
+          `Synced: fetched ${fetched}, saved ${upserted}, matched ${matched}${deleted ? `, removed ${deleted}` : ''}`
+        );
+      }
     },
     onError: err => {
       toast.error(err instanceof Error ? err.message : 'Sync failed');
