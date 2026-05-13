@@ -137,7 +137,6 @@ export async function dispatchPendingBots(): Promise<DispatchResult> {
         bot_name: config.recall.botName,
         webhook_url: `${config.app.url}/api/recall/webhook`,
         recording_mode: 'speaker_view',
-        real_time_transcription: { destination_url: null },
       });
 
       await supabase
