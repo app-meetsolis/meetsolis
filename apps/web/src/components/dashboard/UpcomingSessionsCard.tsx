@@ -162,6 +162,7 @@ interface BotPillProps {
   status: string | null;
   clientId: string | null;
   eventId: string;
+  meetLink: string | null;
   isPro: boolean;
   hasClient: boolean;
 }
@@ -169,11 +170,25 @@ interface BotPillProps {
 function BotPill({
   status,
   clientId,
-  eventId: _eventId,
+  eventId,
+  meetLink,
   isPro,
   hasClient,
 }: BotPillProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const retryMutation = useMutation({
+    mutationFn: () => dispatchNow(eventId),
+    onSuccess: async () => {
+      toast.success('Notetaker dispatched — joining meeting');
+      if (meetLink) window.open(meetLink, '_blank', 'noopener,noreferrer');
+      await queryClient.invalidateQueries({ queryKey: ['calendar-events'] });
+    },
+    onError: err => {
+      toast.error(err instanceof Error ? err.message : 'Retry failed');
+    },
+  });
 
   const openUpload = () => {
     if (clientId) router.push(`/clients/${clientId}?upload=true`);
@@ -226,16 +241,33 @@ function BotPill({
 
   if (s === 'error') {
     return (
-      <button
-        onClick={e => {
-          e.stopPropagation();
-          openUpload();
-        }}
-        className="flex items-center gap-1 text-[11px] text-red-500 hover:underline"
-      >
-        <XCircle className="h-3 w-3" />
-        Failed — Upload manually ›
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={e => {
+            e.stopPropagation();
+            retryMutation.mutate();
+          }}
+          disabled={retryMutation.isPending}
+          className="flex items-center gap-1 text-[11px] text-primary hover:underline disabled:opacity-50"
+        >
+          {retryMutation.isPending ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <Mic className="h-3 w-3" />
+          )}
+          Retry
+        </button>
+        <button
+          onClick={e => {
+            e.stopPropagation();
+            openUpload();
+          }}
+          className="flex items-center gap-1 text-[11px] text-red-500 hover:underline"
+        >
+          <XCircle className="h-3 w-3" />
+          Upload manually
+        </button>
+      </div>
     );
   }
 
@@ -446,6 +478,7 @@ export function UpcomingSessionsCard() {
                     status={evt.bot_status}
                     clientId={evt.client_id}
                     eventId={evt.id}
+                    meetLink={evt.meet_link}
                     isPro={isPro}
                     hasClient={isMatched}
                   />
