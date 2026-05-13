@@ -1,12 +1,13 @@
 /**
- * Sync upcoming Google Calendar events for a single user (Story 6.1).
+ * Sync Google Calendar events for a single user (Story 6.1).
  *
  * Called by:
  *   - POST /api/calendar/sync (manual user trigger)
  *   - POST /api/calendar/sync-all (cron iterator)
  *   - GET /api/calendar/callback (initial sync after OAuth)
  *
- * Filters: only events with Meet/Zoom link OR attendee matching a Client Card email.
+ * - Upserts events with Meet/Zoom link OR attendee matching a Client Card email.
+ * - Deletes calendar_events rows whose Google event no longer exists (deletion sync).
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -18,12 +19,13 @@ import {
 } from './google-calendar';
 import { matchEventToClient } from './match-client';
 
-const SYNC_WINDOW_HOURS = 24;
+const SYNC_WINDOW_HOURS = 24 * 7; // 7 days ahead
 
 export interface SyncResult {
   fetched: number;
   upserted: number;
   matched: number;
+  deleted: number;
 }
 
 export async function syncUserEvents(
@@ -39,6 +41,13 @@ export async function syncUserEvents(
     timeMin: now,
     timeMax,
   });
+
+  // Track every valid Google event id seen — used for deletion diff later
+  const seenGoogleEventIds = new Set(
+    events
+      .filter(e => e.id && e.start?.dateTime && e.end?.dateTime)
+      .map(e => e.id as string)
+  );
 
   let upserted = 0;
   let matched = 0;
@@ -86,5 +95,31 @@ export async function syncUserEvents(
     }
   }
 
-  return { fetched: events.length, upserted, matched };
+  // Deletion sync — remove rows whose Google event id is no longer in the window
+  // Only touch rows in the sync window so we don't nuke past meetings.
+  const { data: existingRows } = await supabase
+    .from('calendar_events')
+    .select('id, google_event_id')
+    .eq('user_id', userId)
+    .gte('start_time', now.toISOString())
+    .lte('start_time', timeMax.toISOString());
+
+  const toDelete = (existingRows ?? [])
+    .filter(
+      row =>
+        row.google_event_id &&
+        !seenGoogleEventIds.has(row.google_event_id as string)
+    )
+    .map(row => row.id as string);
+
+  let deleted = 0;
+  if (toDelete.length > 0) {
+    const { error: delError } = await supabase
+      .from('calendar_events')
+      .delete()
+      .in('id', toDelete);
+    if (!delError) deleted = toDelete.length;
+  }
+
+  return { fetched: events.length, upserted, matched, deleted };
 }
