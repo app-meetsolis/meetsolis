@@ -71,7 +71,10 @@ async function dispatchNow(eventId: string): Promise<{ bot_id: string }> {
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(body.error || 'Failed to dispatch bot');
+    const msg = body.detail
+      ? `${body.error}: ${body.detail}`
+      : body.error || 'Failed to dispatch bot';
+    throw new Error(msg);
   }
   return body;
 }
@@ -135,7 +138,7 @@ function JoinWithNotetakerButton({
   if (!isPro || !hasClient || !meetLink || botStatus) return null;
 
   const minutesToStart = differenceInMinutes(new Date(startTime), new Date());
-  if (minutesToStart < -10 || minutesToStart > 10) return null;
+  if (minutesToStart < -60 || minutesToStart > 60) return null;
 
   return (
     <Button
