@@ -64,11 +64,37 @@ export async function POST(req: NextRequest) {
   if (evt.bot_skipped) {
     return NextResponse.json({ error: 'Bot skipped' }, { status: 400 });
   }
+
+  // Allow retry: clear stale state if previous attempt errored or stuck pending without bot_id
   if (evt.bot_status) {
-    return NextResponse.json(
-      { error: 'Bot already dispatched', bot_status: evt.bot_status },
-      { status: 409 }
-    );
+    const { data: existingSession } = await supabase
+      .from('recall_sessions')
+      .select('status, recall_bot_id, created_at')
+      .eq('calendar_event_id', evt.id)
+      .maybeSingle();
+
+    const isErrored = evt.bot_status === 'error';
+    const isStuckPending =
+      evt.bot_status === 'pending' &&
+      !existingSession?.recall_bot_id &&
+      existingSession?.created_at &&
+      Date.now() - new Date(existingSession.created_at).getTime() > 60_000;
+
+    if (isErrored || isStuckPending) {
+      await supabase
+        .from('recall_sessions')
+        .delete()
+        .eq('calendar_event_id', evt.id);
+      await supabase
+        .from('calendar_events')
+        .update({ bot_status: null })
+        .eq('id', evt.id);
+    } else {
+      return NextResponse.json(
+        { error: 'Bot already dispatched', bot_status: evt.bot_status },
+        { status: 409 }
+      );
+    }
   }
 
   // Pro + active subscription
