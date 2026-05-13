@@ -40,8 +40,11 @@ export interface RecallCreateBotRequest {
   meeting_url: string;
   bot_name: string;
   webhook_url: string;
-  recording_mode: 'speaker_view' | 'gallery_view' | 'audio_only';
-  real_time_transcription?: { destination_url: string | null };
+  recording_config?: {
+    video_mixed_layout?: 'speaker_view' | 'gallery_view' | 'audio_only';
+    video_mixed_mp4?: Record<string, never>;
+    audio_mixed_raw?: Record<string, never>;
+  };
 }
 
 export interface RecallCreateBotResponse {

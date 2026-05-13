@@ -143,7 +143,10 @@ export async function POST(req: NextRequest) {
       meeting_url: evt.meet_link as string,
       bot_name: config.recall.botName,
       webhook_url: `${config.app.url}/api/recall/webhook`,
-      recording_mode: 'speaker_view',
+      recording_config: {
+        video_mixed_layout: 'speaker_view',
+        video_mixed_mp4: {},
+      },
     });
 
     await supabase
