@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMutation } from '@tanstack/react-query';
@@ -336,6 +336,18 @@ export function UpcomingSessionsCard() {
       toast.error(err instanceof Error ? err.message : 'Sync failed');
     },
   });
+
+  // Auto-sync once when dashboard mounts (silent, no toast)
+  const autoSyncedRef = useRef(false);
+  useEffect(() => {
+    if (!isConnected || autoSyncedRef.current) return;
+    autoSyncedRef.current = true;
+    fetch('/api/calendar/sync', { method: 'POST' })
+      .then(() =>
+        queryClient.invalidateQueries({ queryKey: ['calendar-events'] })
+      )
+      .catch(() => {});
+  }, [isConnected, queryClient]);
 
   if (statusLoading || (isConnected && eventsLoading)) {
     return (
