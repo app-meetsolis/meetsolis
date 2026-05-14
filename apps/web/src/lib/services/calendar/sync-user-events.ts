@@ -67,9 +67,19 @@ export async function syncUserEvents(
 
     const link = extractMeetingLink(evt);
     const attendeeEmails = attendees.map(a => a.email);
-    const clientId = attendeeEmails.length
-      ? await matchEventToClient(supabase, userId, attendeeEmails)
-      : null;
+
+    // Preserve manual client match — only run auto-matcher for unmatched events
+    const { data: existing } = await supabase
+      .from('calendar_events')
+      .select('id, client_id')
+      .eq('user_id', userId)
+      .eq('google_event_id', evt.id)
+      .maybeSingle();
+
+    let clientId: string | null = existing?.client_id ?? null;
+    if (!clientId && attendeeEmails.length) {
+      clientId = await matchEventToClient(supabase, userId, attendeeEmails);
+    }
 
     // Filter: must have meet link OR matched client (else not a coaching session)
     if (!link.url && !clientId) continue;
