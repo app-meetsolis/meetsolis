@@ -5,7 +5,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { verifySvixSignature } from '@/lib/services/recall/verify-signature';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import {
@@ -13,27 +12,59 @@ import {
   getRecallSessionByBotId,
 } from '@/lib/services/recall/bot-status-update';
 import { incrementBotSessionCount } from '@/lib/billing/checkUsage';
-import type { RecallWebhookPayload } from '@meetsolis/shared';
 
 export const runtime = 'nodejs';
 
-const payloadSchema = z.object({
-  event: z.string(),
-  data: z
-    .object({
-      bot_id: z.string(),
-      recording_url: z.string().optional(),
-      transcript_url: z.string().optional(),
-      message: z.string().optional(),
-      sub_code: z.string().optional(),
-    })
-    .passthrough(),
-});
+/**
+ * Recall.ai's new account-level webhook payload structure varies:
+ *  - bot.* events:        data.bot.id            (sometimes data.bot_id legacy)
+ *  - recording.* events:  data.bot.id            (recording is keyed to a bot)
+ *  - meeting_metadata.*:  data.bot.id
+ * Extract bot_id defensively to survive payload-shape changes.
+ */
+function extractBotId(data: unknown): string | null {
+  if (!data || typeof data !== 'object') return null;
+  const d = data as Record<string, unknown>;
+  if (typeof d.bot_id === 'string') return d.bot_id;
+  if (d.bot && typeof d.bot === 'object') {
+    const b = d.bot as Record<string, unknown>;
+    if (typeof b.id === 'string') return b.id;
+  }
+  return null;
+}
+
+/**
+ * recording.done payload typically has the download URL deep in the structure:
+ *   data.recording.media_shortcuts.video_mixed.data.download_url
+ * Search a few known shapes; bail out if nothing found.
+ */
+function extractRecordingUrl(data: unknown): string | null {
+  if (!data || typeof data !== 'object') return null;
+  const d = data as Record<string, unknown>;
+  if (typeof d.recording_url === 'string') return d.recording_url;
+
+  const rec = d.recording as Record<string, unknown> | undefined;
+  if (rec) {
+    const ms = rec.media_shortcuts as Record<string, unknown> | undefined;
+    if (ms) {
+      const vm = ms.video_mixed as Record<string, unknown> | undefined;
+      if (vm?.data && typeof vm.data === 'object') {
+        const url = (vm.data as Record<string, unknown>).download_url;
+        if (typeof url === 'string') return url;
+      }
+      const am = ms.audio_mixed as Record<string, unknown> | undefined;
+      if (am?.data && typeof am.data === 'object') {
+        const url = (am.data as Record<string, unknown>).download_url;
+        if (typeof url === 'string') return url;
+      }
+    }
+  }
+  return null;
+}
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
 
-  // Svix signature verification
   const isValid = verifySvixSignature(rawBody, {
     'webhook-id': req.headers.get('webhook-id') ?? '',
     'webhook-timestamp': req.headers.get('webhook-timestamp') ?? '',
@@ -45,28 +76,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let payload: RecallWebhookPayload;
+  let parsed: { event?: string; data?: unknown };
   try {
-    const parsed = payloadSchema.safeParse(JSON.parse(rawBody));
-    if (!parsed.success) {
-      return NextResponse.json({ ok: true }); // malformed but don't NACK
-    }
-    payload = parsed.data as RecallWebhookPayload;
+    parsed = JSON.parse(rawBody);
   } catch {
-    return NextResponse.json({ ok: true }); // don't NACK on parse error
+    return NextResponse.json({ ok: true });
   }
 
-  // Respond 200 immediately — DB updates are fast, transcription dispatch is async
-  const supabase = getSupabaseServerClient();
-  const { event, data } = payload;
-  const botId = data.bot_id;
+  const event = parsed.event;
+  const data = parsed.data;
+  const botId = extractBotId(data);
 
-  // Verify session exists — if not, log and 200 (don't trigger retries)
+  if (!event || !botId) {
+    console.warn(
+      `[recall:webhook] missing event or bot_id. event=${event} body=${rawBody.slice(0, 500)}`
+    );
+    return NextResponse.json({ ok: true });
+  }
+
+  const supabase = getSupabaseServerClient();
   const session = await getRecallSessionByBotId(botId, supabase);
   if (!session) {
     console.warn(`[recall:webhook] unknown bot_id: ${botId}, event: ${event}`);
     return NextResponse.json({ ok: true });
   }
+
+  console.info(`[recall:webhook] event=${event} bot=${botId}`);
 
   switch (event) {
     case 'bot.joining_call':
@@ -87,58 +122,54 @@ export async function POST(req: NextRequest) {
         { status: 'done', ended_at: new Date().toISOString() },
         supabase
       );
-      // Increment quota counter (only on successful completion)
       await incrementBotSessionCount(session.user_id).catch(err =>
         console.error('[recall:webhook] increment failed:', err)
       );
-      // Fire-and-forget: enqueue Story 6.3 transcription pipeline
-      if (data.recording_url) {
-        await updateRecallSession(
-          botId,
-          {
-            status: 'done',
-            raw_recording_url: data.recording_url,
-            ended_at: new Date().toISOString(),
-          },
-          supabase
-        );
-        triggerTranscription(session.id, data.recording_url, session.user_id);
-      }
       break;
 
     case 'bot.done':
-      // Some recordings only have URL available at bot.done
-      if (data.recording_url) {
-        await updateRecallSession(
-          botId,
-          { raw_recording_url: data.recording_url, status: 'done' },
-          supabase
+    case 'recording.done': {
+      const url = extractRecordingUrl(data);
+      const update: Parameters<typeof updateRecallSession>[1] = {
+        status: 'done',
+      };
+      if (url) update.raw_recording_url = url;
+      await updateRecallSession(botId, update, supabase);
+      if (url) {
+        triggerTranscription(session.id, url, session.user_id);
+      } else {
+        console.warn(
+          `[recall:webhook] ${event} had no recording url. payload=${rawBody.slice(0, 1000)}`
         );
-        triggerTranscription(session.id, data.recording_url, session.user_id);
       }
       break;
+    }
 
-    case 'bot.fatal':
+    case 'bot.fatal': {
+      const d = data as Record<string, unknown>;
+      const reason =
+        (typeof d.message === 'string' && d.message) ||
+        (typeof d.sub_code === 'string' && d.sub_code) ||
+        'Unknown fatal error';
       await updateRecallSession(
         botId,
         {
           status: 'error',
-          error_reason: data.message ?? data.sub_code ?? 'Unknown fatal error',
+          error_reason: reason,
           ended_at: new Date().toISOString(),
         },
         supabase
       );
       break;
+    }
 
     default:
-      // Forward-compatible: log unknown events, return 200
       console.info(`[recall:webhook] unhandled event: ${event}`);
   }
 
   return NextResponse.json({ ok: true });
 }
 
-/** Fire-and-forget call to Story 6.3 transcription endpoint */
 function triggerTranscription(
   recallSessionId: string,
   recordingUrl: string,
