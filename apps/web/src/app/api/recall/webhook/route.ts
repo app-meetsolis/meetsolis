@@ -137,15 +137,19 @@ export async function POST(req: NextRequest) {
       if (url) update.raw_recording_url = url;
       await updateRecallSession(botId, update, supabase);
       if (url) {
-        // Fire-and-forget — create sessions row + start transcription pipeline
-        processRecallRecording(
-          session.id,
-          url,
-          session.user_id,
-          supabase
-        ).catch(err =>
-          console.error('[recall:webhook] processRecording failed:', err)
-        );
+        // Await session insert (fast) — Vercel may kill the function after
+        // we return 200, so don't fire-and-forget the DB write.
+        // runTranscribe inside processRecallRecording stays fire-and-forget.
+        try {
+          await processRecallRecording(
+            session.id,
+            url,
+            session.user_id,
+            supabase
+          );
+        } catch (err) {
+          console.error('[recall:webhook] processRecording failed:', err);
+        }
       } else {
         console.warn(
           `[recall:webhook] ${event} had no recording url. payload=${rawBody.slice(0, 1000)}`
