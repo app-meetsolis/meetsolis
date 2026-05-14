@@ -11,6 +11,7 @@ import {
   updateRecallSession,
   getRecallSessionByBotId,
 } from '@/lib/services/recall/bot-status-update';
+import { processRecallRecording } from '@/lib/services/recall/process-recording';
 import { incrementBotSessionCount } from '@/lib/billing/checkUsage';
 
 export const runtime = 'nodejs';
@@ -136,7 +137,15 @@ export async function POST(req: NextRequest) {
       if (url) update.raw_recording_url = url;
       await updateRecallSession(botId, update, supabase);
       if (url) {
-        triggerTranscription(session.id, url, session.user_id);
+        // Fire-and-forget — create sessions row + start transcription pipeline
+        processRecallRecording(
+          session.id,
+          url,
+          session.user_id,
+          supabase
+        ).catch(err =>
+          console.error('[recall:webhook] processRecording failed:', err)
+        );
       } else {
         console.warn(
           `[recall:webhook] ${event} had no recording url. payload=${rawBody.slice(0, 1000)}`
@@ -168,23 +177,4 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ ok: true });
-}
-
-function triggerTranscription(
-  recallSessionId: string,
-  recordingUrl: string,
-  userId: string
-): void {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
-  fetch(`${baseUrl}/api/gladia/transcribe`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      recall_session_id: recallSessionId,
-      recording_url: recordingUrl,
-      user_id: userId,
-    }),
-  }).catch(err =>
-    console.error('[recall:webhook] transcription trigger failed:', err)
-  );
 }
