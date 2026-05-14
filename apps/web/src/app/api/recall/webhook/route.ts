@@ -12,6 +12,7 @@ import {
   getRecallSessionByBotId,
 } from '@/lib/services/recall/bot-status-update';
 import { processRecallRecording } from '@/lib/services/recall/process-recording';
+import { getRecallRecording } from '@/lib/services/recall/recall-client';
 import { incrementBotSessionCount } from '@/lib/billing/checkUsage';
 
 export const runtime = 'nodejs';
@@ -34,32 +35,39 @@ function extractBotId(data: unknown): string | null {
   return null;
 }
 
-/**
- * recording.done payload typically has the download URL deep in the structure:
- *   data.recording.media_shortcuts.video_mixed.data.download_url
- * Search a few known shapes; bail out if nothing found.
- */
-function extractRecordingUrl(data: unknown): string | null {
+/** Extract recording_id from recording.* webhook payload (data.recording.id). */
+function extractRecordingId(data: unknown): string | null {
   if (!data || typeof data !== 'object') return null;
   const d = data as Record<string, unknown>;
-  if (typeof d.recording_url === 'string') return d.recording_url;
-
   const rec = d.recording as Record<string, unknown> | undefined;
-  if (rec) {
-    const ms = rec.media_shortcuts as Record<string, unknown> | undefined;
-    if (ms) {
-      const vm = ms.video_mixed as Record<string, unknown> | undefined;
-      if (vm?.data && typeof vm.data === 'object') {
-        const url = (vm.data as Record<string, unknown>).download_url;
-        if (typeof url === 'string') return url;
-      }
-      const am = ms.audio_mixed as Record<string, unknown> | undefined;
-      if (am?.data && typeof am.data === 'object') {
-        const url = (am.data as Record<string, unknown>).download_url;
-        if (typeof url === 'string') return url;
+  if (rec && typeof rec.id === 'string') return rec.id;
+  return null;
+}
+
+/**
+ * Recall.ai recording endpoint response — the download URL lives in one of a
+ * few possible shapes depending on what recording_config we requested.
+ */
+function extractDownloadUrl(recording: unknown): string | null {
+  if (!recording || typeof recording !== 'object') return null;
+  const r = recording as Record<string, unknown>;
+
+  // Older API: video_url / audio_url at top level
+  if (typeof r.video_url === 'string') return r.video_url;
+  if (typeof r.audio_url === 'string') return r.audio_url;
+
+  // Newer API: media_shortcuts.{video_mixed,audio_mixed}.data.download_url
+  const ms = r.media_shortcuts as Record<string, unknown> | undefined;
+  if (ms) {
+    for (const key of ['video_mixed', 'audio_mixed'] as const) {
+      const node = ms[key] as Record<string, unknown> | undefined;
+      const nodeData = node?.data as Record<string, unknown> | undefined;
+      if (nodeData && typeof nodeData.download_url === 'string') {
+        return nodeData.download_url;
       }
     }
   }
+
   return null;
 }
 
@@ -129,17 +137,43 @@ export async function POST(req: NextRequest) {
       break;
 
     case 'bot.done':
+      await updateRecallSession(botId, { status: 'done' }, supabase);
+      break;
+
     case 'recording.done': {
-      const url = extractRecordingUrl(data);
+      // Recording.done webhook only carries recording.id — fetch the
+      // recording from Recall.ai's API to get the download URL.
+      const recordingId = extractRecordingId(data);
+      if (!recordingId) {
+        console.warn(
+          `[recall:webhook] recording.done had no recording.id. body=${rawBody.slice(0, 500)}`
+        );
+        break;
+      }
+
+      let url: string | null = null;
+      try {
+        const recording = await getRecallRecording(recordingId);
+        url = extractDownloadUrl(recording);
+        if (!url) {
+          console.warn(
+            `[recall:webhook] no download URL found in recording response. recording_id=${recordingId}`
+          );
+        }
+      } catch (err) {
+        console.error(
+          `[recall:webhook] failed to fetch recording ${recordingId}:`,
+          err instanceof Error ? err.message : String(err)
+        );
+      }
+
       const update: Parameters<typeof updateRecallSession>[1] = {
         status: 'done',
       };
       if (url) update.raw_recording_url = url;
       await updateRecallSession(botId, update, supabase);
+
       if (url) {
-        // Await session insert (fast) — Vercel may kill the function after
-        // we return 200, so don't fire-and-forget the DB write.
-        // runTranscribe inside processRecallRecording stays fire-and-forget.
         try {
           await processRecallRecording(
             session.id,
@@ -150,10 +184,6 @@ export async function POST(req: NextRequest) {
         } catch (err) {
           console.error('[recall:webhook] processRecording failed:', err);
         }
-      } else {
-        console.warn(
-          `[recall:webhook] ${event} had no recording url. payload=${rawBody.slice(0, 1000)}`
-        );
       }
       break;
     }
