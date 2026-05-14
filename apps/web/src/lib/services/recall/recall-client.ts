@@ -57,3 +57,25 @@ export async function getRecallBot(
 
   return res.json() as Promise<RecallGetBotResponse>;
 }
+
+/**
+ * Fetch recording details by id (post-call).
+ * The download URL lives inside this response — webhook payload only carries id.
+ */
+export async function getRecallRecording(
+  recordingId: string
+): Promise<unknown> {
+  const res = await fetch(`${config.recall.baseUrl}/recording/${recordingId}`, {
+    method: 'GET',
+    headers: getHeaders(),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(
+      `Recall.ai getRecording failed: ${res.status} ${res.statusText} — ${body}`
+    );
+  }
+
+  return res.json();
+}
