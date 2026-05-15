@@ -8,6 +8,7 @@ export * from './types/analytics';
 export * from './types/billing';
 export * from './types/calendar';
 export * from './types/recall';
+export * from './types/transcript';
 
 // Constants
 export * from './constants/services';

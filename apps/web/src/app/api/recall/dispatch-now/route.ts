@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { getInternalUserId } from '@/lib/helpers/user';
 import { createRecallBot } from '@/lib/services/recall/recall-client';
+import { buildBotRecordingConfig } from '@/lib/services/recall/bot-config';
 import { checkBotSessionLimit } from '@/lib/billing/checkUsage';
 import { config } from '@/lib/config/env';
 
@@ -143,10 +144,7 @@ export async function POST(req: NextRequest) {
       meeting_url: evt.meet_link as string,
       bot_name: config.recall.botName,
       webhook_url: `${config.app.url}/api/recall/webhook`,
-      recording_config: {
-        video_mixed_layout: 'speaker_view',
-        video_mixed_mp4: {},
-      },
+      recording_config: buildBotRecordingConfig(),
     });
 
     await supabase

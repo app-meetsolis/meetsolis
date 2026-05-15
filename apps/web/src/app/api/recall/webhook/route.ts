@@ -13,6 +13,8 @@ import {
 } from '@/lib/services/recall/bot-status-update';
 import { processRecallRecording } from '@/lib/services/recall/process-recording';
 import { getRecallRecording } from '@/lib/services/recall/recall-client';
+import { ensureSessionRow } from '@/lib/services/recall/ensure-session';
+import { finalizeStreamingTranscript } from '@/lib/services/recall/finalize-streaming';
 import { incrementBotSessionCount } from '@/lib/billing/checkUsage';
 
 export const runtime = 'nodejs';
@@ -123,6 +125,10 @@ export async function POST(req: NextRequest) {
 
     case 'bot.in_call_recording':
       await updateRecallSession(botId, { status: 'in_meeting' }, supabase);
+      // Lazy-create the sessions row so live transcript polling has a target.
+      await ensureSessionRow(session.id, supabase).catch(err =>
+        console.error('[recall:webhook] ensureSessionRow failed:', err)
+      );
       break;
 
     case 'bot.call_ended':
@@ -134,6 +140,12 @@ export async function POST(req: NextRequest) {
       await incrementBotSessionCount(session.user_id).catch(err =>
         console.error('[recall:webhook] increment failed:', err)
       );
+      // Concatenate streamed chunks -> transcript_text, trigger summarization.
+      await finalizeStreamingTranscript(
+        session.id,
+        session.user_id,
+        supabase
+      ).catch(err => console.error('[recall:webhook] finalize failed:', err));
       break;
 
     case 'bot.done':
@@ -169,20 +181,37 @@ export async function POST(req: NextRequest) {
 
       const update: Parameters<typeof updateRecallSession>[1] = {
         status: 'done',
+        recording_id: recordingId,
       };
       if (url) update.raw_recording_url = url;
       await updateRecallSession(botId, update, supabase);
 
       if (url) {
-        try {
-          await processRecallRecording(
-            session.id,
-            url,
-            session.user_id,
-            supabase
-          );
-        } catch (err) {
-          console.error('[recall:webhook] processRecording failed:', err);
+        // Streaming already created the sessions row — just attach the audio
+        // URL for Phase 3 playback. Fall back to the legacy async pipeline
+        // only if no streaming session exists (missed webhook / non-bot).
+        const { data: sessionRow } = await supabase
+          .from('sessions')
+          .select('id')
+          .eq('recall_session_id', session.id)
+          .maybeSingle();
+
+        if (sessionRow) {
+          await supabase
+            .from('sessions')
+            .update({ transcript_audio_url: url })
+            .eq('id', sessionRow.id);
+        } else {
+          try {
+            await processRecallRecording(
+              session.id,
+              url,
+              session.user_id,
+              supabase
+            );
+          } catch (err) {
+            console.error('[recall:webhook] processRecording failed:', err);
+          }
         }
       }
       break;

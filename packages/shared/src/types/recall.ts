@@ -26,6 +26,7 @@ export interface RecallSession {
   recall_bot_id: string | null;
   status: RecallBotStatus;
   raw_recording_url: string | null;
+  recording_id: string | null;
   error_reason: string | null;
   joined_at: string | null;
   ended_at: string | null;
@@ -36,6 +37,16 @@ export interface RecallSession {
 // ---------------------------------------------------------------------------
 // Recall.ai API — create bot request/response
 // ---------------------------------------------------------------------------
+/**
+ * Per-bot real-time webhook endpoint. Recall delivers streaming transcript
+ * events here (separate from the account-level Svix lifecycle webhook).
+ */
+export interface RecallRealtimeEndpoint {
+  type: 'webhook';
+  url: string;
+  events: string[]; // e.g. ['transcript.data']
+}
+
 export interface RecallCreateBotRequest {
   meeting_url: string;
   bot_name: string;
@@ -44,6 +55,17 @@ export interface RecallCreateBotRequest {
     video_mixed_layout?: 'speaker_view' | 'gallery_view' | 'audio_only';
     video_mixed_mp4?: Record<string, never>;
     audio_mixed_raw?: Record<string, never>;
+    /** Streaming transcription provider config (Story 6.2b). */
+    transcript?: {
+      provider: {
+        deepgram_streaming?: {
+          model?: string;
+          language?: string;
+        };
+      };
+    };
+    /** Per-bot endpoints for real-time events (Story 6.2b). */
+    realtime_endpoints?: RecallRealtimeEndpoint[];
   };
 }
 

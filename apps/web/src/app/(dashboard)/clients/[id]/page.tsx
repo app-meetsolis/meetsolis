@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Toaster } from 'sonner';
 import { ClientModal } from '@/components/clients/ClientModal';
 import { SessionAccordion } from '@/components/sessions/SessionAccordion';
+import { LiveTranscriptPanel } from '@/components/sessions/LiveTranscriptPanel';
 import {
   Dialog,
   DialogContent,
@@ -88,6 +89,19 @@ export default function ClientDetailPage() {
     },
     enabled: isValid && !!client,
     staleTime: 60_000,
+  });
+
+  // Detect an in-progress (or just-ended) bot meeting for this client.
+  const { data: liveSession } = useQuery<{ session_id: string | null }>({
+    queryKey: ['live-session', id],
+    queryFn: async () => {
+      const r = await fetch(`/api/clients/${id}/live-session`);
+      if (!r.ok) return { session_id: null };
+      return r.json();
+    },
+    enabled: isValid && !!client,
+    refetchInterval: 15_000,
+    staleTime: 10_000,
   });
 
   if (!isValid)
@@ -263,6 +277,11 @@ export default function ClientDetailPage() {
             Add Note
           </Button>
         </div>
+
+        {/* -- Live transcript (only while a bot meeting is active) -- */}
+        {liveSession?.session_id && (
+          <LiveTranscriptPanel sessionId={liveSession.session_id} />
+        )}
 
         {/* -- 2-col body -- */}
         <div className="grid grid-cols-12 gap-5">

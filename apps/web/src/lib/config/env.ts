@@ -55,6 +55,8 @@ const envSchema = z.object({
   // Recall.ai — Story 6.2 (Bot integration)
   RECALL_API_KEY: z.string().optional(),
   RECALL_WEBHOOK_SECRET: z.string().optional(),
+  // Story 6.2b — workspace verification secret for per-bot real-time endpoints
+  RECALL_REALTIME_WEBHOOK_SECRET: z.string().optional(),
   RECALL_BOT_NAME: z.string().default('MeetSolis Notetaker'),
   RECALL_REGION: z.string().default('ap-northeast-1'),
 
@@ -185,6 +187,7 @@ export const config = {
   recall: {
     apiKey: env.RECALL_API_KEY,
     webhookSecret: env.RECALL_WEBHOOK_SECRET,
+    realtimeWebhookSecret: env.RECALL_REALTIME_WEBHOOK_SECRET,
     botName: env.RECALL_BOT_NAME,
     region: env.RECALL_REGION,
     baseUrl: `https://${env.RECALL_REGION}.recall.ai/api/v1`,

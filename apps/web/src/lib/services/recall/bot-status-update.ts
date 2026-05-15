@@ -13,6 +13,7 @@ interface BotUpdate {
   joined_at?: string;
   ended_at?: string;
   raw_recording_url?: string;
+  recording_id?: string;
   error_reason?: string;
 }
 

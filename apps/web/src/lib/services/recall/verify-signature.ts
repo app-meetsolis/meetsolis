@@ -21,11 +21,18 @@ export interface SvixHeaders {
   'webhook-signature': string;
 }
 
+/**
+ * Verify a Svix-compatible HMAC signature.
+ *
+ * @param secret  Signing secret. Defaults to the account-level Svix endpoint
+ *   secret (lifecycle webhook). Per-bot real-time endpoints (Story 6.2b) are
+ *   signed with the workspace verification secret — pass it explicitly.
+ */
 export function verifySvixSignature(
   rawBody: string,
-  headers: SvixHeaders
+  headers: SvixHeaders,
+  secret: string | undefined = config.recall.webhookSecret
 ): boolean {
-  const secret = config.recall.webhookSecret;
   if (!secret) return false;
 
   const {

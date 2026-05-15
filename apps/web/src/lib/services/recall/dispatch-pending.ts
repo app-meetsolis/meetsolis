@@ -8,6 +8,7 @@
 
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { createRecallBot } from './recall-client';
+import { buildBotRecordingConfig } from './bot-config';
 import { checkBotSessionLimit } from '@/lib/billing/checkUsage';
 import { config } from '@/lib/config/env';
 
@@ -136,10 +137,7 @@ export async function dispatchPendingBots(): Promise<DispatchResult> {
         meeting_url: evt.meet_link as string,
         bot_name: config.recall.botName,
         webhook_url: `${config.app.url}/api/recall/webhook`,
-        recording_config: {
-          video_mixed_layout: 'speaker_view',
-          video_mixed_mp4: {},
-        },
+        recording_config: buildBotRecordingConfig(),
       });
 
       await supabase
