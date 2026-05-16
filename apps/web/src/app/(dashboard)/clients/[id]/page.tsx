@@ -162,6 +162,7 @@ export default function ClientDetailPage() {
   const pendingCount = allItems.filter(i => !i.completed).length;
   const roleCompany =
     [client.role, client.company].filter(Boolean).join(' · ') || null;
+  const sessionById = new Map(sessions.map(s => [s.id, s]));
 
   return (
     <>
@@ -332,24 +333,42 @@ export default function ClientDetailPage() {
                   {allItems
                     .filter(i => !i.completed)
                     .slice(0, 8)
-                    .map(item => (
-                      <div
-                        key={item.id}
-                        className="flex items-start gap-3 px-5 py-3.5"
-                      >
-                        <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[12px] text-muted-foreground leading-relaxed">
-                            {item.description}
-                          </p>
-                          {item.assignee && (
-                            <span className="mt-1 inline-block rounded px-1.5 py-0.5 text-[9px] font-bold tracking-wide bg-primary/10 text-primary">
-                              {item.assignee === 'coach' ? 'COACH' : 'CLIENT'}
-                            </span>
-                          )}
+                    .map(item => {
+                      const fromSession = item.session_id
+                        ? sessionById.get(item.session_id)
+                        : undefined;
+                      return (
+                        <div
+                          key={item.id}
+                          className="flex items-start gap-3 px-5 py-3.5"
+                        >
+                          <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] text-muted-foreground leading-relaxed">
+                              {item.description}
+                            </p>
+                            <div className="mt-1 flex items-center gap-2">
+                              {item.assignee && (
+                                <span className="inline-block rounded px-1.5 py-0.5 text-[9px] font-bold tracking-wide bg-primary/10 text-primary">
+                                  {item.assignee === 'coach'
+                                    ? 'COACH'
+                                    : 'CLIENT'}
+                                </span>
+                              )}
+                              {fromSession && (
+                                <span className="truncate text-[10px] text-foreground/35">
+                                  {fromSession.title} ·{' '}
+                                  {format(
+                                    parseISO(fromSession.session_date),
+                                    'MMM d'
+                                  )}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                 </div>
               )}
             </div>
