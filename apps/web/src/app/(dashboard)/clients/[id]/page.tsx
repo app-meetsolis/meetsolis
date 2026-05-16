@@ -21,6 +21,7 @@ import { Toaster } from 'sonner';
 import { ClientModal } from '@/components/clients/ClientModal';
 import { SessionAccordion } from '@/components/sessions/SessionAccordion';
 import { LiveTranscriptPanel } from '@/components/sessions/LiveTranscriptPanel';
+import { ActionItemsAutoToggle } from '@/components/sessions/ActionItemsAutoToggle';
 import {
   Dialog,
   DialogContent,
@@ -306,15 +307,18 @@ export default function ClientDetailPage() {
 
           {/* RIGHT — open action items */}
           <div className="col-span-4 space-y-4">
-            <div className="flex items-center gap-2.5 mb-4">
-              <h2 className="text-[15px] font-semibold text-foreground">
-                Open Actions
-              </h2>
-              {allItems.filter(i => !i.completed).length > 0 && (
-                <span className="rounded-full bg-foreground/[0.08] px-2 py-0.5 text-[11px] font-semibold text-foreground/50">
-                  {allItems.filter(i => !i.completed).length}
-                </span>
-              )}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <h2 className="text-[15px] font-semibold text-foreground">
+                  Open Actions
+                </h2>
+                {allItems.filter(i => !i.completed).length > 0 && (
+                  <span className="rounded-full bg-foreground/[0.08] px-2 py-0.5 text-[11px] font-semibold text-foreground/50">
+                    {allItems.filter(i => !i.completed).length}
+                  </span>
+                )}
+              </div>
+              <ActionItemsAutoToggle />
             </div>
             <div className="rounded-[12px] bg-card shadow-card overflow-hidden">
               {allItems.filter(i => !i.completed).length === 0 ? (

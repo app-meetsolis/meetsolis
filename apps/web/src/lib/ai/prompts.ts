@@ -31,16 +31,45 @@ export function buildSummarizePrompt(
   return `Analyze the following coaching session transcript and return a JSON object with this exact schema:
 
 {
-  "title": "string — concise session title (e.g. 'Session 5 — Leadership Transition')",
   "summary": "string — 2-4 sentence paragraph summarizing key themes and breakthroughs",
-  "key_topics": ["string array of 3-6 topic tags"],
+  "key_topics": ["string array of 3-6 topic tags"]
+}
+
+CLIENT CONTEXT:
+${clientInfo}
+
+TRANSCRIPT:
+${transcript}
+
+Respond with the JSON object only.`;
+}
+
+export function buildActionItemsPrompt(
+  transcript: string,
+  ctx: ClientContext
+): string {
+  const clientInfo = [
+    `Client name: ${ctx.name}`,
+    ctx.goal ? `Client goal: ${ctx.goal}` : null,
+    ctx.coaching_since
+      ? `Coaching relationship since: ${ctx.coaching_since}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  return `Extract concrete action items from the following coaching session transcript and return a JSON object with this exact schema:
+
+{
   "action_items": [
     {
-      "description": "string — specific action to take",
+      "description": "string — specific, measurable action to take",
       "assigned_to": "coach" | "client"
     }
   ]
 }
+
+Return an empty action_items array if the session produced no clear commitments.
 
 CLIENT CONTEXT:
 ${clientInfo}

@@ -1,6 +1,7 @@
 /**
  * Core session summarization logic.
  * Callable directly (no HTTP, no Clerk auth needed) — used by fire-and-forget trigger.
+ * Action items are generated separately — see generate-action-items.ts (Story 6.2c).
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -52,22 +53,6 @@ export async function runSummarize(
       clientCtx
     );
     const embedding = await aiService.generateEmbedding(summary.summary);
-
-    // Idempotent: delete existing before inserting new
-    await supabase.from('action_items').delete().eq('session_id', sessionId);
-
-    if (summary.action_items.length > 0) {
-      await supabase.from('action_items').insert(
-        summary.action_items.map(item => ({
-          session_id: sessionId,
-          client_id: session.client_id,
-          user_id: userId,
-          description: item.description,
-          assignee: item.assigned_to,
-          completed: false,
-        }))
-      );
-    }
 
     await supabase
       .from('sessions')

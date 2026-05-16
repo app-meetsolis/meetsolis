@@ -10,6 +10,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { TranscriptChunk } from '@meetsolis/shared';
 import { concatTranscriptText } from './process-transcript-chunk';
 import { runSummarize } from '@/lib/sessions/summarize-session';
+import { maybeAutoGenerateActionItems } from '@/lib/sessions/generate-action-items';
 
 export async function finalizeStreamingTranscript(
   recallSessionId: string,
@@ -51,11 +52,18 @@ export async function finalizeStreamingTranscript(
     })
     .eq('id', sessionRow.id);
 
-  // Fire-and-forget — generates summary, action items, key topics, embedding.
-  runSummarize(sessionRow.id, userId).catch(err =>
-    console.error(
-      `[recall:finalize] runSummarize failed session=${sessionRow.id}:`,
-      err instanceof Error ? err.message : String(err)
-    )
-  );
+  // Fire-and-forget — generates summary + key topics + embedding, then
+  // auto-generates action items only if the user opted in (Story 6.2c).
+  runSummarize(sessionRow.id, userId)
+    .then(status => {
+      if (status === 'complete') {
+        return maybeAutoGenerateActionItems(sessionRow.id, userId, supabase);
+      }
+    })
+    .catch(err =>
+      console.error(
+        `[recall:finalize] runSummarize failed session=${sessionRow.id}:`,
+        err instanceof Error ? err.message : String(err)
+      )
+    );
 }

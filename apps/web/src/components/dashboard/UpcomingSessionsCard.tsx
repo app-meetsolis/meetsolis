@@ -49,7 +49,7 @@ async function fetchIsPro(): Promise<boolean> {
 }
 
 async function fetchEvents(): Promise<CalendarEventWithClient[]> {
-  const res = await fetch('/api/calendar/events?limit=5');
+  const res = await fetch('/api/calendar/events?limit=20');
   if (!res.ok) return [];
   const body = (await res.json()) as { events: CalendarEventWithClient[] };
   return body.events ?? [];
@@ -471,7 +471,7 @@ export function UpcomingSessionsCard() {
           </Button>
         </div>
 
-        <ul className="space-y-1.5">
+        <ul className="space-y-1.5 max-h-[340px] overflow-y-auto -mr-2 pr-2">
           {events.map(evt => {
             const isMatched = Boolean(evt.client_id && evt.client_name);
             const label = isMatched ? evt.client_name : evt.title;
