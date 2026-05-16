@@ -2,13 +2,18 @@ import OpenAI from 'openai';
 import {
   AIService,
   ClientContext,
-  SessionSummary,
+  SessionSummaryResult,
+  ActionItemsResult,
   ServiceStatus,
   ServiceInfo,
 } from '@meetsolis/shared';
 import { BaseService } from '../base-service';
-import { COACHING_SYSTEM_PROMPT, buildSummarizePrompt } from '../../ai/prompts';
-import { parseSessionSummary } from '../../ai/summarize';
+import {
+  COACHING_SYSTEM_PROMPT,
+  buildSummarizePrompt,
+  buildActionItemsPrompt,
+} from '../../ai/prompts';
+import { parseSummary, parseActionItems } from '../../ai/summarize';
 
 export class OpenAIAIService extends BaseService implements AIService {
   private client: OpenAI;
@@ -44,7 +49,7 @@ export class OpenAIAIService extends BaseService implements AIService {
   async summarizeSession(
     transcript: string,
     ctx: ClientContext
-  ): Promise<SessionSummary> {
+  ): Promise<SessionSummaryResult> {
     const response = await this.client.chat.completions.create({
       model: 'gpt-4o-mini',
       response_format: { type: 'json_object' },
@@ -61,7 +66,30 @@ export class OpenAIAIService extends BaseService implements AIService {
       throw new Error('OpenAI returned empty response');
     }
 
-    return parseSessionSummary(content);
+    return parseSummary(content);
+  }
+
+  async generateActionItems(
+    transcript: string,
+    ctx: ClientContext
+  ): Promise<ActionItemsResult> {
+    const response = await this.client.chat.completions.create({
+      model: 'gpt-4o-mini',
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: COACHING_SYSTEM_PROMPT },
+        { role: 'user', content: buildActionItemsPrompt(transcript, ctx) },
+      ],
+      temperature: 0.3,
+      max_tokens: 1000,
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
+      throw new Error('OpenAI returned empty response');
+    }
+
+    return parseActionItems(content);
   }
 
   async generateEmbedding(text: string): Promise<number[]> {

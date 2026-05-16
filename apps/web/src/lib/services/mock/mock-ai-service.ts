@@ -1,7 +1,8 @@
 import {
   AIService,
   ClientContext,
-  SessionSummary,
+  SessionSummaryResult,
+  ActionItemsResult,
   ServiceStatus,
   ServiceInfo,
 } from '@meetsolis/shared';
@@ -241,10 +242,9 @@ export class MockAIService extends BaseService implements AIService {
   async summarizeSession(
     _transcript: string,
     ctx: ClientContext
-  ): Promise<SessionSummary> {
+  ): Promise<SessionSummaryResult> {
     await new Promise(resolve => setTimeout(resolve, 500));
     return {
-      title: `Session — Leadership Transition`,
       summary: `${ctx.name} explored challenges with delegating authority during organizational restructuring. Discussed fear of losing control and strategies for trusting team members. Identified pattern of micromanagement stemming from past project failures.`,
       key_topics: [
         'delegation',
@@ -252,6 +252,15 @@ export class MockAIService extends BaseService implements AIService {
         'trust',
         'organizational change',
       ],
+    };
+  }
+
+  async generateActionItems(
+    _transcript: string,
+    _ctx: ClientContext
+  ): Promise<ActionItemsResult> {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return {
       action_items: [
         {
           description:

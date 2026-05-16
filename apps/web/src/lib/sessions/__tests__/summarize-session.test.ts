@@ -83,12 +83,10 @@ describe('runSummarize', () => {
     expect(mockSummarizeSession).not.toHaveBeenCalled();
   });
 
-  it('calls AI and updates session on success', async () => {
+  it('calls AI and updates session on success — no action items', async () => {
     const mockSummary = {
-      title: 'Test Session',
       summary: 'Client explored goals.',
       key_topics: ['goals', 'leadership'],
-      action_items: [{ description: 'Do X', assigned_to: 'client' as const }],
     };
 
     mockSingle
@@ -112,8 +110,9 @@ describe('runSummarize', () => {
       eq: jest.fn().mockResolvedValue({ error: null }),
     });
 
-    await runSummarize('s1', 'user-id');
+    const result = await runSummarize('s1', 'user-id');
 
+    expect(result).toBe('complete');
     expect(mockSummarizeSession).toHaveBeenCalledWith('transcript', {
       name: 'Alice',
       goal: 'Lead better',
@@ -122,7 +121,8 @@ describe('runSummarize', () => {
     expect(mockGenerateEmbedding).toHaveBeenCalledWith(
       'Client explored goals.'
     );
-    expect(mockInsert).toHaveBeenCalled();
+    // Summary pipeline no longer touches action_items (Story 6.2c).
+    expect(mockInsert).not.toHaveBeenCalled();
   });
 
   it('sets status=error when AI throws', async () => {

@@ -8,6 +8,7 @@ import { createClient } from '@supabase/supabase-js';
 import { config } from '@/lib/config/env';
 import { ServiceFactory } from '@/lib/service-factory';
 import { runSummarize } from '@/lib/sessions/summarize-session';
+import { maybeAutoGenerateActionItems } from '@/lib/sessions/generate-action-items';
 import {
   checkTranscriptLimit,
   incrementTranscriptCount,
@@ -72,8 +73,11 @@ export async function runTranscribe(
       }
     }
 
-    // Chain into summarization
-    await runSummarize(sessionId, userId);
+    // Chain into summarization, then auto-generate action items if opted in.
+    const summaryStatus = await runSummarize(sessionId, userId);
+    if (summaryStatus === 'complete') {
+      await maybeAutoGenerateActionItems(sessionId, userId, supabase);
+    }
 
     console.log(`[Transcribe] Session ${sessionId} complete`);
     return 'complete';

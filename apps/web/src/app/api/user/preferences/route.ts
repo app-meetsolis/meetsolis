@@ -10,13 +10,11 @@ const patchSchema = z
   .object({
     email_notifications_enabled: z.boolean().optional(),
     timezone: z.string().min(1).max(100).optional(),
+    auto_action_items_enabled: z.boolean().optional(),
   })
-  .refine(
-    data =>
-      data.email_notifications_enabled !== undefined ||
-      data.timezone !== undefined,
-    { message: 'At least one field required' }
-  );
+  .refine(data => Object.keys(data).length > 0, {
+    message: 'At least one field required',
+  });
 
 export async function GET() {
   const { userId: clerkUserId } = await auth();
@@ -32,13 +30,14 @@ export async function GET() {
 
   const { data } = await supabase
     .from('users')
-    .select('email_notifications_enabled, timezone')
+    .select('email_notifications_enabled, timezone, auto_action_items_enabled')
     .eq('id', userId)
     .single();
 
   return NextResponse.json({
     email_notifications_enabled: data?.email_notifications_enabled ?? true,
     timezone: data?.timezone ?? 'UTC',
+    auto_action_items_enabled: data?.auto_action_items_enabled ?? false,
   });
 }
 

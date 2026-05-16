@@ -1,29 +1,39 @@
-import { SessionSummary } from '@meetsolis/shared';
+import { SessionSummaryResult, ActionItemsResult } from '@meetsolis/shared';
 
-export function parseSessionSummary(raw: string): SessionSummary {
+function parseJson(raw: string): Record<string, unknown> {
   let parsed: unknown;
-
   try {
     parsed = JSON.parse(raw);
   } catch {
     throw new Error(`AI returned invalid JSON: ${raw.substring(0, 200)}`);
   }
-
   if (typeof parsed !== 'object' || parsed === null) {
     throw new Error('AI response is not an object');
   }
+  return parsed as Record<string, unknown>;
+}
 
-  const obj = parsed as Record<string, unknown>;
+/** Parse the summary AI response — summary + key_topics only (Story 6.2c). */
+export function parseSummary(raw: string): SessionSummaryResult {
+  const obj = parseJson(raw);
 
-  if (typeof obj.title !== 'string' || !obj.title) {
-    throw new Error('AI response missing required field: title');
-  }
   if (typeof obj.summary !== 'string' || !obj.summary) {
     throw new Error('AI response missing required field: summary');
   }
   if (!Array.isArray(obj.key_topics)) {
     throw new Error('AI response missing required field: key_topics');
   }
+
+  return {
+    summary: obj.summary,
+    key_topics: (obj.key_topics as unknown[]).map(String),
+  };
+}
+
+/** Parse the action-items AI response (Story 6.2c). */
+export function parseActionItems(raw: string): ActionItemsResult {
+  const obj = parseJson(raw);
+
   if (!Array.isArray(obj.action_items)) {
     throw new Error('AI response missing required field: action_items');
   }
@@ -33,7 +43,7 @@ export function parseSessionSummary(raw: string): SessionSummary {
       throw new Error(`action_items[${i}] is not an object`);
     }
     const ai = item as Record<string, unknown>;
-    if (typeof ai.description !== 'string') {
+    if (typeof ai.description !== 'string' || !ai.description) {
       throw new Error(`action_items[${i}].description missing`);
     }
     if (ai.assigned_to !== 'coach' && ai.assigned_to !== 'client') {
@@ -47,10 +57,5 @@ export function parseSessionSummary(raw: string): SessionSummary {
     };
   });
 
-  return {
-    title: obj.title,
-    summary: obj.summary,
-    key_topics: (obj.key_topics as unknown[]).map(String),
-    action_items,
-  };
+  return { action_items };
 }

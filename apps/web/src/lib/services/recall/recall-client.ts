@@ -79,3 +79,42 @@ export async function getRecallRecording(
 
   return res.json();
 }
+
+/**
+ * Recall.ai recording response — the playable media URL lives in one of a few
+ * possible shapes depending on the recording_config requested. Prefers the
+ * mixed audio track, falling back to the mixed video (mp4 plays in <audio>).
+ */
+export function extractRecordingMediaUrl(recording: unknown): string | null {
+  if (!recording || typeof recording !== 'object') return null;
+  const r = recording as Record<string, unknown>;
+
+  // Older API: audio_url / video_url at top level.
+  if (typeof r.audio_url === 'string') return r.audio_url;
+  if (typeof r.video_url === 'string') return r.video_url;
+
+  // Newer API: media_shortcuts.{audio_mixed,video_mixed}.data.download_url.
+  const ms = r.media_shortcuts as Record<string, unknown> | undefined;
+  if (ms) {
+    for (const key of ['audio_mixed', 'video_mixed'] as const) {
+      const node = ms[key] as Record<string, unknown> | undefined;
+      const nodeData = node?.data as Record<string, unknown> | undefined;
+      if (nodeData && typeof nodeData.download_url === 'string') {
+        return nodeData.download_url;
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Fetch a fresh, non-expired playable media URL for a recording.
+ * Recall signed S3 URLs expire — always re-fetch rather than caching.
+ */
+export async function getRecallRecordingMediaUrl(
+  recordingId: string
+): Promise<string | null> {
+  const recording = await getRecallRecording(recordingId);
+  return extractRecordingMediaUrl(recording);
+}

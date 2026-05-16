@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
 import {
   ChevronDown,
@@ -10,9 +11,11 @@ import {
   Pencil,
   Square,
   CheckSquare,
-  Plus,
 } from 'lucide-react';
 import { Session, ClientActionItem } from '@meetsolis/shared';
+import { SummaryView } from './SummaryView';
+import { TranscriptModal } from './TranscriptModal';
+import { GenerateActionItemsButton } from './GenerateActionItemsButton';
 
 interface Props {
   sessions: Session[];
@@ -48,11 +51,20 @@ function AssigneeBadge({ assignee }: { assignee: string | null }) {
 
 export function SessionAccordion({ sessions, actionItems, clientId }: Props) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const sorted = [...sessions].sort(
     (a, b) =>
       new Date(b.session_date).getTime() - new Date(a.session_date).getTime()
   );
   const [openId, setOpenId] = useState<string | null>(sorted[0]?.id ?? null);
+  const [transcriptSessionId, setTranscriptSessionId] = useState<string | null>(
+    null
+  );
+
+  const refreshActionItems = () =>
+    queryClient.invalidateQueries({
+      queryKey: ['all-action-items', clientId],
+    });
 
   if (sorted.length === 0) {
     return (
@@ -122,45 +134,20 @@ export function SessionAccordion({ sessions, actionItems, clientId }: Props) {
 
             {isOpen && (
               <div className="border-t border-border px-6 py-5 space-y-5">
-                {session.summary && (
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-foreground/30 mb-2">
-                      Session Summary
-                    </p>
-                    <p className="text-[13px] leading-relaxed text-foreground/70">
-                      {session.summary}
-                    </p>
-                  </div>
-                )}
+                <SummaryView sessionId={session.id} />
 
-                {session.key_topics?.length > 0 && (
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-foreground/30 mb-2">
-                      Key Topics
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-foreground/30">
+                      Action Items
                     </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {session.key_topics.map(topic => (
-                        <span
-                          key={topic}
-                          className="rounded-full border border-border px-3 py-1 text-[12px] text-foreground/60"
-                        >
-                          {topic}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {sessionItems.length > 0 && (
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-foreground/30">
-                        Action Items
-                      </p>
+                    {sessionItems.length > 0 && (
                       <p className="text-[10px] text-foreground/25">
                         {completed} / {sessionItems.length} complete
                       </p>
-                    </div>
+                    )}
+                  </div>
+                  {sessionItems.length > 0 ? (
                     <div className="space-y-2">
                       {sessionItems.map(item => (
                         <div
@@ -181,18 +168,23 @@ export function SessionAccordion({ sessions, actionItems, clientId }: Props) {
                         </div>
                       ))}
                     </div>
-                    <button className="mt-3 flex items-center gap-1.5 text-[12px] text-foreground/30 hover:text-foreground/60 transition-colors">
-                      <Plus className="h-3.5 w-3.5" />
-                      Add Action Item
-                    </button>
+                  ) : (
+                    <p className="text-[12px] text-foreground/30">
+                      No action items for this session yet.
+                    </p>
+                  )}
+                  <div className="mt-3">
+                    <GenerateActionItemsButton
+                      sessionId={session.id}
+                      sessionStatus={session.status}
+                      onGenerated={refreshActionItems}
+                    />
                   </div>
-                )}
+                </div>
 
-                <div className="flex items-center gap-3 pt-1 border-t border-border">
+                <div className="flex items-center gap-4 pt-1 border-t border-border">
                   <button
-                    onClick={() =>
-                      router.push(`/clients/${clientId}/sessions/${session.id}`)
-                    }
+                    onClick={() => setTranscriptSessionId(session.id)}
                     className="flex items-center gap-1.5 text-[12px] text-foreground/40 hover:text-foreground/80 transition-colors"
                   >
                     <FileText className="h-3.5 w-3.5" />
@@ -213,6 +205,16 @@ export function SessionAccordion({ sessions, actionItems, clientId }: Props) {
           </div>
         );
       })}
+
+      {transcriptSessionId && (
+        <TranscriptModal
+          sessionId={transcriptSessionId}
+          open
+          onOpenChange={o => {
+            if (!o) setTranscriptSessionId(null);
+          }}
+        />
+      )}
     </div>
   );
 }

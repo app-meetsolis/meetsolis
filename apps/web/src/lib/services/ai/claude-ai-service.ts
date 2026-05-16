@@ -2,13 +2,18 @@ import Anthropic from '@anthropic-ai/sdk';
 import {
   AIService,
   ClientContext,
-  SessionSummary,
+  SessionSummaryResult,
+  ActionItemsResult,
   ServiceStatus,
   ServiceInfo,
 } from '@meetsolis/shared';
 import { BaseService } from '../base-service';
-import { COACHING_SYSTEM_PROMPT, buildSummarizePrompt } from '../../ai/prompts';
-import { parseSessionSummary } from '../../ai/summarize';
+import {
+  COACHING_SYSTEM_PROMPT,
+  buildSummarizePrompt,
+  buildActionItemsPrompt,
+} from '../../ai/prompts';
+import { parseSummary, parseActionItems } from '../../ai/summarize';
 
 export class ClaudeAIService extends BaseService implements AIService {
   private client: Anthropic;
@@ -43,7 +48,7 @@ export class ClaudeAIService extends BaseService implements AIService {
   async summarizeSession(
     transcript: string,
     ctx: ClientContext
-  ): Promise<SessionSummary> {
+  ): Promise<SessionSummaryResult> {
     const response = await this.client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 1000,
@@ -64,7 +69,34 @@ export class ClaudeAIService extends BaseService implements AIService {
       throw new Error('Claude returned non-text response');
     }
 
-    return parseSessionSummary(block.text);
+    return parseSummary(block.text);
+  }
+
+  async generateActionItems(
+    transcript: string,
+    ctx: ClientContext
+  ): Promise<ActionItemsResult> {
+    const response = await this.client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1000,
+      system: [
+        {
+          type: 'text',
+          text: COACHING_SYSTEM_PROMPT,
+          cache_control: { type: 'ephemeral' },
+        },
+      ],
+      messages: [
+        { role: 'user', content: buildActionItemsPrompt(transcript, ctx) },
+      ],
+    });
+
+    const block = response.content[0];
+    if (block.type !== 'text') {
+      throw new Error('Claude returned non-text response');
+    }
+
+    return parseActionItems(block.text);
   }
 
   async generateEmbedding(_text: string): Promise<number[]> {
