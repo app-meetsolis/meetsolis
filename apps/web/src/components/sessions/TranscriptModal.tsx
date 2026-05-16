@@ -111,8 +111,9 @@ function AudioTab({
   sessionId: string;
   chunks: TranscriptChunk[];
 }) {
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [currentMs, setCurrentMs] = useState(0);
+  const [mediaError, setMediaError] = useState(false);
 
   const { data, isLoading, isError } = useQuery<{ audio_url: string }>({
     queryKey: ['audio-url', sessionId],
@@ -126,7 +127,7 @@ function AudioTab({
   });
 
   const handleSeek = (ms: number) => {
-    const el = audioRef.current;
+    const el = videoRef.current;
     if (!el) return;
     el.currentTime = ms / 1000;
     setCurrentMs(ms);
@@ -136,7 +137,7 @@ function AudioTab({
   if (isLoading) {
     return (
       <p className="py-8 text-center text-[12px] text-foreground/30">
-        Loading audio…
+        Loading recording…
       </p>
     );
   }
@@ -152,10 +153,25 @@ function AudioTab({
   return (
     <div className="space-y-3">
       <TranscriptAudioPlayer
-        ref={audioRef}
+        ref={videoRef}
         src={data.audio_url}
         onTimeUpdate={setCurrentMs}
+        onError={() => setMediaError(true)}
       />
+      {mediaError && (
+        <p className="text-[12px] text-foreground/40">
+          Couldn&rsquo;t play the recording here.{' '}
+          <a
+            href={data.audio_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary underline"
+          >
+            Open it in a new tab
+          </a>
+          .
+        </p>
+      )}
       <div className="max-h-[45vh] overflow-y-auto pr-1">
         <SyncedTranscriptView
           chunks={chunks}
@@ -211,7 +227,7 @@ export function TranscriptModal({ sessionId, open, onOpenChange }: Props) {
           <Tabs defaultValue="transcript">
             <TabsList>
               <TabsTrigger value="transcript">Transcript</TabsTrigger>
-              <TabsTrigger value="audio">Audio</TabsTrigger>
+              <TabsTrigger value="audio">Recording</TabsTrigger>
             </TabsList>
             <TabsContent value="transcript">
               <FinalTranscript session={session} />

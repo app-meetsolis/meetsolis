@@ -97,12 +97,12 @@ export function SessionAccordion({ sessions, actionItems, clientId }: Props) {
               onClick={() => setOpenId(isOpen ? null : session.id)}
               className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-foreground/[0.02] transition-colors"
             >
-              <div className="shrink-0 w-14 text-left">
+              <div className="shrink-0 w-16 text-left">
                 <p className="text-[13px] font-semibold text-foreground/70">
                   {format(dateObj, 'MMM d')}
                 </p>
                 <p className="text-[10px] text-foreground/25">
-                  {format(dateObj, 'yyyy')}
+                  {format(parseISO(session.created_at), 'h:mm a')}
                 </p>
               </div>
 
