@@ -13,7 +13,7 @@ function parseJson(raw: string): Record<string, unknown> {
   return parsed as Record<string, unknown>;
 }
 
-/** Parse the summary AI response — summary + key_topics only (Story 6.2c). */
+/** Parse the summary AI response — title (optional) + summary + key_topics. */
 export function parseSummary(raw: string): SessionSummaryResult {
   const obj = parseJson(raw);
 
@@ -24,7 +24,15 @@ export function parseSummary(raw: string): SessionSummaryResult {
     throw new Error('AI response missing required field: key_topics');
   }
 
+  // Title is optional — a missing/blank title degrades gracefully rather
+  // than failing the whole summary.
+  const title =
+    typeof obj.title === 'string' && obj.title.trim()
+      ? obj.title.trim()
+      : undefined;
+
   return {
+    ...(title ? { title } : {}),
     summary: obj.summary,
     key_topics: (obj.key_topics as unknown[]).map(String),
   };

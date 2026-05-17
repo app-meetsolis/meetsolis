@@ -31,6 +31,7 @@ export function buildSummarizePrompt(
   return `Analyze the following coaching session transcript and return a JSON object with this exact schema:
 
 {
+  "title": "string — concise 3-7 word session title (e.g. 'Leadership Transition — Delegation')",
   "summary": "string — 2-4 sentence paragraph summarizing key themes and breakthroughs",
   "key_topics": ["string array of 3-6 topic tags"]
 }
