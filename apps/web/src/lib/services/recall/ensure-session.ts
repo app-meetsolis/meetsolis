@@ -7,6 +7,10 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import {
+  isPlaceholderTitle,
+  DEFAULT_SESSION_TITLE,
+} from '@/lib/sessions/session-title';
 
 interface CalEventLite {
   title?: string;
@@ -45,7 +49,11 @@ export async function ensureSessionRow(
     ? ((rawCal[0] as CalEventLite) ?? {})
     : ((rawCal as CalEventLite | null) ?? {});
 
-  const title = cal.title ?? 'Recorded session';
+  const calTitle = cal.title?.trim();
+  const title =
+    calTitle && !isPlaceholderTitle(calTitle)
+      ? calTitle
+      : DEFAULT_SESSION_TITLE;
   const sessionDate = cal.start_time
     ? cal.start_time.split('T')[0]
     : new Date().toISOString().split('T')[0];

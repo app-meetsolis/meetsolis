@@ -8,6 +8,7 @@ import { createClient } from '@supabase/supabase-js';
 import { config } from '@/lib/config/env';
 import { ServiceFactory } from '@/lib/service-factory';
 import { ClientContext } from '@meetsolis/shared';
+import { isPlaceholderTitle } from '@/lib/sessions/session-title';
 
 function getSupabase() {
   return createClient(config.supabase.url!, config.supabase.serviceRoleKey!);
@@ -21,7 +22,7 @@ export async function runSummarize(
 
   const { data: session } = await supabase
     .from('sessions')
-    .select('id, user_id, client_id, transcript_text')
+    .select('id, user_id, client_id, title, transcript_text')
     .eq('id', sessionId)
     .single();
 
@@ -54,15 +55,19 @@ export async function runSummarize(
     );
     const embedding = await aiService.generateEmbedding(summary.summary);
 
-    await supabase
-      .from('sessions')
-      .update({
-        summary: summary.summary,
-        key_topics: summary.key_topics,
-        embedding: JSON.stringify(embedding),
-        status: 'complete',
-      })
-      .eq('id', sessionId);
+    const updates: Record<string, unknown> = {
+      summary: summary.summary,
+      key_topics: summary.key_topics,
+      embedding: JSON.stringify(embedding),
+      status: 'complete',
+    };
+    // Give the session a real title when it only has a placeholder
+    // (e.g. "(no title)" inherited from a calendar event with no summary).
+    if (summary.title && isPlaceholderTitle(session.title)) {
+      updates.title = summary.title;
+    }
+
+    await supabase.from('sessions').update(updates).eq('id', sessionId);
 
     console.log(`[Summarize] Session ${sessionId} complete`);
     return 'complete';

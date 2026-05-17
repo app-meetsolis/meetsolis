@@ -245,6 +245,7 @@ export class MockAIService extends BaseService implements AIService {
   ): Promise<SessionSummaryResult> {
     await new Promise(resolve => setTimeout(resolve, 500));
     return {
+      title: 'Leadership Transition — Delegation',
       summary: `${ctx.name} explored challenges with delegating authority during organizational restructuring. Discussed fear of losing control and strategies for trusting team members. Identified pattern of micromanagement stemming from past project failures.`,
       key_topics: [
         'delegation',

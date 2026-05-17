@@ -35,6 +35,21 @@ describe('parseSummary', () => {
     const result = parseSummary(input);
     expect(result.key_topics).toEqual(['1', '2', '3']);
   });
+
+  it('extracts an optional title when present', () => {
+    const input = JSON.stringify({
+      title: 'Leadership Transition',
+      summary: 'x',
+      key_topics: [],
+    });
+    expect(parseSummary(input).title).toBe('Leadership Transition');
+  });
+
+  it('omits title when missing or blank', () => {
+    expect(parseSummary(validInput).title).toBeUndefined();
+    const blank = JSON.stringify({ title: '  ', summary: 'x', key_topics: [] });
+    expect(parseSummary(blank).title).toBeUndefined();
+  });
 });
 
 describe('parseActionItems', () => {

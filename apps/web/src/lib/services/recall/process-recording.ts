@@ -5,6 +5,10 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { runTranscribe } from '@/lib/sessions/transcribe-session';
+import {
+  isPlaceholderTitle,
+  DEFAULT_SESSION_TITLE,
+} from '@/lib/sessions/session-title';
 
 interface CalEventLite {
   title?: string;
@@ -52,7 +56,11 @@ export async function processRecallRecording(
     ? ((rawCal[0] as CalEventLite) ?? {})
     : ((rawCal as CalEventLite | null) ?? {});
 
-  const title = calEvent.title ?? 'Recorded session';
+  const calTitle = calEvent.title?.trim();
+  const title =
+    calTitle && !isPlaceholderTitle(calTitle)
+      ? calTitle
+      : DEFAULT_SESSION_TITLE;
   const sessionDate = calEvent.start_time
     ? calEvent.start_time.split('T')[0]
     : new Date().toISOString().split('T')[0];
