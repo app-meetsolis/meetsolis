@@ -13,7 +13,7 @@ export const securityHeaders = {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' data: https://fonts.gstatic.com",
     "frame-src 'self' https://*.clerk.dev https://*.clerk.accounts.dev https://*.clerk.com https://clerk.meetsolis.com https://challenges.cloudflare.com https://*.hotjar.com",
-    "media-src 'self' blob:",
+    "media-src 'self' blob: https://*.recall.ai https://*.amazonaws.com",
     "worker-src 'self' blob:",
     "object-src 'none'",
     "base-uri 'self'",
@@ -56,7 +56,7 @@ export const developmentSecurityHeaders = {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' data: https://fonts.gstatic.com",
     "frame-src 'self' https://*.clerk.dev https://*.clerk.accounts.dev https://*.clerk.com https://clerk.meetsolis.com https://challenges.cloudflare.com https://*.hotjar.com",
-    "media-src 'self' blob:",
+    "media-src 'self' blob: https://*.recall.ai https://*.amazonaws.com",
     "worker-src 'self' blob:",
   ].join('; '),
 };
