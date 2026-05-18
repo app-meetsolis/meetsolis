@@ -3,6 +3,8 @@
  * Hand-rolled from Recall.ai API docs — no official SDK types.
  */
 
+import type { DiarizedUtterance, SpeakerMap } from './gladia';
+
 // ---------------------------------------------------------------------------
 // Bot status (mirrors recall_sessions.status CHECK constraint)
 // ---------------------------------------------------------------------------
@@ -10,10 +12,13 @@ export type RecallBotStatus =
   | 'pending'
   | 'joining'
   | 'in_meeting'
+  | 'transcribing'
   | 'done'
   | 'error'
   | 'quota_exceeded'
-  | 'skipped';
+  | 'skipped'
+  | 'transcription_failed'
+  | 'summary_failed';
 
 // ---------------------------------------------------------------------------
 // DB row
@@ -32,6 +37,11 @@ export interface RecallSession {
   ended_at: string | null;
   created_at: string;
   updated_at: string;
+  // Story 6.3 — Gladia transcription pipeline
+  gladia_job_id: string | null;
+  diarized_transcript: DiarizedUtterance[] | null;
+  speaker_map: SpeakerMap | null;
+  speaker_review_needed: boolean;
 }
 
 // ---------------------------------------------------------------------------

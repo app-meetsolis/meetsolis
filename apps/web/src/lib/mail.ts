@@ -65,3 +65,51 @@ export async function sendWelcomeEmail(email: string, name?: string) {
     return { success: false, error };
   }
 }
+
+/**
+ * Notify a coach that auto-transcription failed for a session (Story 6.3).
+ * Sent only on a hard failure with no streaming transcript to fall back on,
+ * so the coach knows to upload the recording manually.
+ */
+export async function sendTranscriptionFailedEmail(
+  email: string,
+  name: string | null,
+  clientName: string
+) {
+  const firstName = name?.split(' ')[0] || 'there';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://meetsolis.com';
+
+  try {
+    const info = await transporter.sendMail({
+      from: `"MeetSolis" <${process.env.GMAIL_USER}>`,
+      to: email,
+      subject: `Action needed: transcription failed for ${clientName}`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #0f172a;">
+          <h2 style="margin-bottom: 16px;">We couldn't transcribe a session</h2>
+          <p style="color: #475569; line-height: 1.6;">
+            Hi ${firstName}, automatic transcription of your recent session with
+            <strong>${clientName}</strong> didn't go through.
+          </p>
+          <p style="color: #475569; line-height: 1.6;">
+            No transcript was captured, so there's nothing for us to summarize.
+            You can still get a summary by uploading the recording manually from
+            the client's page.
+          </p>
+          <p style="margin: 24px 0;">
+            <a href="${appUrl}/clients"
+               style="background:#0d5c63;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
+              Upload manually
+            </a>
+          </p>
+          <p style="color: #94a3b8; font-size: 12px;">— MeetSolis</p>
+        </div>
+      `,
+    });
+    console.log('Transcription-failed email sent: %s', info.messageId);
+    return { success: true };
+  } catch (error) {
+    console.error('Error sending transcription-failed email:', error);
+    return { success: false, error };
+  }
+}
