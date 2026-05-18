@@ -1,20 +1,19 @@
 /**
  * Finalize a streamed transcript when a bot call ends (Story 6.2b).
  *
- * Concatenates transcript_chunks into transcript_text, marks streaming
- * complete, and triggers AI summarization directly. Skips runTranscribe —
- * the transcript already exists from live streaming.
+ * Concatenates transcript_chunks into transcript_text and marks streaming
+ * complete. Story 6.3: it no longer summarizes — the summary is produced once,
+ * by the Gladia path, on the high-quality diarized transcript (avoids a
+ * wasted AI run and a summary-then-changes UX). Between bot.call_ended and
+ * Gladia completion the session has a transcript but no summary.
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { TranscriptChunk } from '@meetsolis/shared';
 import { concatTranscriptText } from './process-transcript-chunk';
-import { runSummarize } from '@/lib/sessions/summarize-session';
-import { maybeAutoGenerateActionItems } from '@/lib/sessions/generate-action-items';
 
 export async function finalizeStreamingTranscript(
   recallSessionId: string,
-  userId: string,
   supabase: SupabaseClient
 ): Promise<void> {
   const { data: sessionRow, error } = await supabase
@@ -51,19 +50,4 @@ export async function finalizeStreamingTranscript(
       transcript_streaming_complete: true,
     })
     .eq('id', sessionRow.id);
-
-  // Fire-and-forget — generates summary + key topics + embedding, then
-  // auto-generates action items only if the user opted in (Story 6.2c).
-  runSummarize(sessionRow.id, userId)
-    .then(status => {
-      if (status === 'complete') {
-        return maybeAutoGenerateActionItems(sessionRow.id, userId, supabase);
-      }
-    })
-    .catch(err =>
-      console.error(
-        `[recall:finalize] runSummarize failed session=${sessionRow.id}:`,
-        err instanceof Error ? err.message : String(err)
-      )
-    );
 }

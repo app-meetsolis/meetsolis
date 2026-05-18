@@ -20,10 +20,16 @@ const envSchema = z.object({
   OPENAI_API_KEY: z.string().optional(),
 
   // Transcription Provider (abstracted)
+  // 'gladia' documents the value for Story 6.5 manual-upload routing; bot
+  // sessions are hardcoded to Gladia and ignore this env var.
   TRANSCRIPTION_PROVIDER: z
-    .enum(['placeholder', 'deepgram', 'openai-whisper'])
+    .enum(['placeholder', 'deepgram', 'openai-whisper', 'gladia'])
     .default('placeholder'),
   DEEPGRAM_API_KEY: z.string().optional(),
+
+  // Gladia — Story 6.3 (bot recording re-transcription + diarization)
+  GLADIA_API_KEY: z.string().optional(),
+  GLADIA_WEBHOOK_SECRET: z.string().optional(),
 
   // Billing Provider (abstracted)
   BILLING_PROVIDER: z.enum(['placeholder', 'dodo']).default('placeholder'),
@@ -155,6 +161,12 @@ export const config = {
   transcription: {
     provider: env.TRANSCRIPTION_PROVIDER,
     deepgramApiKey: env.DEEPGRAM_API_KEY,
+  },
+
+  gladia: {
+    apiKey: env.GLADIA_API_KEY,
+    webhookSecret: env.GLADIA_WEBHOOK_SECRET,
+    baseUrl: 'https://api.gladia.io/v2',
   },
 
   billing: {

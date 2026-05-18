@@ -9,6 +9,7 @@ export * from './types/billing';
 export * from './types/calendar';
 export * from './types/recall';
 export * from './types/transcript';
+export * from './types/gladia';
 
 // Constants
 export * from './constants/services';

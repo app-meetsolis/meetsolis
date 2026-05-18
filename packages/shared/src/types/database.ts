@@ -404,6 +404,9 @@ export interface FileWithUser extends File {
 
 export type SessionStatus = 'pending' | 'processing' | 'complete' | 'error';
 
+/** Provenance of a session's transcript (Story 6.3). */
+export type SessionSource = 'manual' | 'recall_ai';
+
 export interface Session {
   id: string;
   user_id: string;
@@ -417,6 +420,10 @@ export interface Session {
   key_topics: string[];
   embedding: number[] | null;
   status: SessionStatus;
+  /** Story 6.3 — 'recall_ai' when produced by the bot/Gladia pipeline. */
+  source: SessionSource;
+  /** Story 6.2b — links a bot session to its recall_sessions row. */
+  recall_session_id: string | null;
   created_at: string;
   updated_at: string;
   action_items?: { id: string; status: string }[];

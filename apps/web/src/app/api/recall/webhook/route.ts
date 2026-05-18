@@ -11,13 +11,16 @@ import {
   updateRecallSession,
   getRecallSessionByBotId,
 } from '@/lib/services/recall/bot-status-update';
-import { processRecallRecording } from '@/lib/services/recall/process-recording';
 import { getRecallRecording } from '@/lib/services/recall/recall-client';
 import { ensureSessionRow } from '@/lib/services/recall/ensure-session';
 import { finalizeStreamingTranscript } from '@/lib/services/recall/finalize-streaming';
+import { transcribeBotRecording } from '@/lib/services/transcription/gladia-service';
 import { incrementBotSessionCount } from '@/lib/billing/checkUsage';
 
 export const runtime = 'nodejs';
+// The Deepgram fallback transcribes the recording inline (synchronous) — give
+// it headroom for long sessions. Harmless for the async Gladia path.
+export const maxDuration = 300;
 
 /**
  * Recall.ai's new account-level webhook payload structure varies:
@@ -140,12 +143,11 @@ export async function POST(req: NextRequest) {
       await incrementBotSessionCount(session.user_id).catch(err =>
         console.error('[recall:webhook] increment failed:', err)
       );
-      // Concatenate streamed chunks -> transcript_text, trigger summarization.
-      await finalizeStreamingTranscript(
-        session.id,
-        session.user_id,
-        supabase
-      ).catch(err => console.error('[recall:webhook] finalize failed:', err));
+      // Concatenate streamed chunks -> transcript_text. Summarization is
+      // deferred to the Gladia path (Story 6.3) — no eager summary here.
+      await finalizeStreamingTranscript(session.id, supabase).catch(err =>
+        console.error('[recall:webhook] finalize failed:', err)
+      );
       break;
 
     case 'bot.done':
@@ -187,32 +189,31 @@ export async function POST(req: NextRequest) {
       await updateRecallSession(botId, update, supabase);
 
       if (url) {
-        // Streaming already created the sessions row — just attach the audio
-        // URL for Phase 3 playback. Fall back to the legacy async pipeline
-        // only if no streaming session exists (missed webhook / non-bot).
+        // Streaming usually created the sessions row already; ensure it
+        // exists so Story 6.2c playback has a target even on a missed
+        // streaming webhook.
         const { data: sessionRow } = await supabase
           .from('sessions')
           .select('id')
           .eq('recall_session_id', session.id)
           .maybeSingle();
+        const sessionRowId =
+          sessionRow?.id ?? (await ensureSessionRow(session.id, supabase));
 
-        if (sessionRow) {
+        // Attach the audio URL for Story 6.2c recording playback.
+        if (sessionRowId) {
           await supabase
             .from('sessions')
             .update({ transcript_audio_url: url })
-            .eq('id', sessionRow.id);
-        } else {
-          try {
-            await processRecallRecording(
-              session.id,
-              url,
-              session.user_id,
-              supabase
-            );
-          } catch (err) {
-            console.error('[recall:webhook] processRecording failed:', err);
-          }
+            .eq('id', sessionRowId);
         }
+
+        // Re-transcribe for a diarized transcript + summary (Story 6.3).
+        // Routes to Gladia or Deepgram by config; the streaming transcript is
+        // overwritten by the diarized one.
+        await transcribeBotRecording(session.id, supabase).catch(err =>
+          console.error('[recall:webhook] transcribeBotRecording failed:', err)
+        );
       }
       break;
     }
