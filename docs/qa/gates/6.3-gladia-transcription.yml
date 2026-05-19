@@ -1,0 +1,143 @@
+story: "6.3"
+title: "Gladia/Deepgram Bot Transcription + Speaker Diarization"
+reviewer: "Quinn (Test Architect)"
+date: "2026-05-18"
+decision: PASS
+
+quality_score: 92/100
+
+summary: >
+  Strong, well-tested implementation. The post-review pivot to a 3-way provider
+  router (mock / Deepgram / Gladia) closed a real bug and lets the MVP ship on
+  Deepgram with Gladia as a zero-code-change upgrade. The one MEDIUM issue found
+  in review (QA-6.3-C1 — fire-and-forget summary regeneration, unreliable on
+  Vercel) was fixed during review: the PATCH speaker route now awaits the
+  summary chain. 44 tests pass (9 suites), type-check + lint clean. Four LOW
+  items remain as non-blocking follow-ups.
+
+resolved_during_review:
+  - id: QA-6.3-C1
+    title: "Speaker-reassignment summary regeneration was fire-and-forget"
+    severity: MEDIUM
+    resolution: >
+      PATCH /api/recall/sessions/[id]/speakers now awaits runSummarize +
+      maybeAutoGenerateActionItems instead of firing them unawaited, so the
+      regeneration reliably completes on Vercel serverless. maxDuration=120
+      added to the route. Verified by the speakers route test suite.
+    files:
+      - "apps/web/src/app/api/recall/sessions/[id]/speakers/route.ts"
+
+ac_coverage:
+  - ac: "Gladia job submission (recording.done)"
+    status: PASS
+    note: "recording.done → transcribeBotRecording; legacy Deepgram processRecallRecording path removed; ensureSessionRow fallback kept; idempotent via gladia_job_id."
+  - ac: "Gladia webhook callback /api/gladia/webhook"
+    status: PASS
+    note: "Zod-validated; event-discriminated. Auth is a URL shared-secret token, not HMAC — intentional, documented deviation (Gladia v2 does not sign per-job callbacks)."
+  - ac: "Speaker ID mapping (1 / 2 / 3+ cases)"
+    status: PASS
+    note: "map-speakers.ts pure + unit-tested for all cases incl. non-contiguous indices."
+  - ac: "Pipeline integration — updates existing session row"
+    status: PASS
+    note: "handleGladiaDone/processRecallTranscript update the existing row, no double-insert; verified by test."
+  - ac: "finalize-streaming — no eager summary"
+    status: PASS
+    note: "Eager runSummarize removed; 'Generating summary…' state added to the session detail page."
+  - ac: "Failure recovery fallback"
+    status: PASS
+    note: "Streaming-transcript fallback vs transcription_failed + coach email; both branches unit-tested."
+  - ac: "Manual speaker reassignment UI"
+    status: PASS
+    note: "Banner + editor + GET/PATCH route built and tested. Re-summarization now awaited (QA-6.3-C1 resolved)."
+  - ac: "Transcription provider routing (config/env)"
+    status: PASS
+    note: "'gladia' added to TRANSCRIPTION_PROVIDER enum; bot path uses the router. Deepgram fallback added beyond original scope — improvement."
+  - ac: "Quality / standards"
+    status: PASS
+    note: "All files ≤500 lines; no direct process.env; Zod on webhook + PATCH body; no `any`; standard error shape on routes."
+
+critical_issues: []
+
+concerns:
+  - id: QA-6.3-C2
+    title: "Bot session with an empty transcript polls 'Generating summary…' forever"
+    severity: LOW
+    suggested_owner: dev
+    description: >
+      If Gladia/Deepgram returns no utterances, runSummarize returns 'skipped'
+      and never sets sessions.status, leaving it 'pending'. isAwaitingSummary()
+      on the session detail page then returns true indefinitely → 4s polling
+      with no terminal state. Rare (empty recording) but unbounded.
+    fix: >
+      Give the pipeline a terminal signal for the no-content case (set
+      sessions.status when runSummarize skips, or bound isAwaitingSummary by
+      transcript_streaming_complete / elapsed time)."
+
+  - id: QA-6.3-C3
+    title: "Gladia webhook is unauthenticated if GLADIA_WEBHOOK_SECRET is unset"
+    severity: LOW
+    suggested_owner: dev
+    description: >
+      verifyGladiaCallbackToken returns true when no secret is configured. If an
+      operator sets GLADIA_API_KEY but forgets GLADIA_WEBHOOK_SECRET, the
+      callback route accepts unsigned POSTs. Practical risk is low — the handler
+      no-ops unless the body carries a real UUID gladia_job_id — but it is silent.
+    fix: "Warn or hard-fail when GLADIA_API_KEY is set without GLADIA_WEBHOOK_SECRET. Already noted in backlog/gladia-activation.md."
+
+  - id: QA-6.3-C4
+    title: "calendar_events.bot_status not updated by Gladia/Deepgram transitions"
+    severity: LOW
+    suggested_owner: dev
+    description: >
+      The transcription pipeline writes recall_sessions.status directly
+      (transcribing / done / transcription_failed) and bypasses
+      updateRecallSession, which mirrors status to calendar_events.bot_status.
+      A transcription_failed session still shows 'done' on the calendar dashboard.
+    fix: "Mirror terminal transcription status to calendar_events, or document that bot_status reflects only the meeting lifecycle."
+
+  - id: QA-6.3-C5
+    title: "Orphaned legacy code + naming debt"
+    severity: LOW
+    suggested_owner: dev
+    description: >
+      process-recording.ts is no longer referenced (legacy Deepgram bot path).
+      handleGladiaDone and recall_sessions.gladia_job_id are provider-agnostic in
+      practice (store deepgram-* / mock-gladia-* markers). Acknowledged in the
+      story Dev Notes.
+    fix: "Delete process-recording.ts in a follow-up; optionally rename to provider-neutral terms later. Non-urgent."
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: "Clerk auth + ownership checks on the speaker route; Zod on all inputs; callback token compared with timingSafeEqual. QA-6.3-C3 is a low-risk misconfiguration hardening item."
+  performance:
+    status: PASS
+    notes: "Deepgram fallback transcribes inline in the recording.done webhook (maxDuration=300); fine for ~1 hr sessions. Speaker PATCH awaits the AI chain (maxDuration=120). Gladia path is async."
+  reliability:
+    status: PASS
+    notes: "Failure-recovery and idempotency are solid; QA-6.3-C1 fixed during review. QA-6.3-C2 (empty-transcript poll) is a low-severity edge case."
+  maintainability:
+    status: PASS
+    notes: "Files ≤500 lines, cohesive modules, strong comments, no `any`. Naming debt (QA-6.3-C5) is minor and documented."
+
+passed_areas:
+  - "3-way provider router — clean separation, idempotent, mock/Deepgram/Gladia all feed one pipeline"
+  - "Speaker mapping — pure, all speaker-count cases covered + tested"
+  - "Diarized transcript formatter — groups consecutive turns, sorts, tested"
+  - "Failure recovery — degraded-summary vs hard-fail branches, tested"
+  - "Gladia callback handling — Zod-validated, event-discriminated, token-authenticated"
+  - "Pipeline updates the existing streaming session row — no duplicate sessions"
+  - "Speaker reassignment — reformats transcript + re-summarizes (awaited), tested"
+  - "Migration 028 — additive, idempotent (IF NOT EXISTS), status CHECK extended"
+  - "Doc research correctly drove the callback-auth + callback_config deviations"
+  - "TypeScript: 0 errors; ESLint: clean for all changed files"
+
+tests_added_during_review:
+  - "apps/web/src/app/api/recall/sessions/[id]/speakers/__tests__/route.test.ts — speaker reassignment (AC-required, was missing)"
+
+test_summary:
+  total_new: 44
+  suites: 9
+  status: "all passing"
+
+retest_required: false

@@ -4,8 +4,8 @@
  * GET   — speaker map + review state for the session detail UI (Story 6.3).
  * PATCH — coach-corrected speaker map → reformat transcript + re-summarize.
  *
- * Re-summarization is fire-and-forget: the coach gets an immediate 200 and the
- * updated summary appears on the next poll.
+ * PATCH re-summarizes synchronously (awaited) so the work reliably completes
+ * on Vercel serverless; the UI shows a 'Saving…' state and polls for the result.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -20,6 +20,8 @@ import { runSummarize } from '@/lib/sessions/summarize-session';
 import { maybeAutoGenerateActionItems } from '@/lib/sessions/generate-action-items';
 
 export const runtime = 'nodejs';
+// PATCH awaits the summary + action-item AI chain — give it headroom.
+export const maxDuration = 120;
 
 function getSupabase() {
   return createClient(config.supabase.url!, config.supabase.serviceRoleKey!);
@@ -177,16 +179,18 @@ export async function PATCH(
       })
       .eq('id', params.id);
 
-    // Re-summarize fire-and-forget — the UI polls for the refreshed summary.
-    runSummarize(params.id, userId)
-      .then(status => {
-        if (status === 'complete') {
-          return maybeAutoGenerateActionItems(params.id, userId, supabase);
-        }
-      })
-      .catch(e =>
-        console.error(`[speakers API] re-summarize failed ${params.id}:`, e)
-      );
+    // Re-summarize synchronously. A fire-and-forget call would be unreliable
+    // on Vercel serverless — the function can be frozen once the response is
+    // sent, dropping the regeneration. The UI shows a 'Saving…' state for the
+    // few seconds this takes, then polls for the refreshed summary.
+    try {
+      const status = await runSummarize(params.id, userId);
+      if (status === 'complete') {
+        await maybeAutoGenerateActionItems(params.id, userId, supabase);
+      }
+    } catch (e) {
+      console.error(`[speakers API] re-summarize failed ${params.id}:`, e);
+    }
 
     return NextResponse.json({ ok: true, speaker_map: speakerMap });
   } catch (error) {
