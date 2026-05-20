@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   Building2,
   Calendar,
+  FileText,
   MoreHorizontal,
   Pencil,
   Sparkles,
@@ -270,6 +271,14 @@ export default function ClientDetailPage() {
           >
             <Sparkles className="h-4 w-4" />
             Ask Solis
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => router.push(`/brief/manual/${id}`)}
+            className="rounded-lg border-border bg-transparent px-4 py-2 text-[13px] font-medium gap-2"
+          >
+            <FileText className="h-4 w-4" />
+            Coach Brief
           </Button>
           <Button
             variant="outline"

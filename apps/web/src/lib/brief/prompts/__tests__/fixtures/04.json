@@ -1,0 +1,29 @@
+{
+  "clientName": "David Okafor",
+  "clientGoal": "Define what kind of COO he wants to be in his first year",
+  "clientNotes": "Newly appointed COO at a 120-person logistics startup. Came from a much larger company. Six weeks into the role.",
+  "recentSessions": [
+    {
+      "date": "2026-05-09",
+      "summary": "David listed everything on his plate — ops, hiring, two failing processes, a board ask. He noticed he had no criterion for what to say no to. We began shaping a 'COO I want to be' statement; he landed on 'the person who builds systems, not the person who is the system.'",
+      "keyTopics": ["goal-setting", "prioritization", "identity"]
+    },
+    {
+      "date": "2026-04-25",
+      "summary": "First working session. David described feeling like he's 'auditing' the company rather than leading it. We agreed his quarter goal is to move from observer to owner of two specific areas.",
+      "keyTopics": ["goal-setting", "transition"]
+    }
+  ],
+  "openActionItems": [
+    "Draft the one-page 'COO I want to be' statement",
+    "Pick the two areas to fully own this quarter"
+  ],
+  "retrievedSessions": [
+    {
+      "date": "2026-04-25",
+      "summary": "David noticed he defaults to proving competence by knowing everything — a habit that served him as an analyst but works against him as a COO.",
+      "keyTopics": ["identity", "goal-setting"]
+    }
+  ],
+  "isFirstSession": false
+}

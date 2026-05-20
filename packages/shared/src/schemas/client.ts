@@ -17,6 +17,8 @@ export const ClientSchema = z.object({
   start_date: z.string().nullable().optional(), // DATE stored as ISO string
   website: z.string().url().nullable().optional().or(z.literal('')),
   notes: z.string().nullable().optional(),
+  // Story 6.4 — private per-client coach notes, persists across sessions, never AI-touched
+  coach_notes: z.string().nullable().optional(),
   last_session_at: z.string().datetime().or(z.date()).nullable().optional(),
   created_at: z.string().datetime().or(z.date()),
   updated_at: z.string().datetime().or(z.date()),
@@ -44,6 +46,8 @@ export const ClientUpdateSchema = z.object({
   start_date: z.string().nullable().optional(),
   website: z.string().url('Invalid URL format').trim().nullable().optional().or(z.literal('')),
   notes: z.string().trim().max(10000, 'Notes must be at most 10,000 characters').nullable().optional(),
+  // Story 6.4 — coach Open Questions field on the brief screen
+  coach_notes: z.string().max(10000, 'Coach notes must be at most 10,000 characters').nullable().optional(),
 }).strict();
 
 // Type exports

@@ -1,0 +1,29 @@
+{
+  "clientName": "Rachel Stein",
+  "clientGoal": "Find a sustainable pace as a solo founder before she burns out",
+  "clientNotes": "Solo founder of a bootstrapped 8-person company. Works 70+ hour weeks. Came to coaching after a health scare.",
+  "recentSessions": [
+    {
+      "date": "2026-05-10",
+      "summary": "Rachel reported she took one full day off — the first in five months — and spent it anxious and checking Slack. She said rest feels like 'falling behind an invisible competitor.' We examined who that competitor is; she couldn't name one.",
+      "keyTopics": ["burnout", "rest", "self-worth"]
+    },
+    {
+      "date": "2026-04-26",
+      "summary": "Rachel listed what only she can do versus what she does out of habit. Two-thirds of her week is habit. She resisted delegating customer support, saying 'no one will care like I do.'",
+      "keyTopics": ["burnout", "delegation", "control"]
+    }
+  ],
+  "openActionItems": [
+    "Hand first-line customer support to the ops hire",
+    "Take one full weekend day off with Slack closed"
+  ],
+  "retrievedSessions": [
+    {
+      "date": "2026-02-28",
+      "summary": "Rachel saw that overwork is how she earns the right to exist in her own company — a belief she traced to launching with no co-founder and feeling she had to justify the risk daily.",
+      "keyTopics": ["burnout", "self-worth", "breakthrough"]
+    }
+  ],
+  "isFirstSession": false
+}

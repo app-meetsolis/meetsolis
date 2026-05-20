@@ -70,6 +70,11 @@ export interface AIService extends ExternalService {
   ): Promise<ActionItemsResult>;
   generateEmbedding(text: string): Promise<number[]>;
   querySolis(systemPrompt: string, userPrompt: string): Promise<string>;
+  /**
+   * Story 6.4 — narrative AI Prep Note generation for Coach Brief.
+   * Higher-temperature, creative output (NOT JSON). Returns plain text.
+   */
+  generatePrepNote(systemPrompt: string, userPrompt: string): Promise<string>;
 }
 
 export interface TranscriptionResult {

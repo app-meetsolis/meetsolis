@@ -2,12 +2,15 @@ import '@testing-library/jest-dom';
 
 // TECH-001: openai/_shims/web-runtime.ts initializes browser APIs on import,
 // crashing Node.js test environment. Mock the entire openai module globally.
-jest.mock('openai', () => ({
-  OpenAI: jest.fn(() => ({
-    chat: { completions: { create: jest.fn() } },
-    embeddings: { create: jest.fn() },
-  })),
-}));
+// Bypassed when RUN_PREP_EVAL=1 so the §9 live eval can hit real OpenAI.
+if (process.env.RUN_PREP_EVAL !== '1') {
+  jest.mock('openai', () => ({
+    OpenAI: jest.fn(() => ({
+      chat: { completions: { create: jest.fn() } },
+      embeddings: { create: jest.fn() },
+    })),
+  }));
+}
 
 // Mock dodopayments SDK globally (same Node.js environment issue as openai)
 jest.mock('dodopayments', () => {
@@ -69,7 +72,37 @@ jest.mock('next/navigation', () => ({
 }));
 
 // Mock environment variables for tests
-process.env.USE_MOCK_SERVICES = 'true';
+// Skip USE_MOCK_SERVICES override during the §9 live eval so the real
+// OpenAI/Claude provider is selected.
+if (process.env.RUN_PREP_EVAL !== '1') {
+  process.env.USE_MOCK_SERVICES = 'true';
+} else {
+  // next/jest does NOT load .env.local in test mode — pull it in manually
+  // so OPENAI_API_KEY / ANTHROPIC_API_KEY become available for the live eval.
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const envLocal = fs.readFileSync(
+      path.resolve(__dirname, '.env.local'),
+      'utf8'
+    );
+    for (const line of envLocal.split(/\r?\n/)) {
+      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
+      if (!m) continue;
+      const key = m[1];
+      let val = m[2];
+      if (
+        (val.startsWith('"') && val.endsWith('"')) ||
+        (val.startsWith("'") && val.endsWith("'"))
+      ) {
+        val = val.slice(1, -1);
+      }
+      if (!process.env[key]) process.env[key] = val;
+    }
+  } catch (e) {
+    console.warn('[prep-eval] could not load .env.local:', e.message);
+  }
+}
 process.env.NODE_ENV = 'test';
 process.env.SERVICE_TIMEOUT_MS = '1000';
 process.env.CIRCUIT_BREAKER_THRESHOLD = '3';
@@ -169,8 +202,10 @@ beforeEach(() => {
   // Clear all mocks before each test
   jest.clearAllMocks();
 
-  // Reset environment to known state
-  process.env.USE_MOCK_SERVICES = 'true';
+  // Reset environment to known state — skipped for §9 live eval.
+  if (process.env.RUN_PREP_EVAL !== '1') {
+    process.env.USE_MOCK_SERVICES = 'true';
+  }
 });
 
 // Suppress console warnings in tests unless debugging

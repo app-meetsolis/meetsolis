@@ -110,3 +110,6 @@ skills-lock.json
 
 # Planning docs
 /plans/
+
+# Story 6.4 — prompt-eval live output (regenerated per run)
+apps/web/src/lib/brief/prompts/__tests__/eval-output/

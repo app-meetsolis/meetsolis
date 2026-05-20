@@ -1,0 +1,29 @@
+{
+  "clientName": "Daniel Cohen",
+  "clientGoal": "Repair and reset the working relationship with his co-founder",
+  "clientNotes": "Co-founder/CEO of a 40-person company. Tension with his co-founder (CTO) has grown over 18 months. They barely speak directly.",
+  "recentSessions": [
+    {
+      "date": "2026-05-05",
+      "summary": "Daniel described routing decisions through other people to avoid talking to his co-founder, Ben, directly. He listed his grievances fluently but struggled to name a single thing he'd contributed to the rift. When pressed, he said 'I stopped telling him things because it was easier.'",
+      "keyTopics": ["conflict", "co-founder relationship", "avoidance"]
+    },
+    {
+      "date": "2026-04-21",
+      "summary": "Daniel admitted the conflict is bleeding into the company — the team has started picking sides. He framed Ben as the problem throughout. We noticed how certain he is, and how that certainty might be protecting him from a harder conversation.",
+      "keyTopics": ["conflict", "co-founder relationship"]
+    }
+  ],
+  "openActionItems": [
+    "Name one specific way he has contributed to the breakdown",
+    "Propose a direct, unmediated conversation with Ben"
+  ],
+  "retrievedSessions": [
+    {
+      "date": "2026-03-08",
+      "summary": "Daniel recognized that he equates being right with being safe, and that winning arguments with Ben has started to matter more to him than the company they are both trying to build.",
+      "keyTopics": ["conflict", "breakthrough"]
+    }
+  ],
+  "isFirstSession": false
+}

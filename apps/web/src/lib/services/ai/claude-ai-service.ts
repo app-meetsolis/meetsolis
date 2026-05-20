@@ -140,4 +140,31 @@ export class ClaudeAIService extends BaseService implements AIService {
       throw new Error('Claude returned non-text response');
     return block.text;
   }
+
+  /**
+   * Story 6.4 — Coach Brief AI Prep Note. Hero feature: uses Sonnet (highest
+   * quality bar) at temperature 0.7 for specific, narrative coaching output.
+   */
+  async generatePrepNote(
+    systemPrompt: string,
+    userPrompt: string
+  ): Promise<string> {
+    const response = await this.client.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 900,
+      temperature: 0.7,
+      system: [
+        {
+          type: 'text',
+          text: systemPrompt,
+          cache_control: { type: 'ephemeral' },
+        },
+      ],
+      messages: [{ role: 'user', content: userPrompt }],
+    });
+    const block = response.content[0];
+    if (block.type !== 'text')
+      throw new Error('Claude returned non-text response');
+    return block.text.trim();
+  }
 }

@@ -37,9 +37,15 @@ const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-async function getUserTier(
+/**
+ * Resolves a user's subscription tier. Exported for Story 6.4 (Coach Brief
+ * gating). `supabase` is optional — defaults to a fresh server client.
+ */
+export async function getUserTier(
   userId: string,
-  supabase: ReturnType<typeof getSupabaseServerClient>
+  supabase: ReturnType<
+    typeof getSupabaseServerClient
+  > = getSupabaseServerClient()
 ): Promise<SubscriptionPlan> {
   const { data } = await supabase
     .from('subscriptions')
