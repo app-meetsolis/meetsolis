@@ -296,6 +296,17 @@ export class MockAIService extends BaseService implements AIService {
     });
   }
 
+  async generatePrepNote(
+    _systemPrompt: string,
+    _userPrompt: string
+  ): Promise<string> {
+    return [
+      'Across the last few sessions a consistent thread has emerged: your client keeps returning to the gap between what they commit to and what they protect time for. They name priorities clearly, then let reactive work crowd them out.',
+      'Consider opening by asking them to walk through how the last commitment actually played out, hour by hour — the specifics tend to surface the real obstacle faster than asking how it "went".',
+      'Worth revisiting the breakthrough from an earlier session where they connected over-preparation to anxiety management; the same pattern may be driving the current overwhelm.',
+    ].join('\n\n');
+  }
+
   // Mock-specific methods
   getRequestCount(): number {
     return this.requestCount;

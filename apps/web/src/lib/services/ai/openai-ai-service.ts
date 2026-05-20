@@ -132,4 +132,28 @@ export class OpenAIAIService extends BaseService implements AIService {
     if (!content) throw new Error('OpenAI returned empty response');
     return content;
   }
+
+  /**
+   * Story 6.4 — Coach Brief AI Prep Note. Uses gpt-4o (full, not mini) because
+   * this is the hero feature and the quality bar is "feels hand-written" —
+   * 4o-mini drifts into generic coaching prose. Cost remains tiny at scale
+   * (~$0.0125/brief). Narrative text output (no JSON format), temp 0.7.
+   */
+  async generatePrepNote(
+    systemPrompt: string,
+    userPrompt: string
+  ): Promise<string> {
+    const response = await this.client.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      temperature: 0.7,
+      max_tokens: 900,
+    });
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error('OpenAI returned empty response');
+    return content.trim();
+  }
 }

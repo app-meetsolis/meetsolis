@@ -1,0 +1,29 @@
+{
+  "clientName": "James Park",
+  "clientGoal": "Make the shift from senior engineer to engineering manager without falling back into doing the work himself",
+  "clientNotes": "Promoted to EM of a 6-person team four months ago. Was the team's top IC.",
+  "recentSessions": [
+    {
+      "date": "2026-05-07",
+      "summary": "James admitted he picked up a critical bug fix himself over the weekend instead of coaching his engineer through it. He framed it as urgency, then conceded the deeper truth: shipping code is the only part of the job where he feels competent right now.",
+      "keyTopics": ["leadership transition", "identity", "delegation"]
+    },
+    {
+      "date": "2026-04-23",
+      "summary": "Explored what James misses about being an IC. He said 'a clear definition of a good day.' As an EM he can't tell if he did well. We started naming what a good management day actually looks like.",
+      "keyTopics": ["leadership transition", "measuring success"]
+    }
+  ],
+  "openActionItems": [
+    "Coach the engineer through the next bug instead of fixing it himself",
+    "Write three concrete markers of a good management day"
+  ],
+  "retrievedSessions": [
+    {
+      "date": "2026-03-19",
+      "summary": "James recognized his discomfort isn't about skill — it's grief for an identity he was very good at, and he hadn't let himself acknowledge the loss.",
+      "keyTopics": ["identity", "transition", "breakthrough"]
+    }
+  ],
+  "isFirstSession": false
+}

@@ -1,0 +1,29 @@
+{
+  "clientName": "Tomás Herrera",
+  "clientGoal": "Lead from his own judgment instead of waiting for permission",
+  "clientNotes": "First-time CTO, promoted internally past more senior peers. Defers heavily to the CEO.",
+  "recentSessions": [
+    {
+      "date": "2026-05-08",
+      "summary": "Tomás brought a technical decision he'd 'run by' the CEO even though it was squarely his call. He realized he frames his own decisions as proposals. We named the cost: his team can't tell what he actually believes.",
+      "keyTopics": ["confidence", "authority", "imposter syndrome"]
+    },
+    {
+      "date": "2026-04-24",
+      "summary": "Tomás described a meeting where he had the right answer early but waited for someone senior to say it first. He said 'if I'm wrong out loud, everyone will see I shouldn't be here.'",
+      "keyTopics": ["imposter syndrome", "confidence"]
+    }
+  ],
+  "openActionItems": [
+    "Make the architecture decision without running it by the CEO",
+    "State a clear position in the next leadership meeting before anyone else speaks"
+  ],
+  "retrievedSessions": [
+    {
+      "date": "2026-03-11",
+      "summary": "Tomás recognized that being promoted past his peers made him feel he had to keep proving the choice was correct, so he avoids any visible risk that could be used as evidence against him.",
+      "keyTopics": ["imposter syndrome", "breakthrough"]
+    }
+  ],
+  "isFirstSession": false
+}

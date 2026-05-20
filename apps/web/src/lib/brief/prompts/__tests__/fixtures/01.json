@@ -1,0 +1,34 @@
+{
+  "clientName": "Sarah Chen",
+  "clientGoal": "Lead her engineering org with less hands-on control as it scales from 12 to 40 people",
+  "clientNotes": "VP Engineering at a Series B fintech. Promoted from Director 8 months ago. Strong technically, struggles to let go of code review and architecture decisions.",
+  "recentSessions": [
+    {
+      "date": "2026-05-04",
+      "summary": "Sarah described staying until 9pm three nights last week to review PRs herself. She acknowledged her team lead, Marcus, is capable but said 'it's faster if I just do it.' We named the cost: she missed her daughter's recital. She committed to handing PR review for the payments squad fully to Marcus this week and not opening those PRs herself.",
+      "keyTopics": ["delegation", "work-life boundaries", "trust"]
+    },
+    {
+      "date": "2026-04-20",
+      "summary": "Explored why letting go feels unsafe. Sarah traced it to a production incident last year that happened 'on her watch' as a new Director. She said 'if something breaks now, it's proof I shouldn't have been promoted.'",
+      "keyTopics": ["fear of failure", "delegation", "self-trust"]
+    },
+    {
+      "date": "2026-04-06",
+      "summary": "Sarah set the quarter's focus: build a leadership layer she trusts. She rated her trust in her three team leads at 6/10, 7/10, and 4/10. We agreed the work is less about their competence and more about her tolerance for being one step removed.",
+      "keyTopics": ["goal-setting", "delegation"]
+    }
+  ],
+  "openActionItems": [
+    "Hand payments-squad PR review fully to Marcus, do not open those PRs",
+    "Block a 6pm hard stop on Tuesdays and Thursdays"
+  ],
+  "retrievedSessions": [
+    {
+      "date": "2026-02-19",
+      "summary": "Sarah had a breakthrough realizing her over-involvement isn't protecting the team — it signals she doesn't trust them, and her strongest engineer had started disengaging because of it.",
+      "keyTopics": ["delegation", "trust", "breakthrough"]
+    }
+  ],
+  "isFirstSession": false
+}

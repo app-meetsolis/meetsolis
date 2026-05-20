@@ -1,0 +1,29 @@
+{
+  "clientName": "Aisha Bello",
+  "clientGoal": "Decide whether to leave her corporate VP role for an early-stage startup — and own the decision",
+  "clientNotes": "VP of Marketing at a Fortune 500. Has a startup offer on the table. Three weeks to decide.",
+  "recentSessions": [
+    {
+      "date": "2026-05-11",
+      "summary": "Aisha made two pro/con lists and noticed both were written to justify staying. She admitted she keeps asking mentors what they'd do because she doesn't trust her own answer. When asked what she actually wants, she said 'I haven't let myself consider that as data.'",
+      "keyTopics": ["decision-making", "career pivot", "self-trust"]
+    },
+    {
+      "date": "2026-04-27",
+      "summary": "Explored Aisha's fear of regret. She's less afraid of the startup failing than of leaving and discovering the security she has now was worth more than she admits. We named that she's deciding between two fears, not between a fear and a hope.",
+      "keyTopics": ["career pivot", "fear", "decision-making"]
+    }
+  ],
+  "openActionItems": [
+    "Write the version of the decision that starts from what she wants, not what's safe",
+    "Talk to two people who left similar roles — about how the decision felt, not whether it worked out"
+  ],
+  "retrievedSessions": [
+    {
+      "date": "2026-04-13",
+      "summary": "Aisha realized she has spent her career optimizing for being chosen — by schools, by employers — and has rarely practiced choosing for herself.",
+      "keyTopics": ["self-trust", "career pivot", "breakthrough"]
+    }
+  ],
+  "isFirstSession": false
+}

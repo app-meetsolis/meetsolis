@@ -1,0 +1,29 @@
+{
+  "clientName": "Marcus Webb",
+  "clientGoal": "Build the resilience to lead through setbacks without spiraling",
+  "clientNotes": "Founder/CEO of a 25-person B2B SaaS. Second-time founder. Tends to catastrophize after bad news.",
+  "recentSessions": [
+    {
+      "date": "2026-05-12",
+      "summary": "Marcus came in shaken — his largest customer, 32% of revenue, gave notice two days ago. He cycled between blaming his head of sales and blaming himself, and said 'this is the beginning of the end' four times. We slowed down and separated what's known (one churn) from what he's predicting (collapse).",
+      "keyTopics": ["crisis", "catastrophizing", "resilience"]
+    },
+    {
+      "date": "2026-04-28",
+      "summary": "Worked on Marcus's pattern of going silent with his team when stressed. He admitted he hadn't told his leadership team about a cash-flow concern for three weeks. We discussed how withholding 'to protect them' actually isolates him.",
+      "keyTopics": ["communication", "isolation under stress"]
+    }
+  ],
+  "openActionItems": [
+    "Have a direct conversation with the head of sales — facts, not blame",
+    "Tell the leadership team about the churn within 48 hours"
+  ],
+  "retrievedSessions": [
+    {
+      "date": "2026-01-15",
+      "summary": "Marcus recognized that in his first company he treated every setback as a referendum on his worth, and that this is what burned him out before the acquisition.",
+      "keyTopics": ["resilience", "self-worth", "breakthrough"]
+    }
+  ],
+  "isFirstSession": false
+}

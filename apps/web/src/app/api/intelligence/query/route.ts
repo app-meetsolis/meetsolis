@@ -13,10 +13,22 @@ import { z } from 'zod';
 import { UpgradeRequiredError } from '@meetsolis/shared';
 import { config } from '@/lib/config/env';
 import { getInternalUserId } from '@/lib/helpers/user';
-import { checkQueryLimit, incrementQueryCount } from '@/lib/billing/checkUsage';
+import {
+  checkQueryLimit,
+  incrementQueryCount,
+  getUserTier,
+} from '@/lib/billing/checkUsage';
 import { buildSolisContext, parseSolisResponse } from '@/lib/ai/solis';
 import { SOLIS_SYSTEM_PROMPT } from '@/lib/ai/prompts';
 import { ServiceFactory } from '@/lib/service-factory';
+import {
+  detectPrepIntent,
+  type PrepIntentClient,
+} from '@/lib/ai/intent-detection';
+import { buildPrepResponse } from '@/lib/brief/solis-prep';
+
+export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 const QuerySchema = z.object({
   query: z.string().min(3).max(500).trim(),
@@ -107,6 +119,55 @@ export async function POST(request: NextRequest) {
           { status: 404 }
         );
       }
+    }
+
+    // 5b. Prep-intent detection (Story 6.4) — branches before generic RAG
+    const { data: userClients } = await supabase
+      .from('clients')
+      .select('id, name')
+      .eq('user_id', userId);
+
+    const prepIntent = detectPrepIntent(
+      query,
+      (userClients ?? []) as PrepIntentClient[]
+    );
+
+    if (prepIntent.isPrep) {
+      let answer: string;
+
+      if (prepIntent.matchedClient) {
+        const tier = await getUserTier(userId);
+        const prep = await buildPrepResponse({
+          userId,
+          clientId: prepIntent.matchedClient.id,
+          tier,
+        });
+        answer = prep.answer;
+      } else {
+        // Ambiguous client — ask which one (locked decision #3)
+        const names = (
+          prepIntent.candidates && prepIntent.candidates.length > 0
+            ? prepIntent.candidates
+            : (userClients ?? [])
+        ).map(c => c.name);
+        answer =
+          names.length > 0
+            ? `Which client would you like me to prep you for?\n\n${names
+                .map(n => `- ${n}`)
+                .join('\n')}`
+            : "I couldn't find that client. Add them as a Client Card first, then ask me to prep you.";
+      }
+
+      await supabase.from('solis_queries').insert({
+        user_id: userId,
+        client_id: prepIntent.matchedClient?.id ?? clientId ?? null,
+        query,
+        response: answer,
+        citations: [],
+      });
+      await incrementQueryCount(userId);
+
+      return NextResponse.json({ answer, citations: [] }, { status: 200 });
     }
 
     // 6. Build RAG context

@@ -20,6 +20,7 @@ import { SessionsList } from '@/components/dashboard/SessionsList';
 import { ActionItemsAccordion } from '@/components/dashboard/ActionItemsAccordion';
 import { SolisFab } from '@/components/dashboard/SolisFab';
 import { UpcomingSessionsCard } from '@/components/dashboard/UpcomingSessionsCard';
+import { CoachBriefBanner } from '@/components/dashboard/CoachBriefBanner';
 import type {
   SessionWithClient,
   ActionItemWithClient,
@@ -180,6 +181,9 @@ export default function DashboardPage() {
             </Button>
           </div>
         </div>
+
+        {/* Coach Brief banner — Story 6.4 */}
+        <CoachBriefBanner />
 
         {/* Upcoming Sessions — Story 6.1 */}
         <UpcomingSessionsCard />

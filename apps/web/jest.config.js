@@ -47,13 +47,16 @@ const customJestConfig = {
     '<rootDir>/src/**/*.{test,spec}.{js,jsx,ts,tsx}',
   ],
   transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { presets: ['next/babel'] }],
+    // Include .mjs so ESM deps (e.g. @clerk/backend crypto.mjs) get transpiled.
+    '^.+\\.(js|jsx|ts|tsx|mjs)$': ['babel-jest', { presets: ['next/babel'] }],
   },
   transformIgnorePatterns: [
-    '/node_modules/(?!(nanoid)/)',
+    // Transform these deps — they ship ESM that Jest cannot run untransformed.
+    // @clerk/* ships .mjs (e.g. @clerk/backend crypto.mjs); jose is its dep.
+    '/node_modules/(?!(nanoid|@clerk|jose)/)',
     '^.+\\.module\\.(css|sass|scss)$',
   ],
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'mjs', 'json', 'node'],
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

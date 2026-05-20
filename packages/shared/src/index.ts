@@ -10,6 +10,7 @@ export * from './types/calendar';
 export * from './types/recall';
 export * from './types/transcript';
 export * from './types/gladia';
+export * from './types/coach-brief';
 
 // Constants
 export * from './constants/services';
@@ -18,3 +19,4 @@ export * from './constants/services';
 export * from './schemas/client';
 export * from './schemas/actionItem';
 export * from './schemas/session';
+export * from './schemas/coach-brief';

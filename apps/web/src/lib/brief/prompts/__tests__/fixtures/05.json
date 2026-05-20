@@ -1,0 +1,34 @@
+{
+  "clientName": "Elena Rossi",
+  "clientGoal": "Stop overcommitting and protect time for the work only she can do",
+  "clientNotes": "Design Director at a consumer app. Reports she 'can't say no' and ends up doing IC work at night.",
+  "recentSessions": [
+    {
+      "date": "2026-05-06",
+      "summary": "Elena counted seven new commitments she'd made in the past week — three were other people's problems she'd absorbed, including a cross-team design review she has no stake in. When asked what saying yes protects her from, she paused and said 'people being disappointed in me.'",
+      "keyTopics": ["boundaries", "people-pleasing", "overcommitment"]
+    },
+    {
+      "date": "2026-04-22",
+      "summary": "Elena described her week as 'reactive from 9 to 6, then my real job from 8 to 11.' We named that her calendar reflects everyone's priorities except her own.",
+      "keyTopics": ["boundaries", "time", "overcommitment"]
+    },
+    {
+      "date": "2026-04-08",
+      "summary": "Elena set her quarter goal: ship the design-system overhaul, which she's deferred twice. She admitted she defers it precisely because it has no external deadline pressuring her.",
+      "keyTopics": ["goal-setting", "boundaries"]
+    }
+  ],
+  "openActionItems": [
+    "Decline the cross-team design review",
+    "Block two mornings a week for design-system work before agreeing to anything else"
+  ],
+  "retrievedSessions": [
+    {
+      "date": "2026-03-04",
+      "summary": "Elena had a breakthrough seeing that 'helpful' had become her whole identity, and that the design-system work scares her because being judged on it would test whether she's actually good, not just available.",
+      "keyTopics": ["identity", "boundaries", "breakthrough"]
+    }
+  ],
+  "isFirstSession": false
+}
