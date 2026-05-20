@@ -482,10 +482,14 @@ export function UpcomingSessionsCard() {
                 key={evt.id}
                 className={`flex items-center justify-between gap-3 px-3 py-2 rounded-[8px] hover:bg-muted/50 transition-colors cursor-pointer ${isPast ? 'opacity-70' : ''}`}
                 onClick={() => {
-                  if (isMatched) {
-                    router.push(`/clients/${evt.client_id}`);
-                  } else {
+                  if (!isMatched) {
                     setMatchEvent(evt);
+                  } else if (isPro) {
+                    // Story 6.4 — Pro users land on the Coach Brief screen,
+                    // which lazily generates the brief if it doesn't exist.
+                    router.push(`/brief/${evt.id}`);
+                  } else {
+                    router.push(`/clients/${evt.client_id}`);
                   }
                 }}
               >
