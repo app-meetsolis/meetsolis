@@ -13,9 +13,7 @@
       "USE_MOCK_SERVICES": "false"
     }
   },
-  "crons": [
-    { "path": "/api/brief/generate-pending", "schedule": "*/5 * * * *" }
-  ],
+  "crons": [],
   "headers": [
     {
       "source": "/(.*)",
