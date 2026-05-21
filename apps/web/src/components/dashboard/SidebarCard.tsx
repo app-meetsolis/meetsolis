@@ -1,15 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import { X, Sparkles, ArrowUpRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
-
-// TODO: wire up to real subscription API
-const MOCK_PLAN: 'free' | 'pro' = 'free';
-const MOCK_CLIENTS_USED = 2;
-const MOCK_CLIENTS_LIMIT = 3;
-const MOCK_TRANSCRIPTS_USED = 2;
-const MOCK_TRANSCRIPTS_LIMIT = 5;
+import type { UsageResponse } from '@meetsolis/shared';
 
 // TODO: wire up to real onboarding progress API
 const MOCK_STEPS_DONE = 3;
@@ -74,6 +69,12 @@ function UsageBar({
   );
 }
 
+async function fetchUsage(): Promise<UsageResponse | null> {
+  const r = await fetch('/api/usage');
+  if (!r.ok) return null;
+  return r.json();
+}
+
 export function SidebarCard() {
   const [dismissed, setDismissed] = useState(true);
 
@@ -81,11 +82,16 @@ export function SidebarCard() {
     setDismissed(localStorage.getItem('ms_onboarding_card_dismissed') === '1');
   }, []);
 
-  const isPro = MOCK_PLAN === 'pro';
+  const { data: usage } = useQuery<UsageResponse | null>({
+    queryKey: ['usage'],
+    queryFn: fetchUsage,
+    staleTime: 60_000,
+  });
+
+  const isPro = usage?.tier === 'pro';
   const onboardingDone = MOCK_STEPS_DONE >= MOCK_STEPS_TOTAL;
 
-  if (isPro && onboardingDone) return null;
-
+  // Onboarding-incomplete card — takes priority for any tier
   if (!onboardingDone && !dismissed) {
     return (
       <div className="mx-2 mb-2 rounded-lg border border-border bg-muted p-3 relative">
@@ -121,58 +127,105 @@ export function SidebarCard() {
     );
   }
 
-  if (!isPro) {
+  // Hide until real usage loads (avoids flash of wrong tier card)
+  if (!usage) return null;
+
+  // Pro plan — visible badge + real monthly usage
+  if (isPro) {
     return (
-      <div className="mx-2 mb-2 rounded-lg border border-border bg-muted p-3">
+      <div className="mx-2 mb-2 rounded-lg border border-primary/25 bg-primary/[0.06] p-3">
         <div className="flex items-center gap-1.5 mb-3">
-          <Sparkles
-            style={{ width: 11, height: 11 }}
-            className="text-primary shrink-0"
-          />
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary-foreground">
+            <Sparkles style={{ width: 9, height: 9 }} />
+            Pro
+          </span>
           <span className="text-[11px] font-semibold text-foreground">
-            Free plan
+            plan
           </span>
         </div>
 
-        <div className="space-y-2.5 mb-3">
+        <div className="space-y-2.5">
           <div className="space-y-1">
             <div className="flex justify-between text-[10px] text-muted-foreground">
-              <span>Clients</span>
+              <span>Transcripts</span>
               <span>
-                {MOCK_CLIENTS_USED} / {MOCK_CLIENTS_LIMIT}
+                {usage.transcript_count} / {usage.transcript_limit}
               </span>
             </div>
             <UsageBar
-              used={MOCK_CLIENTS_USED}
-              limit={MOCK_CLIENTS_LIMIT}
-              color="#E8E4DD"
-            />
-          </div>
-          <div className="space-y-1">
-            <div className="flex justify-between text-[10px] text-muted-foreground">
-              <span>Uploads</span>
-              <span>
-                {MOCK_TRANSCRIPTS_USED} / {MOCK_TRANSCRIPTS_LIMIT}
-              </span>
-            </div>
-            <UsageBar
-              used={MOCK_TRANSCRIPTS_USED}
-              limit={MOCK_TRANSCRIPTS_LIMIT}
+              used={usage.transcript_count}
+              limit={usage.transcript_limit}
               color="#37ea9e"
             />
           </div>
+          <div className="space-y-1">
+            <div className="flex justify-between text-[10px] text-muted-foreground">
+              <span>Queries</span>
+              <span>
+                {usage.query_count.toLocaleString()} /{' '}
+                {usage.query_limit.toLocaleString()}
+              </span>
+            </div>
+            <UsageBar
+              used={usage.query_count}
+              limit={usage.query_limit}
+              color="#E8E4DD"
+            />
+          </div>
         </div>
-
-        <Link
-          href="/pricing"
-          className="flex items-center justify-center gap-1 w-full rounded-md border border-primary/20 bg-primary/10 hover:bg-primary/20 px-3 py-1.5 text-[11px] font-medium text-primary transition-colors"
-        >
-          Upgrade to Pro
-          <ArrowUpRight style={{ width: 10, height: 10 }} />
-        </Link>
       </div>
     );
   }
 
-  return null;
+  // Free plan — real client + transcript counts, upgrade CTA
+  return (
+    <div className="mx-2 mb-2 rounded-lg border border-border bg-muted p-3">
+      <div className="flex items-center gap-1.5 mb-3">
+        <Sparkles
+          style={{ width: 11, height: 11 }}
+          className="text-primary shrink-0"
+        />
+        <span className="text-[11px] font-semibold text-foreground">
+          Free plan
+        </span>
+      </div>
+
+      <div className="space-y-2.5 mb-3">
+        <div className="space-y-1">
+          <div className="flex justify-between text-[10px] text-muted-foreground">
+            <span>Clients</span>
+            <span>
+              {usage.client_count} / {usage.client_limit}
+            </span>
+          </div>
+          <UsageBar
+            used={usage.client_count}
+            limit={usage.client_limit}
+            color="#E8E4DD"
+          />
+        </div>
+        <div className="space-y-1">
+          <div className="flex justify-between text-[10px] text-muted-foreground">
+            <span>Transcripts</span>
+            <span>
+              {usage.transcript_count} / {usage.transcript_limit}
+            </span>
+          </div>
+          <UsageBar
+            used={usage.transcript_count}
+            limit={usage.transcript_limit}
+            color="#37ea9e"
+          />
+        </div>
+      </div>
+
+      <Link
+        href="/pricing"
+        className="flex items-center justify-center gap-1 w-full rounded-md border border-primary/20 bg-primary/10 hover:bg-primary/20 px-3 py-1.5 text-[11px] font-medium text-primary transition-colors"
+      >
+        Upgrade to Pro
+        <ArrowUpRight style={{ width: 10, height: 10 }} />
+      </Link>
+    </div>
+  );
 }
