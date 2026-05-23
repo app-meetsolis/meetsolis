@@ -21,6 +21,7 @@ import { ActionItemsAccordion } from '@/components/dashboard/ActionItemsAccordio
 import { SolisFab } from '@/components/dashboard/SolisFab';
 import { UpcomingSessionsCard } from '@/components/dashboard/UpcomingSessionsCard';
 import { CoachBriefBanner } from '@/components/dashboard/CoachBriefBanner';
+import { LiveTranscriptPanel } from '@/components/dashboard/LiveTranscriptPanel';
 import type {
   SessionWithClient,
   ActionItemWithClient,
@@ -187,6 +188,9 @@ export default function DashboardPage() {
 
         {/* Upcoming Sessions — Story 6.1 */}
         <UpcomingSessionsCard />
+
+        {/* Live transcript panel — Story 6.5 (Pro only, only renders if a bot is in_meeting) */}
+        <LiveTranscriptPanel enabled={usage?.tier === 'pro'} />
 
         {/* 3 stat cards */}
         <StatCards
