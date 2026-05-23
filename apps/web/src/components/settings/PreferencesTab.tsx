@@ -13,14 +13,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Bell, Clock, Calendar, Shield, ExternalLink } from 'lucide-react';
+import {
+  Bell,
+  Clock,
+  Calendar,
+  Shield,
+  ExternalLink,
+  Mic,
+  Sparkles,
+} from 'lucide-react';
+import type { ManualTranscriptionProvider } from '@meetsolis/shared';
 import { CURATED_TIMEZONES, getAllTimezones } from '@/lib/constants/timezones';
 import { SectionCard } from './SectionCard';
 import { CalendarIntegration } from './CalendarIntegration';
+import { CoachBriefWindowSelect } from './CoachBriefWindowSelect';
+import { AutoTranscribeToggle } from './AutoTranscribeToggle';
+import { ManualProviderSelect } from './ManualProviderSelect';
 
 interface Preferences {
   email_notifications_enabled: boolean;
   timezone: string;
+  auto_transcribe_enabled: boolean;
+  coach_brief_window_minutes: number;
+  manual_transcription_provider: ManualTranscriptionProvider;
 }
 
 const DATE_FORMATS = [
@@ -41,6 +56,13 @@ async function fetchPreferences(): Promise<Preferences> {
   const res = await fetch('/api/user/preferences');
   if (!res.ok) throw new Error('Failed to load preferences');
   return res.json() as Promise<Preferences>;
+}
+
+async function fetchIsPro(): Promise<boolean> {
+  const res = await fetch('/api/usage');
+  if (!res.ok) return false;
+  const body = await res.json();
+  return body.tier === 'pro';
 }
 
 async function savePreferences(patch: Partial<Preferences>): Promise<void> {
@@ -75,9 +97,17 @@ export function PreferencesTab() {
     queryKey: ['user-preferences'],
     queryFn: fetchPreferences,
   });
+  const { data: isPro = false } = useQuery({
+    queryKey: ['is-pro'],
+    queryFn: fetchIsPro,
+  });
 
   const [emailNotifs, setEmailNotifs] = useState(true);
   const [timezone, setTimezone] = useState('UTC');
+  const [autoTranscribe, setAutoTranscribe] = useState(true);
+  const [briefWindow, setBriefWindow] = useState(60);
+  const [manualProvider, setManualProvider] =
+    useState<ManualTranscriptionProvider>('deepgram');
   const [showAll, setShowAll] = useState(false);
   const [saving, setSaving] = useState(false);
   const [dateFormat, setDateFormat] = useState('MDY');
@@ -89,6 +119,9 @@ export function PreferencesTab() {
     if (data) {
       setEmailNotifs(data.email_notifications_enabled);
       setTimezone(data.timezone);
+      setAutoTranscribe(data.auto_transcribe_enabled);
+      setBriefWindow(data.coach_brief_window_minutes);
+      setManualProvider(data.manual_transcription_provider);
     }
   }, [data]);
 
@@ -130,6 +163,21 @@ export function PreferencesTab() {
     await save({ timezone: browserTz });
   }
 
+  async function handleAutoTranscribe(checked: boolean) {
+    setAutoTranscribe(checked);
+    await save({ auto_transcribe_enabled: checked });
+  }
+
+  async function handleBriefWindow(minutes: number) {
+    setBriefWindow(minutes);
+    await save({ coach_brief_window_minutes: minutes });
+  }
+
+  async function handleManualProvider(p: ManualTranscriptionProvider) {
+    setManualProvider(p);
+    await save({ manual_transcription_provider: p });
+  }
+
   function handleDateFormat(value: string) {
     setDateFormat(value);
     localStorage.setItem('ms-date-format', value);
@@ -164,6 +212,33 @@ export function PreferencesTab() {
         {/* Integrations (Story 6.1 — Google Calendar) */}
         <CalendarIntegration />
 
+        {/* Coach Brief (Story 6.5) */}
+        <SectionCard icon={Sparkles} title="Coach Brief">
+          <CoachBriefWindowSelect
+            value={briefWindow}
+            onChange={v => void handleBriefWindow(v)}
+            isPro={isPro}
+            disabled={saving}
+          />
+        </SectionCard>
+
+        {/* Auto-transcription (Story 6.5) */}
+        <SectionCard icon={Mic} title="Auto-transcription">
+          <AutoTranscribeToggle
+            checked={autoTranscribe}
+            onCheckedChange={v => void handleAutoTranscribe(v)}
+            isPro={isPro}
+            disabled={saving}
+          />
+          <div className="pt-2 border-t border-border">
+            <ManualProviderSelect
+              value={manualProvider}
+              onChange={v => void handleManualProvider(v)}
+              disabled={saving}
+            />
+          </div>
+        </SectionCard>
+
         {/* Notifications */}
         <SectionCard icon={Bell} title="Notifications">
           <div className="flex items-start justify-between gap-4">
@@ -197,7 +272,10 @@ export function PreferencesTab() {
             <Switch checked disabled className="opacity-50" />
           </div>
         </SectionCard>
+      </div>
 
+      {/* Right column */}
+      <div className="space-y-4">
         {/* Timezone */}
         <SectionCard icon={Clock} title="Timezone">
           {showBrowserHint && (
@@ -249,10 +327,7 @@ export function PreferencesTab() {
             Used for displaying session dates and times throughout the app.
           </p>
         </SectionCard>
-      </div>
 
-      {/* Right column */}
-      <div className="space-y-4">
         {/* Date format */}
         <SectionCard icon={Calendar} title="Date format">
           <Select value={dateFormat} onValueChange={handleDateFormat}>

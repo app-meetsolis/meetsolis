@@ -13,6 +13,42 @@
 
 import type { User, UserRole, UserPreferences } from './auth';
 
+// =============================================================================
+// USER_PREFERENCES TABLE ROW (Stories 6.2, 6.4, 6.5)
+// =============================================================================
+// Distinct from auth.ts `UserPreferences` (which is a JSON blob on users.preferences).
+// This mirrors the actual `user_preferences` DB table.
+
+/** Manual upload transcription engine (Story 6.5). Bot sessions always use Gladia. */
+export type ManualTranscriptionProvider = 'deepgram' | 'gladia';
+
+/** Coach-brief activation window (Story 6.4/6.5). DB allows 15–240; UI restricts to these. */
+export type CoachBriefWindowMinutes = 30 | 60 | 120 | 240;
+
+export interface UserPreferencesRow {
+  id: string;
+  user_id: string;
+  max_clients: number;
+  /** Story 6.2 — Pro bot auto-join master toggle. */
+  auto_transcribe_enabled: boolean;
+  /** Story 6.4 — minutes-before-event to fire coach brief. DB CHECK 15–240. */
+  coach_brief_window_minutes: number;
+  /** Story 6.5 — engine for manual uploads only. */
+  manual_transcription_provider: ManualTranscriptionProvider;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Combined GET /api/user/preferences response — flat shape, mixed from both tables. */
+export interface UserPreferencesResponse {
+  email_notifications_enabled: boolean;
+  timezone: string;
+  auto_action_items_enabled: boolean;
+  auto_transcribe_enabled: boolean;
+  coach_brief_window_minutes: number;
+  manual_transcription_provider: ManualTranscriptionProvider;
+}
+
 export interface UserInsert {
   clerk_id: string;
   email: string;

@@ -19,20 +19,42 @@ const mockGetInternalUserId = getInternalUserId as jest.MockedFunction<
   typeof getInternalUserId
 >;
 
-function makeSupabase(
-  userData: Record<string, unknown> | null,
-  updateError: unknown = null
-) {
-  const updateChain = {
-    eq: jest.fn().mockResolvedValue({ error: updateError }),
-  };
+interface MakeSupabaseOpts {
+  userRow?: Record<string, unknown> | null;
+  prefRow?: Record<string, unknown> | null;
+  usersUpdateError?: unknown;
+  prefsUpsertError?: unknown;
+}
+
+function makeSupabase(opts: MakeSupabaseOpts = {}) {
+  const {
+    userRow = null,
+    prefRow = null,
+    usersUpdateError = null,
+    prefsUpsertError = null,
+  } = opts;
   return {
-    from: jest.fn(() => ({
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: userData }),
-      update: jest.fn(() => updateChain),
-    })),
+    from: jest.fn((table: string) => {
+      if (table === 'users') {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({ data: userRow }),
+          update: jest.fn(() => ({
+            eq: jest.fn().mockResolvedValue({ error: usersUpdateError }),
+          })),
+        };
+      }
+      if (table === 'user_preferences') {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({ data: prefRow }),
+          upsert: jest.fn().mockResolvedValue({ error: prefsUpsertError }),
+        };
+      }
+      throw new Error(`Unexpected table: ${table}`);
+    }),
   };
 }
 
@@ -44,40 +66,63 @@ function makeRequest(body: unknown): NextRequest {
   });
 }
 
+type AuthResult = Awaited<ReturnType<typeof auth>>;
+const authed = (clerkUserId: string | null) =>
+  ({ userId: clerkUserId }) as AuthResult;
+
 describe('GET /api/user/preferences', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('returns 401 when unauthenticated', async () => {
-    mockAuth.mockResolvedValue({ userId: null } as ReturnType<
-      typeof auth
-    > extends Promise<infer T>
-      ? T
-      : never);
+    mockAuth.mockResolvedValue(authed(null));
     const res = await GET();
     expect(res.status).toBe(401);
   });
 
-  it('returns preferences', async () => {
-    mockAuth.mockResolvedValue({ userId: 'clerk_1' } as ReturnType<
-      typeof auth
-    > extends Promise<infer T>
-      ? T
-      : never);
+  it('returns merged users + user_preferences', async () => {
+    mockAuth.mockResolvedValue(authed('clerk_1'));
     mockGetInternalUserId.mockResolvedValue('user_1');
     mockGetSupabase.mockReturnValue(
       makeSupabase({
-        email_notifications_enabled: false,
-        timezone: 'Europe/London',
+        userRow: {
+          email_notifications_enabled: false,
+          timezone: 'Europe/London',
+          auto_action_items_enabled: true,
+        },
+        prefRow: {
+          auto_transcribe_enabled: false,
+          coach_brief_window_minutes: 120,
+          manual_transcription_provider: 'gladia',
+        },
       }) as ReturnType<typeof getSupabaseServerClient>
     );
     const res = await GET();
-    const body = (await res.json()) as {
-      email_notifications_enabled: boolean;
-      timezone: string;
-    };
+    const body = await res.json();
     expect(res.status).toBe(200);
-    expect(body.email_notifications_enabled).toBe(false);
-    expect(body.timezone).toBe('Europe/London');
+    expect(body).toEqual({
+      email_notifications_enabled: false,
+      timezone: 'Europe/London',
+      auto_action_items_enabled: true,
+      auto_transcribe_enabled: false,
+      coach_brief_window_minutes: 120,
+      manual_transcription_provider: 'gladia',
+    });
+  });
+
+  it('returns defaults when user_preferences row missing', async () => {
+    mockAuth.mockResolvedValue(authed('clerk_1'));
+    mockGetInternalUserId.mockResolvedValue('user_1');
+    mockGetSupabase.mockReturnValue(
+      makeSupabase({
+        userRow: {},
+        prefRow: null,
+      }) as ReturnType<typeof getSupabaseServerClient>
+    );
+    const res = await GET();
+    const body = await res.json();
+    expect(body.auto_transcribe_enabled).toBe(true);
+    expect(body.coach_brief_window_minutes).toBe(60);
+    expect(body.manual_transcription_provider).toBe('deepgram');
   });
 });
 
@@ -85,58 +130,110 @@ describe('PATCH /api/user/preferences', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('returns 401 when unauthenticated', async () => {
-    mockAuth.mockResolvedValue({ userId: null } as ReturnType<
-      typeof auth
-    > extends Promise<infer T>
-      ? T
-      : never);
+    mockAuth.mockResolvedValue(authed(null));
     const res = await PATCH(makeRequest({ timezone: 'UTC' }));
     expect(res.status).toBe(401);
   });
 
   it('returns 400 for empty body', async () => {
-    mockAuth.mockResolvedValue({ userId: 'clerk_1' } as ReturnType<
-      typeof auth
-    > extends Promise<infer T>
-      ? T
-      : never);
+    mockAuth.mockResolvedValue(authed('clerk_1'));
     mockGetInternalUserId.mockResolvedValue('user_1');
     mockGetSupabase.mockReturnValue(
-      makeSupabase({}) as ReturnType<typeof getSupabaseServerClient>
+      makeSupabase() as ReturnType<typeof getSupabaseServerClient>
     );
     const res = await PATCH(makeRequest({}));
     expect(res.status).toBe(400);
   });
 
-  it('updates timezone', async () => {
-    mockAuth.mockResolvedValue({ userId: 'clerk_1' } as ReturnType<
-      typeof auth
-    > extends Promise<infer T>
-      ? T
-      : never);
+  it('updates a users-table field (timezone)', async () => {
+    mockAuth.mockResolvedValue(authed('clerk_1'));
     mockGetInternalUserId.mockResolvedValue('user_1');
     mockGetSupabase.mockReturnValue(
-      makeSupabase({}) as ReturnType<typeof getSupabaseServerClient>
+      makeSupabase() as ReturnType<typeof getSupabaseServerClient>
     );
     const res = await PATCH(makeRequest({ timezone: 'Asia/Tokyo' }));
-    const body = (await res.json()) as { ok: boolean };
     expect(res.status).toBe(200);
-    expect(body.ok).toBe(true);
+    expect(await res.json()).toEqual({ ok: true });
   });
 
-  it('updates email_notifications_enabled', async () => {
-    mockAuth.mockResolvedValue({ userId: 'clerk_1' } as ReturnType<
-      typeof auth
-    > extends Promise<infer T>
-      ? T
-      : never);
+  it('updates a user_preferences-table field (auto_transcribe_enabled)', async () => {
+    mockAuth.mockResolvedValue(authed('clerk_1'));
     mockGetInternalUserId.mockResolvedValue('user_1');
     mockGetSupabase.mockReturnValue(
-      makeSupabase({}) as ReturnType<typeof getSupabaseServerClient>
+      makeSupabase() as ReturnType<typeof getSupabaseServerClient>
+    );
+    const res = await PATCH(makeRequest({ auto_transcribe_enabled: false }));
+    expect(res.status).toBe(200);
+  });
+
+  it('rejects coach_brief_window_minutes outside the IN-list (45)', async () => {
+    mockAuth.mockResolvedValue(authed('clerk_1'));
+    mockGetInternalUserId.mockResolvedValue('user_1');
+    mockGetSupabase.mockReturnValue(
+      makeSupabase() as ReturnType<typeof getSupabaseServerClient>
+    );
+    const res = await PATCH(makeRequest({ coach_brief_window_minutes: 45 }));
+    expect(res.status).toBe(400);
+  });
+
+  it('accepts coach_brief_window_minutes 30/60/120/240', async () => {
+    for (const v of [30, 60, 120, 240]) {
+      mockAuth.mockResolvedValue(authed('clerk_1'));
+      mockGetInternalUserId.mockResolvedValue('user_1');
+      mockGetSupabase.mockReturnValue(
+        makeSupabase() as ReturnType<typeof getSupabaseServerClient>
+      );
+      const res = await PATCH(makeRequest({ coach_brief_window_minutes: v }));
+      expect(res.status).toBe(200);
+    }
+  });
+
+  it('rejects manual_transcription_provider outside enum', async () => {
+    mockAuth.mockResolvedValue(authed('clerk_1'));
+    mockGetInternalUserId.mockResolvedValue('user_1');
+    mockGetSupabase.mockReturnValue(
+      makeSupabase() as ReturnType<typeof getSupabaseServerClient>
     );
     const res = await PATCH(
-      makeRequest({ email_notifications_enabled: false })
+      makeRequest({ manual_transcription_provider: 'whisper' })
     );
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 207 when only user_preferences upsert fails', async () => {
+    mockAuth.mockResolvedValue(authed('clerk_1'));
+    mockGetInternalUserId.mockResolvedValue('user_1');
+    mockGetSupabase.mockReturnValue(
+      makeSupabase({
+        prefsUpsertError: { message: 'boom' },
+      }) as ReturnType<typeof getSupabaseServerClient>
+    );
+    const res = await PATCH(
+      makeRequest({
+        timezone: 'UTC',
+        coach_brief_window_minutes: 60,
+      })
+    );
+    expect(res.status).toBe(207);
+    const body = await res.json();
+    expect(body.failed).toEqual(['user_preferences']);
+  });
+
+  it('returns 500 when both updates fail', async () => {
+    mockAuth.mockResolvedValue(authed('clerk_1'));
+    mockGetInternalUserId.mockResolvedValue('user_1');
+    mockGetSupabase.mockReturnValue(
+      makeSupabase({
+        usersUpdateError: { message: 'a' },
+        prefsUpsertError: { message: 'b' },
+      }) as ReturnType<typeof getSupabaseServerClient>
+    );
+    const res = await PATCH(
+      makeRequest({
+        timezone: 'UTC',
+        coach_brief_window_minutes: 60,
+      })
+    );
+    expect(res.status).toBe(500);
   });
 });
