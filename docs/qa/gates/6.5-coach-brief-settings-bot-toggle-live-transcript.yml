@@ -1,0 +1,136 @@
+schema: 1
+story: '6.5'
+story_title: 'Coach Brief Settings, Bot Toggle & Live Transcript View'
+gate: PASS
+status_reason: 'REL-001 fix applied — partial-failure UX now surfaces warning toast naming the failed table. Original CONCERNS resolved. Remaining items are future backlog (not ship-blockers).'
+reviewer: 'Quinn (Test Architect)'
+updated: '2026-05-23T19:30:00Z'
+prior_gate: 'CONCERNS (2026-05-23T19:00:00Z) — superseded after REL-001 fix'
+
+quality_score: 100
+expires: '2026-06-06T19:00:00Z'
+
+evidence:
+  tests_reviewed: 24
+  risks_identified: 5
+  trace:
+    ac_covered:
+      - 'Coach Brief window 30/60/120/240 mapping'
+      - 'Auto-transcribe toggle persistence'
+      - 'Manual provider enum validation'
+      - 'bot_skipped flip via PATCH'
+      - 'Speaker map render-time mapping (5 cases)'
+      - 'ms→clock formatting'
+      - 'Two-table partial-failure 207'
+      - 'Two-table merged GET'
+    ac_gaps:
+      - 'No integration test for /api/sessions/active join+filter'
+      - 'No integration test verifying panel auto-collapse on transcript_streaming_complete'
+      - 'No test for useActiveSessions polling behavior'
+      - 'No UI test for "Skipped" pill render after bot_skipped flip'
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: |
+      All routes Clerk-authed via `auth()`. Zod schemas guard all inputs.
+      Service-role bypass pattern in /api/sessions/active (and /transcript-live)
+      is the codebase convention — manual user_id filter applied. Defense-in-depth
+      opportunity but not a regression.
+  performance:
+    status: PASS
+    notes: |
+      3s + 10s polling matches Recall's 2-5s chunk cadence. Reuses 6.2b's
+      append_transcript_chunk plpgsql function (atomic, dedup-by-key).
+      JSONB append OK at 60-min × 2-5s = ~720-1800 chunks per session.
+  reliability:
+    status: PASS
+    notes: |
+      REL-001 resolved 2026-05-23. PreferencesTab.savePreferences now reads
+      response body and surfaces `body.partial` as a warning toast naming the
+      failed table. 207 is correctly distinguished from full success.
+      Server-side transactional rollback across two tables is still a future
+      improvement but not required for ship.
+  maintainability:
+    status: PASS
+    notes: |
+      Clean row extraction (UpcomingSessionRow) keeps files under 500 lines.
+      Types in packages/shared. Comments only where non-obvious. __test_only
+      re-export pattern is mildly unusual but documented.
+
+top_issues:
+  - id: 'REL-001'
+    severity: resolved
+    summary: '207 partial-failure response not surfaced to user (RESOLVED 2026-05-23)'
+    refs:
+      - 'apps/web/src/components/settings/PreferencesTab.tsx (savePreferences + save)'
+    suggested_owner: dev
+    description: |
+      RESOLVED. savePreferences now returns {partial, failed[]}; save wrapper
+      branches to toast.warning when partial is true, naming the failed table.
+      Type-check + 24 tests pass.
+  - id: 'EDGE-001'
+    severity: low
+    summary: 'wasCompleteRef resets on unmount → back-to-back sessions could re-fire toast'
+    refs:
+      - 'apps/web/src/components/dashboard/LiveTranscriptPanel.tsx:57,75-91'
+    suggested_owner: dev
+    description: |
+      If a session completes, panel collapses + queryClient invalidates + card unmounts
+      on next active-sessions poll. If the same recall_session somehow reappears (Recall
+      retry → status flips back), the wasCompleteRef would be re-initialized and the
+      toast would fire again. Edge case, not breaking.
+  - id: 'UX-001'
+    severity: low
+    summary: '"Open in Google Calendar" links to calendar root, not the event'
+    refs:
+      - 'apps/web/src/components/dashboard/UpcomingSessionRow.tsx:344-355'
+    suggested_owner: dev
+    description: |
+      Requires `calendar_id` to build proper eid base64 deep-link; not stored on
+      calendar_events. Acknowledged by dev in story. Future improvement: store
+      `htmlLink` from Google Calendar API response in sync.
+  - id: 'TEST-001'
+    severity: low
+    summary: 'Live transcript end-to-end behaviors only unit-tested'
+    refs:
+      - 'apps/web/src/components/dashboard/__tests__/LiveTranscriptPanel.test.ts'
+    suggested_owner: dev
+    description: |
+      Auto-collapse on complete=true, auto-scroll w/ sticky detection, and "Skipped"
+      pill render after bot_skipped flip are not covered by automated tests. Manual
+      QA was performed (per user confirmation). Integration tests using
+      React Testing Library would close the gap.
+  - id: 'PERF-001'
+    severity: low
+    summary: '/api/sessions/active polled every 10s for all Pro dashboard mounts'
+    refs:
+      - 'apps/web/src/hooks/useActiveSessions.ts:25-32'
+    suggested_owner: dev
+    description: |
+      Continues polling even when no session has been active for hours. At scale,
+      consider backoff (e.g., 10s → 30s → 60s after N consecutive empty polls) or
+      websocket-based active-session detection when Realtime is wired.
+
+waiver:
+  active: false
+
+recommendations:
+  immediate: []  # REL-001 resolved 2026-05-23
+  future:
+    - action: 'Add integration test for panel auto-collapse on transcript_streaming_complete'
+      refs:
+        - 'apps/web/src/components/dashboard/LiveTranscriptPanel.tsx'
+    - action: 'Add API test for GET /api/sessions/active (join+filter+complete=false gate)'
+      refs:
+        - 'apps/web/src/app/api/sessions/active/route.ts'
+    - action: 'Store Google Calendar htmlLink during sync to enable proper deep-link in row menu'
+      refs:
+        - 'apps/web/src/components/dashboard/UpcomingSessionRow.tsx'
+        - 'apps/web/migrations/024_calendar_integration.sql (add column)'
+    - action: 'Backoff /api/sessions/active polling when no active sessions'
+      refs:
+        - 'apps/web/src/hooks/useActiveSessions.ts'
+    - action: 'Wire Clerk→Supabase JWT to enable Realtime on sessions (migration 029 already published the table)'
+      refs:
+        - 'apps/web/src/lib/supabase/client.ts'
