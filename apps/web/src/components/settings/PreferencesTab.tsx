@@ -65,13 +65,28 @@ async function fetchIsPro(): Promise<boolean> {
   return body.tier === 'pro';
 }
 
-async function savePreferences(patch: Partial<Preferences>): Promise<void> {
+interface SaveResult {
+  partial: boolean;
+  failed: string[];
+}
+
+async function savePreferences(
+  patch: Partial<Preferences>
+): Promise<SaveResult> {
   const res = await fetch('/api/user/preferences', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(patch),
   });
   if (!res.ok) throw new Error('Save failed');
+  const body = (await res.json().catch(() => ({}))) as {
+    partial?: boolean;
+    failed?: string[];
+  };
+  return {
+    partial: Boolean(body.partial),
+    failed: body.failed ?? [],
+  };
 }
 
 function PreferencesLoadingSkeleton() {
@@ -136,9 +151,15 @@ export function PreferencesTab() {
     async (patch: Partial<Preferences>) => {
       setSaving(true);
       try {
-        await savePreferences(patch);
+        const result = await savePreferences(patch);
         await queryClient.invalidateQueries({ queryKey: ['user-preferences'] });
-        toast.success('Preferences saved');
+        if (result.partial) {
+          toast.warning(
+            `Some preferences didn't save (${result.failed.join(', ')}) — try again`
+          );
+        } else {
+          toast.success('Preferences saved');
+        }
       } catch {
         toast.error('Failed to save preferences');
       } finally {
