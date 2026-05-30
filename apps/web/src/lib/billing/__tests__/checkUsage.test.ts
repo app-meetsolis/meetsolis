@@ -60,8 +60,8 @@ function setupSupabase(tableResponses: Record<string, any>) {
 describe('LIMITS', () => {
   it('free tier has correct limits', () => {
     expect(LIMITS.free.clients).toBe(3);
-    expect(LIMITS.free.transcripts).toBe(5);
-    expect(LIMITS.free.queries).toBe(75);
+    expect(LIMITS.free.transcripts).toBe(10);
+    expect(LIMITS.free.queries).toBe(50);
   });
 
   it('pro tier has correct limits', () => {
@@ -182,7 +182,7 @@ const baseUsage = {
 describe('checkTranscriptLimit', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('passes when free user has < 5 transcripts', async () => {
+  it('passes when free user has < 10 sessions', async () => {
     setupSupabase({
       subscriptions: {
         ...makeChain(),
@@ -193,7 +193,7 @@ describe('checkTranscriptLimit', () => {
         upsert: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
         single: jest.fn().mockResolvedValue({
-          data: { ...baseUsage, transcript_count: 4 },
+          data: { ...baseUsage, transcript_count: 9 },
           error: null,
         }),
       },
@@ -202,7 +202,7 @@ describe('checkTranscriptLimit', () => {
     await expect(checkTranscriptLimit('user-1')).resolves.toBeUndefined();
   });
 
-  it('throws when free user has 5 transcripts', async () => {
+  it('throws when free user has 10 sessions', async () => {
     setupSupabase({
       subscriptions: {
         ...makeChain(),
@@ -213,7 +213,7 @@ describe('checkTranscriptLimit', () => {
         upsert: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
         single: jest.fn().mockResolvedValue({
-          data: { ...baseUsage, transcript_count: 5 },
+          data: { ...baseUsage, transcript_count: 10 },
           error: null,
         }),
       },
@@ -308,7 +308,7 @@ describe('checkTranscriptLimit', () => {
 describe('checkQueryLimit', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('throws when free user hits 75 queries', async () => {
+  it('throws when free user hits 50 queries', async () => {
     setupSupabase({
       subscriptions: {
         ...makeChain(),
@@ -319,7 +319,7 @@ describe('checkQueryLimit', () => {
         upsert: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
         single: jest.fn().mockResolvedValue({
-          data: { ...baseUsage, query_count: 75 },
+          data: { ...baseUsage, query_count: 50 },
           error: null,
         }),
       },

@@ -30,12 +30,12 @@ const LIMIT_CONTENT: Record<
   transcript: {
     title: "You've used all your free AI sessions",
     description:
-      'Free plan includes 5 lifetime AI session summaries. Upgrade to Pro for 25 AI sessions per month.',
+      'Free plan includes 10 lifetime AI session summaries. Upgrade to Pro for 25 AI sessions per month.',
   },
   query: {
     title: "You've reached your Solis query limit",
     description:
-      'Free plan includes 75 lifetime Solis queries. Upgrade to Pro for 2,000 queries per month.',
+      'Free plan includes 50 lifetime Solis queries. Upgrade to Pro for 2,000 queries per month.',
   },
 };
 

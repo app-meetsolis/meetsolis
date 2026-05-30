@@ -95,7 +95,7 @@ export function StatCards({
   } else {
     insightName = null;
     insightBody =
-      'Upload your first transcript to unlock AI insights across your coaching portfolio.';
+      'Upload your first session to unlock AI insights across your coaching portfolio.';
     primaryQuery = 'How do I get started with MeetSolis?';
     ghostLabel = 'View clients';
     ghostQuery = '';

@@ -27,7 +27,7 @@ function isAdminBypassActive(userId: string): boolean {
 // ---------------------------------------------------------------------------
 
 export const LIMITS = {
-  free: { clients: 3, transcripts: 5, queries: 75 },
+  free: { clients: 3, transcripts: 10, queries: 50 },
   pro: { clients: Infinity, transcripts: 25, queries: 2000 },
 } as const;
 

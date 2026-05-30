@@ -70,7 +70,7 @@ export function PlanCard({ usage, onRefetch }: Props) {
             <div className="space-y-1">
               <Badge variant="secondary">Free</Badge>
               <p className="text-[13px] text-muted-foreground">
-                3 clients · 5 lifetime transcripts · 75 queries
+                3 clients · 10 lifetime sessions · 50 queries
               </p>
             </div>
             <Button

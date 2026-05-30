@@ -25,8 +25,8 @@ const PLANS: Plan[] = [
     cta: 'Start for Free',
     features: [
       '3 active clients',
-      '5 lifetime transcripts',
-      '75 AI queries lifetime',
+      '10 lifetime sessions',
+      '50 AI queries lifetime',
     ],
   },
   {
@@ -40,7 +40,7 @@ const PLANS: Plan[] = [
     featured: true,
     features: [
       'Unlimited clients',
-      'Unlimited transcripts',
+      'Unlimited sessions',
       'Unlimited AI queries',
       'Solis Intelligence (AI memory)',
       'Pre-session briefs',

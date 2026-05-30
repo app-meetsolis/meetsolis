@@ -379,7 +379,7 @@ export function SolisChat({ clientId, clientName }: SolisChatProps) {
             {usageData && (
               <p className="mt-0.5 text-[11px] text-[#4e5b6d] dark:text-white/35">
                 {usageData.tier === 'free'
-                  ? `${usageData.query_count} / 75 lifetime queries`
+                  ? `${usageData.query_count} / 50 lifetime queries`
                   : `${usageData.query_count} / 2,000 queries this month`}
               </p>
             )}

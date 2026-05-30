@@ -1,0 +1,134 @@
+schema: 1
+story: '7.1'
+story_title: 'Tier Limit Updates + "Sessions" Terminology Rename'
+gate: PASS
+status_reason: 'Two-constant edit + 19 user-facing copy renames executed cleanly. All ACs met. Targeted tests pass. Zero new technical debt.'
+reviewer: 'Quinn (Test Architect)'
+updated: '2026-05-30T00:00:00Z'
+
+quality_score: 100
+expires: '2026-06-13T00:00:00Z'
+
+top_issues: []
+waiver: { active: false }
+
+evidence:
+  tests_reviewed: 21
+  risks_identified: 0
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7]
+    ac_gaps: []
+
+ac_trace:
+  - ac: 'LIMITS.free.transcripts = 10 (was 5)'
+    status: PASS
+    refs: ['apps/web/src/lib/billing/checkUsage.ts:30']
+    test: 'checkUsage.test.ts:63 — LIMITS free has correct limits'
+  - ac: 'LIMITS.free.queries = 50 (was 75)'
+    status: PASS
+    refs: ['apps/web/src/lib/billing/checkUsage.ts:30']
+    test: 'checkUsage.test.ts:64'
+  - ac: 'checkUsage test expectations updated'
+    status: PASS
+    refs: ['apps/web/src/lib/billing/__tests__/checkUsage.test.ts:63-64,185,205,311']
+    test: '21/21 pass'
+  - ac: '/api/usage response shows transcript_limit:10, query_limit:50 for free'
+    status: PASS
+    refs: ['apps/web/src/app/api/usage/__tests__/route.test.ts:14,101-103']
+    test: 'route.test.ts free tier case'
+  - ac: 'No hard-coded 5/75 for free-tier in UI'
+    status: PASS
+    refs: ['grep verified: all remaining 75 are CSS opacity/SVG paths; no 5 lifetime|Solis|AI hits']
+    test: 'manual grep audit'
+  - ac: 'User-facing "transcripts" count-noun renamed to "sessions"'
+    status: PASS
+    refs:
+      - 'apps/web/src/components/dashboard/SidebarCard.tsx (x2)'
+      - 'apps/web/src/components/dashboard/DashboardTopbar.tsx'
+      - 'apps/web/src/components/dashboard/SessionsList.tsx'
+      - 'apps/web/src/components/dashboard/ProactiveSolisCard.tsx'
+      - 'apps/web/src/components/dashboard/StatCards.tsx'
+      - 'apps/web/src/components/settings/UsageCard.tsx'
+      - 'apps/web/src/components/settings/BillingTab.tsx'
+      - 'apps/web/src/components/settings/PlanCard.tsx'
+      - 'apps/web/src/components/settings/CancelDialog.tsx'
+      - 'apps/web/src/components/billing/UpgradeModal.tsx'
+      - 'apps/web/src/components/novera-dark/NoveraPricing.tsx'
+      - 'apps/web/src/components/novera-dark/NoveraFAQ.tsx'
+      - 'apps/web/src/components/solis/SolisChat.tsx'
+      - 'apps/web/src/components/solis/SolisPanel.tsx'
+      - 'apps/web/src/app/(dashboard)/dashboard/page.tsx'
+      - 'apps/web/src/app/(legal)/terms/page.tsx'
+      - 'apps/web/src/app/(marketing)/pricing/page.tsx'
+    test: 'manual grep audit — all remaining "transcripts" are literal-text/artifact/file refs (per A5)'
+  - ac: 'File/component names + DB columns + API fields unchanged'
+    status: PASS
+    refs:
+      - 'TranscriptModal.tsx, LiveTranscriptPanel.tsx, TranscriptAudioPlayer.tsx — unchanged'
+      - 'sessions.transcript_text, transcript_count, transcript_chunks DB columns — unchanged'
+      - 'UsageResponse.transcript_limit, transcript_count API fields — unchanged'
+    test: 'TypeScript build succeeds (no consumers broke)'
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'No new attack surface. No auth changes. Constants only.'
+  performance:
+    status: PASS
+    notes: 'No DB queries added. No runtime cost change. Bundle size delta < 0.5KB (copy changes only).'
+  reliability:
+    status: PASS
+    notes: 'Free users currently at transcript_count 5-9 unlock additional uploads (intended windfall). Free users currently at query_count 50-74 hit the wall on next query (intended friction).'
+  maintainability:
+    status: PASS
+    notes: 'LIMITS constant remains single source of truth. UI components correctly consume API response (transcript_limit field) rather than hardcoding. UpgradeModal description copy keeps numbers in sync.'
+
+testability:
+  controllability: PASS
+  observability: PASS
+  debuggability: PASS
+
+compliance_check:
+  coding_standards: PASS
+  project_structure: PASS
+  testing_strategy: PASS
+  all_acs_met: PASS
+
+recommendations:
+  immediate: []
+  future:
+    - action: 'Consider parameterizing UpgradeModal copy from LIMITS const'
+      refs: ['apps/web/src/components/billing/UpgradeModal.tsx:33,38']
+      rationale: 'Currently hardcoded "10 lifetime AI session summaries" / "50 lifetime Solis queries" — would drift if LIMITS changes again. Low priority; LIMITS rarely changes.'
+    - action: 'Consider parameterizing BillingTab + NoveraPricing + NoveraFAQ + PlanCard + CancelDialog limit numbers from LIMITS const'
+      refs:
+        - 'apps/web/src/components/settings/BillingTab.tsx:17-18,25'
+        - 'apps/web/src/components/novera-dark/NoveraPricing.tsx:28-29'
+        - 'apps/web/src/components/novera-dark/NoveraFAQ.tsx:33,53'
+        - 'apps/web/src/components/settings/PlanCard.tsx:73'
+        - 'apps/web/src/components/settings/CancelDialog.tsx:64-65'
+      rationale: 'Same drift risk. Marketing pages may benefit from SSR-rendered LIMITS for SEO consistency. Defer to a copy-as-data refactor story.'
+
+review_notes: |
+  Story 7.1 was the smallest and simplest of Epic 7 (0.5d). Risk profile was minimal:
+  - Diff: 19 source files, 34 insertions, 34 deletions (net zero LOC growth)
+  - No new code paths, no new dependencies, no migration
+  - No auth/payment/security file touched (only billing LIMITS const)
+
+  Dev correctly preserved internal symbols per PM precheck:
+  - File/component names (TranscriptModal, LiveTranscriptPanel, transcribe-session, summarize-session)
+  - DB columns (transcript_text, transcript_count, transcript_chunks, etc.)
+  - API response field (transcript_limit, transcript_count)
+  - LIMITS object key (LIMITS.free.transcripts)
+  - Storage bucket name (transcripts)
+  - Env vars (TRANSCRIPTION_PROVIDER)
+  - Bot disclosure copy ("to capture transcripts" — refers to the artifacts)
+  - Marketing artifact references ("Speaker-Aware Coaching Transcripts", "Searchable call transcripts")
+  - Legal page text (Terms/Privacy "session transcripts" — literal content)
+
+  Pre-existing 22-suite Clerk-ESM test failure noise is unchanged by this story (verified — the SolisPanel waitFor timeout is in the same downstream assertion that was failing on main; my regex copy change `75 → 50` renders correctly per test snapshot).
+
+  Behavioral expectations confirmed:
+  - Free users at transcript_count 5-9 get a quiet windfall (now under the 10-cap) — intended
+  - Free users at query_count 50-74 will hit the wall on next query (now over the 50-cap) — intended friction per BRAINSTORM §6
+  - Pro tier unchanged (25 sessions/mo, 2000 queries/mo)

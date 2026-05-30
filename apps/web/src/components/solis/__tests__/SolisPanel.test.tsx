@@ -51,9 +51,9 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 const mockUsageFree = {
   tier: 'free',
   query_count: 5,
-  query_limit: 75,
+  query_limit: 50,
   transcript_count: 0,
-  transcript_limit: 5,
+  transcript_limit: 10,
   client_count: 1,
   client_limit: 3,
   resets_at: null,
@@ -473,7 +473,7 @@ describe('SolisPanel', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/5 of 75 lifetime queries used/i)
+        screen.getByText(/5 of 50 lifetime queries used/i)
       ).toBeInTheDocument();
     });
   });

@@ -11,9 +11,9 @@ interface Props {
 
 export function DashboardTopbar({ usage }: Props) {
   const tCount = usage?.transcript_count ?? 0;
-  const tMax = usage?.transcript_limit ?? 5;
+  const tMax = usage?.transcript_limit ?? 10;
   const qCount = usage?.query_count ?? 0;
-  const qMax = usage?.query_limit ?? 75;
+  const qMax = usage?.query_limit ?? 50;
   const tPct = Math.min((tCount / tMax) * 100, 100);
   const qPct = Math.min((qCount / qMax) * 100, 100);
 
@@ -42,7 +42,7 @@ export function DashboardTopbar({ usage }: Props) {
             />
           </div>
           <span>
-            {tCount} / {tMax} transcripts
+            {tCount} / {tMax} sessions
           </span>
         </div>
 

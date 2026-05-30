@@ -31,7 +31,7 @@ export function SessionsList({ sessions }: Props) {
     return (
       <div className="flex-1 flex items-center justify-center py-16">
         <p className="text-[13px] text-muted-foreground">
-          No sessions yet — upload your first transcript
+          No sessions yet — upload your first session
         </p>
       </div>
     );

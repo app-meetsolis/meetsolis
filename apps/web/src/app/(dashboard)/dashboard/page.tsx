@@ -159,7 +159,7 @@ export default function DashboardPage() {
             <p className="text-[13px] text-muted-foreground mt-0.5">
               {sessions.length > 0
                 ? `${sessions.length} session${sessions.length !== 1 ? 's' : ''} · ${actions.length} open action${actions.length !== 1 ? 's' : ''}`
-                : 'No sessions yet — upload your first transcript'}
+                : 'No sessions yet — upload your first session'}
             </p>
           </div>
           <div className="flex gap-2 shrink-0">

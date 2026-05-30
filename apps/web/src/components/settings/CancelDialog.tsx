@@ -61,8 +61,8 @@ export function CancelDialog({ open, periodEnd, onClose, onCancelled }: Props) {
         </DialogHeader>
         <ul className="text-[13px] text-muted-foreground space-y-1 list-disc pl-4">
           <li>Unlimited clients → 3 client limit</li>
-          <li>25 transcripts/month → 5 lifetime transcripts</li>
-          <li>2000 Solis queries → 75 lifetime queries</li>
+          <li>25 sessions/month → 10 lifetime sessions</li>
+          <li>2000 Solis queries → 50 lifetime queries</li>
         </ul>
         <DialogFooter className="gap-2">
           <Button variant="default" onClick={onClose} disabled={loading}>

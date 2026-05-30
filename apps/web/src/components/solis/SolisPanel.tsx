@@ -207,7 +207,7 @@ export function SolisPanel({ clientId, clientName }: SolisPanelProps) {
       {usageData && (
         <p className="text-[11px] text-muted-foreground">
           {usageData.tier === 'free'
-            ? `${usageData.query_count} of 75 lifetime queries used`
+            ? `${usageData.query_count} of 50 lifetime queries used`
             : `${usageData.query_count} of 2,000 monthly queries used`}
         </p>
       )}

@@ -40,7 +40,7 @@ export function ProactiveSolisCard({
     ctaQuery = `Prepare me for my next coaching session with ${lastClient}. What should I focus on based on their history?`;
   } else {
     insight =
-      'Upload your first transcript to unlock AI insights across your coaching portfolio.';
+      'Upload your first session to unlock AI insights across your coaching portfolio.';
     ctaText = 'Explore Solis';
     ctaQuery = 'How do I get started with MeetSolis coaching intelligence?';
   }

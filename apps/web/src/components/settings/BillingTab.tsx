@@ -14,15 +14,15 @@ async function fetchUsage(): Promise<UsageResponse> {
 
 const FREE_FEATURES = [
   '3 active clients',
-  '5 lifetime transcript uploads',
-  '75 lifetime Solis AI queries',
+  '10 lifetime session uploads',
+  '50 lifetime Solis AI queries',
   'Full session timeline per client',
   'Action item tracking',
 ];
 
 const PRO_FEATURES = [
   'Unlimited active clients',
-  '25 transcript uploads / month',
+  '25 session uploads / month',
   '2,000 Solis AI queries / month',
   'Full session timeline per client',
   'Action item tracking',
