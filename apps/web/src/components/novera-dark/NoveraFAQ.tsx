@@ -30,7 +30,7 @@ const faqItems: FAQItem[] = [
   {
     question: 'What does the free plan include?',
     answer:
-      'The free plan gives you 3 active clients, 5 lifetime sessions, and 75 AI queries — enough to experience the full value of MeetSolis before committing. No credit card required.',
+      'The free plan gives you 3 active clients, 10 lifetime sessions, and 50 AI queries — enough to experience the full value of MeetSolis before committing. No credit card required.',
   },
   {
     question: 'What is Solis Intelligence?',
@@ -50,7 +50,7 @@ const faqItems: FAQItem[] = [
   {
     question: 'Can I downgrade from Pro to Free?',
     answer:
-      "Yes. Cancel your subscription anytime and your account will revert to the free tier at the end of your billing cycle. Your existing clients and session history are preserved — you'll just be limited to the free plan limits (3 clients, 5 sessions, 75 queries) going forward.",
+      "Yes. Cancel your subscription anytime and your account will revert to the free tier at the end of your billing cycle. Your existing clients and session history are preserved — you'll just be limited to the free plan limits (3 clients, 10 sessions, 50 queries) going forward.",
   },
 ];
 

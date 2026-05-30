@@ -5,7 +5,7 @@ import NoveraFAQ from '@/components/novera-dark/NoveraFAQ';
 export const metadata: Metadata = {
   title: 'Pricing — MeetSolis',
   description:
-    'Start free with 3 clients and 5 sessions. Upgrade to Pro at $99/mo for unlimited coaching memory. No credit card required.',
+    'Start free with 3 clients and 10 sessions. Upgrade to Pro at $99/mo for unlimited coaching memory. No credit card required.',
 };
 
 const pricingJsonLd = {

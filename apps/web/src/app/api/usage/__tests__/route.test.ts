@@ -11,7 +11,7 @@ jest.mock('@/lib/supabase/server', () => ({
 jest.mock('@/lib/helpers/user', () => ({ getInternalUserId: jest.fn() }));
 jest.mock('@/lib/billing/checkUsage', () => ({
   LIMITS: {
-    free: { clients: 3, transcripts: 5, queries: 75 },
+    free: { clients: 3, transcripts: 10, queries: 50 },
     pro: { clients: Infinity, transcripts: 25, queries: 2000 },
   },
 }));
@@ -98,9 +98,9 @@ describe('GET /api/usage', () => {
     const body = await res.json();
     expect(body.tier).toBe('free');
     expect(body.transcript_count).toBe(2);
-    expect(body.transcript_limit).toBe(5);
+    expect(body.transcript_limit).toBe(10);
     expect(body.query_count).toBe(10);
-    expect(body.query_limit).toBe(75);
+    expect(body.query_limit).toBe(50);
     expect(body.client_count).toBe(1);
     expect(body.client_limit).toBe(3);
     expect(body.resets_at).toBeNull();

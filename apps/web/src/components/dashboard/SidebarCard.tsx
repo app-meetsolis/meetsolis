@@ -147,7 +147,7 @@ export function SidebarCard() {
         <div className="space-y-2.5">
           <div className="space-y-1">
             <div className="flex justify-between text-[10px] text-muted-foreground">
-              <span>Transcripts</span>
+              <span>Sessions</span>
               <span>
                 {usage.transcript_count} / {usage.transcript_limit}
               </span>
@@ -206,7 +206,7 @@ export function SidebarCard() {
         </div>
         <div className="space-y-1">
           <div className="flex justify-between text-[10px] text-muted-foreground">
-            <span>Transcripts</span>
+            <span>Sessions</span>
             <span>
               {usage.transcript_count} / {usage.transcript_limit}
             </span>

@@ -56,7 +56,7 @@ export function UsageCard({ usage }: Props) {
         limit={usage.client_limit}
       />
       <UsageBar
-        label="Transcripts"
+        label="Sessions"
         count={usage.transcript_count}
         limit={usage.transcript_limit}
       />

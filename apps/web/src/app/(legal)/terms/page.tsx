@@ -379,9 +379,9 @@ export default function TermsPage() {
                     </p>
                     <p>
                       <strong style={{ color: '#d9f0e5' }}>Plans:</strong> Free
-                      (3 clients, 5 lifetime transcripts, 75 queries) · Pro
+                      (3 clients, 10 lifetime sessions, 50 queries) · Pro
                       ($99/month or $948/year — unlimited clients, 25
-                      transcripts/month, 2,000 queries/month).
+                      sessions/month, 2,000 queries/month).
                     </p>
                     <p>
                       <strong style={{ color: '#d9f0e5' }}>Refunds:</strong> We
