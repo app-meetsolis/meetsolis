@@ -51,10 +51,26 @@ const mockGenerate = generateIntelligenceStrip as jest.MockedFunction<
 const VALID_ID = '123e4567-e89b-12d3-a456-426614174000';
 
 describe('POST /api/clients/[id]/intelligence-strip', () => {
+  function mockSupabaseWithExistingStrip(strip: any) {
+    return {
+      from: jest.fn(() => ({
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        maybeSingle: jest.fn().mockResolvedValue({
+          data: { ai_intelligence_strip: strip },
+          error: null,
+        }),
+      })),
+    };
+  }
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockAuth.mockResolvedValue({ userId: 'clerk-user' } as any);
-    mockCreateClient.mockReturnValue({} as any);
+    // Default: an existing strip exists, so Pro check applies.
+    mockCreateClient.mockReturnValue(
+      mockSupabaseWithExistingStrip({ recurring_theme: 'old' }) as any
+    );
   });
 
   it('returns 400 for invalid UUID', async () => {
@@ -123,6 +139,31 @@ describe('POST /api/clients/[id]/intelligence-strip', () => {
     );
     const res = await POST(req, { params: { id: VALID_ID } });
     expect(res.status).toBe(422);
+  });
+
+  it('allows first-gen for Free coach when strip is currently null', async () => {
+    mockCreateClient.mockReturnValue(
+      mockSupabaseWithExistingStrip(null) as any
+    );
+    mockGetTier.mockResolvedValue('free' as any);
+    mockGenerate.mockResolvedValue({
+      success: true,
+      strip: {
+        recurring_theme: 't',
+        theme_frequency: 'f',
+        recent_breakthrough: 'b',
+        current_focus: 'c',
+        generated_at: new Date().toISOString(),
+      },
+    });
+    const req = new NextRequest(
+      `http://localhost:3000/api/clients/${VALID_ID}/intelligence-strip`,
+      { method: 'POST' }
+    );
+    const res = await POST(req, { params: { id: VALID_ID } });
+    expect(res.status).toBe(200);
+    expect(mockGetTier).not.toHaveBeenCalled();
+    expect(mockGenerate).toHaveBeenCalled();
   });
 });
 

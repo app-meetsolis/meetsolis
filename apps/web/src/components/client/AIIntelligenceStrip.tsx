@@ -73,7 +73,7 @@ export function AIIntelligenceStrip({
   const isPro = usage?.tier === 'pro';
 
   const refreshMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (opts?: { silent?: boolean }) => {
       const r = await fetch(`/api/clients/${clientId}/intelligence-strip`, {
         method: 'POST',
       });
@@ -81,14 +81,33 @@ export function AIIntelligenceStrip({
         const body = await r.json().catch(() => ({}));
         throw new Error(body?.error?.message ?? 'Refresh failed');
       }
-      return (await r.json()).strip as Strip;
+      const strip = (await r.json()).strip as Strip;
+      return { strip, silent: opts?.silent ?? false };
     },
-    onSuccess: () => {
-      toast.success('Insights refreshed');
+    onSuccess: data => {
+      if (!data.silent) toast.success('Insights refreshed');
       queryClient.invalidateQueries({ queryKey: ['client', clientId] });
     },
-    onError: (err: Error) => toast.error(err.message),
+    onError: (err: Error, vars) => {
+      if (!vars?.silent) toast.error(err.message);
+    },
   });
+
+  // Auto-trigger first generation: client has sessions but never had a strip
+  // generated (existing pre-7.2 clients OR session uploaded while page open).
+  // Fires once per mount; server allows first-gen for both tiers.
+  const autoFired = useRef(false);
+  useEffect(() => {
+    if (
+      !strip &&
+      hasSessions &&
+      !autoFired.current &&
+      !refreshMutation.isPending
+    ) {
+      autoFired.current = true;
+      refreshMutation.mutate({ silent: true });
+    }
+  }, [strip, hasSessions, refreshMutation]);
 
   const updateStripMutation = useMutation({
     mutationFn: async (patch: Partial<Strip>) => {
@@ -149,6 +168,27 @@ export function AIIntelligenceStrip({
     );
   }
 
+  if (!strip && refreshMutation.isError) {
+    return (
+      <div className="rounded-[12px] bg-card shadow-card px-6 py-5 space-y-3">
+        <div className="flex items-center gap-2 text-foreground/55 text-[13px]">
+          <Sparkles className="h-4 w-4 text-primary/70" />
+          <span>
+            Couldn&apos;t generate insights —{' '}
+            {refreshMutation.error?.message ?? 'unknown error'}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => refreshMutation.mutate(undefined)}
+          className="inline-flex items-center gap-1.5 text-[12px] text-primary hover:underline"
+        >
+          <RefreshCw className="h-3.5 w-3.5" /> Try again
+        </button>
+      </div>
+    );
+  }
+
   if (!strip || refreshMutation.isPending) {
     return (
       <div className="rounded-[12px] bg-card shadow-card px-6 py-5 space-y-3">
@@ -177,7 +217,7 @@ export function AIIntelligenceStrip({
         <RefreshButton
           isPro={!!isPro}
           isPending={refreshMutation.isPending}
-          onClick={() => refreshMutation.mutate()}
+          onClick={() => refreshMutation.mutate(undefined)}
         />
       </header>
 

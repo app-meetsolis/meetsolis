@@ -59,19 +59,31 @@ export async function POST(
     const userId = await getInternalUserId(supabase, clerkUserId);
     if (!userId) return err('USER_NOT_FOUND', 'User not found', 404);
 
-    // Pro-only — Free client hides button, this is defense-in-depth.
-    const tier = await getUserTier(userId, supabase);
-    if (tier !== 'pro') {
-      return NextResponse.json(
-        {
-          error: {
-            code: 'UPGRADE_REQUIRED',
-            message:
-              'Manual refresh is a Pro feature. Auto-refresh still runs after every session.',
+    // First-generation (strip currently null) is allowed for both tiers —
+    // matches the auto-regen-runs-for-both-tiers locked decision (BRAINSTORM §2,
+    // story 7.2 A9). Subsequent manual refresh is Pro-only.
+    const { data: existingRow } = await supabase
+      .from('clients')
+      .select('ai_intelligence_strip')
+      .eq('id', clientId)
+      .eq('user_id', userId)
+      .maybeSingle();
+    const isFirstGen = !existingRow?.ai_intelligence_strip;
+
+    if (!isFirstGen) {
+      const tier = await getUserTier(userId, supabase);
+      if (tier !== 'pro') {
+        return NextResponse.json(
+          {
+            error: {
+              code: 'UPGRADE_REQUIRED',
+              message:
+                'Manual refresh is a Pro feature. Auto-refresh still runs after every session.',
+            },
           },
-        },
-        { status: 403 }
-      );
+          { status: 403 }
+        );
+      }
     }
 
     const result = await generateIntelligenceStrip(clientId, userId);
