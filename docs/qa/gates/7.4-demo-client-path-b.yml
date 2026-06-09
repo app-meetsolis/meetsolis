@@ -1,0 +1,189 @@
+schema: 1
+story: '7.4'
+story_title: 'Demo Client "Alex Rivera" + Onboarding Path B'
+gate: PASS
+status_reason: 'Migration applied. Seed + API + Step components shipped with idempotency, embedding fallback, and 23/23 tests passing. Pattern divergence (useEffect fetch) and race-window on double-seed noted as low-severity concerns; neither blocks ship.'
+reviewer: 'Quinn (Test Architect)'
+updated: '2026-05-30T00:00:00Z'
+
+quality_score: 90
+expires: '2026-06-13T00:00:00Z'
+
+top_issues:
+  - id: MAINT-001
+    severity: low
+    title: 'Step2BDemoTour uses fetch-in-useEffect instead of react-query useMutation'
+    refs: ['apps/web/src/components/onboarding/steps/Step2BDemoTour.tsx:58-78']
+    rationale: |
+      Project CLAUDE.md says "Data fetching: @tanstack/react-query — never fetch in useEffect."
+      Step 2B issues a POST in useEffect to trigger the seed. Server-side idempotency makes the
+      practical risk minor (dupes return alreadySeeded; cost is bounded), and the cancel flag
+      handles unmount races. Still a convention violation worth fixing before 7.3 mounts the
+      component into the live onboarding shell.
+    suggested_owner: dev
+    fix: 'Convert to useMutation; trigger via mutate() in a one-shot useEffect that only fires when mutation is idle.'
+  - id: MAINT-002
+    severity: low
+    title: 'Idempotency lookup is not atomic — double-click could create two demo clients'
+    refs:
+      - 'apps/web/migrations/030_story_7_4_demo_client.sql:15-17 (partial index is NOT unique)'
+      - 'apps/web/src/lib/onboarding/seed-demo-client.ts:47-66 (read-then-write window)'
+    rationale: |
+      Two concurrent POSTs from the same user could both pass the maybeSingle() check before
+      either inserts. Outcome: two demo clients (deletable, no data corruption). UX impact
+      small but real if a coach refreshes Step 2B mid-seed. Add a UNIQUE partial constraint:
+      CREATE UNIQUE INDEX uniq_clients_one_demo_per_user ON clients(user_id) WHERE is_demo = TRUE
+      Then catch the conflict in the seed function and treat as alreadySeeded.
+    suggested_owner: dev
+  - id: SEC-001
+    severity: low
+    title: 'API error response echoes raw error.message to caller'
+    refs: ['apps/web/src/app/api/onboarding/seed-demo/route.ts:41-45']
+    rationale: |
+      INTERNAL_ERROR returns e.message verbatim. Supabase errors can expose column / constraint
+      names to an authed caller. Low severity (caller is already inside Clerk auth), but
+      generic client message + full server log is the standard pattern.
+    suggested_owner: dev
+    fix: 'console.error(e); return err("INTERNAL_ERROR", "Failed to set up your demo. Please try again.", 500);'
+
+waiver: { active: false }
+
+evidence:
+  tests_reviewed: 23
+  risks_identified: 3
+  trace:
+    ac_covered: [
+      'migration-030',
+      'demo-client-data-static',
+      'seed-function-idempotency',
+      'seed-function-embeddings',
+      'seed-function-brief-failure-non-fatal',
+      'api-route-auth',
+      'api-route-idempotent',
+      'demo-badge-render',
+      'step2b-standalone',
+      'step4b-standalone',
+      'demobriefpreview-standalone'
+    ]
+    ac_gaps: [
+      'step2b-component-mount-test',
+      'step4b-component-mount-test',
+      'demobriefpreview-snapshot-test'
+    ]
+
+ac_trace:
+  - ac: 'Migration 030 adds is_demo + ai_intelligence_strip; reuses existing coach_notes'
+    status: PASS
+    refs:
+      - 'apps/web/migrations/030_story_7_4_demo_client.sql'
+      - 'Verified user-applied to Supabase before QA'
+    notes: 'Original spec asked for new coach_note column; dev correctly chose to reuse existing clients.coach_notes (Story 6.4) — decision documented in spec amendment + dev completion notes. 7.2 + 7.7 specs propagated 2026-05-30.'
+  - ac: 'demo-client-data.ts exports DEMO_CLIENT/SESSIONS/ITEMS/BRIEF/STRIP, no real-company refs, no dated cultural refs'
+    status: PASS
+    refs:
+      - 'apps/web/src/lib/onboarding/demo-client-data.ts'
+      - 'apps/web/src/lib/onboarding/__tests__/demo-client-data.test.ts'
+    notes: 'Blocklist test catches COVID/pandemic/OpenAI/Elon/ChatGPT/TikTok. Persona (VP Eng at fictional Northridge Logistics) is generic. Theme arc shows progression (problem → exploration → breakthrough → next edge). AI Strip phrasings are specific not generic ("Executive presence — present in 3 of 4 sessions"). Content quality is founder-review territory; structural sanity is covered.'
+  - ac: 'Seed function: idempotent, embeds, inserts client+sessions+items+brief, returns counts'
+    status: PASS
+    refs:
+      - 'apps/web/src/lib/onboarding/seed-demo-client.ts'
+      - 'apps/web/src/lib/onboarding/__tests__/seed-demo-client.test.ts'
+    notes: '5 test cases including alreadySeeded, embedding fallback, brief-failure-non-fatal, fatal client-insert error.'
+  - ac: 'POST /api/onboarding/seed-demo: Clerk auth, idempotent, error envelope'
+    status: PASS
+    refs:
+      - 'apps/web/src/app/api/onboarding/seed-demo/route.ts'
+      - 'apps/web/src/app/api/onboarding/seed-demo/__tests__/route.test.ts'
+    notes: '5 test cases including 401, 404, success, alreadySeeded, 500.'
+  - ac: 'Demo badge on Client Card detail when client.is_demo'
+    status: PASS
+    refs: ['apps/web/src/app/(dashboard)/clients/[id]/page.tsx:191-202']
+    notes: 'Subtle outline chip + title-attr tooltip. File now 421 lines (under 500). No additional render cost when is_demo is false.'
+  - ac: 'Step2BDemoTour — calls seed on mount, renders profile + strip + brief preview + Solis prefill'
+    status: CONCERNS
+    refs: ['apps/web/src/components/onboarding/steps/Step2BDemoTour.tsx']
+    notes: 'Pattern divergence (MAINT-001 — useEffect fetch). Functionally correct; component is currently unmounted (waiting on Story 7.3 shell) so no live impact.'
+  - ac: 'Step4BCreateClient — 3-field form (name, goal, company), redirects to new client page'
+    status: PASS
+    refs: ['apps/web/src/components/onboarding/steps/Step4BCreateClient.tsx']
+    notes: 'react-hook-form + zodResolver, UpgradeModal for limit hits, sonner toast.'
+  - ac: 'DemoBriefPreview — read-only mirror of BriefScreen for Free coach onboarding'
+    status: PASS
+    refs: ['apps/web/src/components/onboarding/steps/DemoBriefPreview.tsx']
+    notes: 'Smart workaround for tier-gated /api/brief. Same content seeded into coach_briefs so Pro coach later sees identical at /brief/manual/{clientId}.'
+  - ac: 'Counts toward tier limits — no special-case in checkClientLimit'
+    status: PASS
+    refs: ['apps/web/src/lib/billing/checkUsage.ts (unchanged) + grep of is_demo']
+    notes: 'No filter on is_demo in client count queries. Demo client is counted normally — intended per BRAINSTORM §5.'
+  - ac: 'Quality: tsc clean, no any, files ≤500 lines'
+    status: PASS
+    refs:
+      - 'tsc exit 0 confirmed during review'
+      - 'wc -l: demo-client-data.ts=331, Step2B=260, DemoBriefPreview=98, Step4B=178, seed=210'
+    notes: 'All files comfortably under 500.'
+
+nfr_validation:
+  security:
+    status: CONCERNS
+    notes: 'SEC-001 (low): API echoes raw error.message. Clerk auth + internal user resolution otherwise sound. No new attack surface beyond authed seed-once endpoint.'
+  performance:
+    status: PASS
+    notes: 'Per-signup cost ~$0.001 (4 OpenAI embeddings). Brief gen $0 (hand-written). Bundle delta from demo-client-data static content is server-side only. Minor PERF nit: buildDemoAIStrip()/buildDemoBriefContent() recompute per render in Step 2B (defer with useMemo if mount churn matters).'
+  reliability:
+    status: CONCERNS
+    notes: 'MAINT-002 (low): non-atomic idempotency. Brief-failure non-fatal path is correct. Session/item insert failures throw fatally — leaves orphan client+earlier-sessions. Acceptable for demo (deletable, low blast radius).'
+  maintainability:
+    status: CONCERNS
+    notes: 'MAINT-001 (low): useEffect fetch in Step 2B violates project pattern. Convert to useMutation before 7.3 mounts the component.'
+
+testability:
+  controllability: PASS
+  observability: PASS
+  debuggability: PASS
+
+compliance_check:
+  coding_standards: PASS
+  project_structure: PASS
+  testing_strategy: CONCERNS
+  all_acs_met: PASS
+
+recommendations:
+  immediate: []
+  future:
+    - action: 'Convert Step2BDemoTour seed call from fetch+useEffect to useMutation'
+      refs: ['apps/web/src/components/onboarding/steps/Step2BDemoTour.tsx:58-78']
+      rationale: 'Project CLAUDE.md convention. Best done before Story 7.3 mounts the component.'
+    - action: 'Add UNIQUE partial index for one-demo-per-user'
+      refs: ['apps/web/migrations/030_story_7_4_demo_client.sql']
+      rationale: 'Closes the double-seed race window. Tiny migration follow-up.'
+    - action: 'Genericify INTERNAL_ERROR client message; log full error server-side'
+      refs: ['apps/web/src/app/api/onboarding/seed-demo/route.ts:41-45']
+      rationale: 'Standard production hardening; low severity but trivial fix.'
+    - action: 'Add component mount tests for Step2BDemoTour, Step4BCreateClient, DemoBriefPreview'
+      rationale: 'Round out testing pyramid. Data layer is solid; UI smoke tests would close the trace gap.'
+    - action: 'Memoize buildDemoAIStrip / buildDemoBriefContent in Step2BDemoTour'
+      refs: ['apps/web/src/components/onboarding/steps/Step2BDemoTour.tsx:83-84']
+      rationale: 'Eliminate per-render recompute. Cosmetic.'
+
+review_notes: |
+  Story 7.4 shipped clean against the locked decisions:
+  - Brief = real Story 6.4 content, hand-written, seeded → ✓ (DemoBriefPreview workaround for tier-gated /api/brief is the right call for Free coaches mid-onboarding; Pro coaches still see the same content at /brief/manual/{clientId})
+  - is_demo badge → ✓
+  - Counts toward tier limits → ✓ (no special-case)
+  - "Re-add demo" Settings CTA SKIPPED → ✓
+  - Per-signup cost ~$0.001 (4 OpenAI embeddings) → matches spec note
+
+  The coach_note → coach_notes column reuse decision is a net positive — avoids
+  duplicating intent of the existing Story 6.4 column. Propagated correctly to
+  7.2 + 7.7 specs before this review.
+
+  Demo content quality is founder-review territory; the structural sanity test
+  (blocklist for dated/real-company references; assignee mix; 4-session count;
+  3-month span) catches drift. Content prose itself should be eyeballed before
+  ship; that wasn't part of QA's authority.
+
+  Story 7.3 still owes a shell mount for Step 2B + Step 4B + the redirect
+  middleware before this story's UX is end-user-reachable. Until then, the
+  /onboarding route still hosts the legacy Story 1.8 flow which 7.3 will
+  delete + replace. Not a blocker for 7.4 — story scope is delivered.

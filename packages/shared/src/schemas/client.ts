@@ -5,6 +5,16 @@ import { z } from 'zod';
  * v3: Executive coach pivot — goal, start_date, notes replace email/phone/linkedin/tags/status
  */
 
+// Story 7.4 + 7.2 — AI-generated intelligence strip JSONB shape on clients.ai_intelligence_strip
+export const AIIntelligenceStripSchema = z.object({
+  recurring_theme: z.string(),
+  theme_frequency: z.string(),
+  recent_breakthrough: z.string(),
+  current_focus: z.string(),
+  generated_at: z.string(), // ISO timestamp
+});
+export type AIIntelligenceStrip = z.infer<typeof AIIntelligenceStripSchema>;
+
 // Base client schema with all fields
 export const ClientSchema = z.object({
   id: z.string().uuid(),
@@ -19,6 +29,10 @@ export const ClientSchema = z.object({
   notes: z.string().nullable().optional(),
   // Story 6.4 — private per-client coach notes, persists across sessions, never AI-touched
   coach_notes: z.string().nullable().optional(),
+  // Story 7.4 — Alex Rivera demo client flag
+  is_demo: z.boolean().default(false),
+  // Story 7.4 (seeded) / 7.2 (regen) — AI insight summary
+  ai_intelligence_strip: AIIntelligenceStripSchema.nullable().optional(),
   last_session_at: z.string().datetime().or(z.date()).nullable().optional(),
   created_at: z.string().datetime().or(z.date()),
   updated_at: z.string().datetime().or(z.date()),
