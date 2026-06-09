@@ -189,9 +189,19 @@ export default function ClientDetailPage() {
                 {ini}
               </div>
               <div>
-                <h1 className="text-[22px] font-bold tracking-[-0.02em] text-foreground leading-tight">
-                  {client.name}
-                </h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-[22px] font-bold tracking-[-0.02em] text-foreground leading-tight">
+                    {client.name}
+                  </h1>
+                  {client.is_demo && (
+                    <span
+                      title="Demo — explore MeetSolis with this sample client"
+                      className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-medium text-foreground/55"
+                    >
+                      Demo
+                    </span>
+                  )}
+                </div>
                 {roleCompany && (
                   <div className="flex items-center gap-1.5 mt-1 text-[12px] text-foreground/40">
                     <Building2 className="h-3 w-3 shrink-0" />
