@@ -390,13 +390,20 @@ function ClickToEdit({
   };
 
   if (!editing) {
-    const display = value?.trim() ? value : (placeholder ?? 'Click to add…');
+    const trimmed = value?.trim() ?? '';
+    const isPlaceholder = !trimmed;
+    const isBuilding = trimmed === 'Building...';
+    const display = isPlaceholder ? (placeholder ?? 'Click to add…') : value;
+    const tone =
+      isPlaceholder || isBuilding
+        ? 'italic text-foreground/35'
+        : 'text-foreground/85';
     return (
       <button
         type="button"
         onClick={() => setEditing(true)}
         aria-label={`Edit ${ariaLabel}`}
-        className="block w-full text-left text-[13px] text-foreground/85 leading-relaxed hover:text-foreground transition-colors py-1"
+        className={`block w-full text-left text-[13px] leading-relaxed transition-colors py-1 px-2 -mx-2 rounded-md hover:text-foreground hover:ring-1 hover:ring-primary/20 hover:bg-primary/[0.03] ${tone}`}
       >
         {display}
       </button>
