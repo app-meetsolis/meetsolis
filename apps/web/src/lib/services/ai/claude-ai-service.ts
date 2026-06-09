@@ -6,14 +6,22 @@ import {
   ActionItemsResult,
   ServiceStatus,
   ServiceInfo,
+  IntelligenceStripInput,
+  IntelligenceStripFields,
 } from '@meetsolis/shared';
 import { BaseService } from '../base-service';
 import {
   COACHING_SYSTEM_PROMPT,
   buildSummarizePrompt,
   buildActionItemsPrompt,
+  INTELLIGENCE_STRIP_SYSTEM_PROMPT_V1,
+  buildIntelligenceStripPrompt,
 } from '../../ai/prompts';
-import { parseSummary, parseActionItems } from '../../ai/summarize';
+import {
+  parseSummary,
+  parseActionItems,
+  parseIntelligenceStrip,
+} from '../../ai/summarize';
 
 export class ClaudeAIService extends BaseService implements AIService {
   private client: Anthropic;
@@ -139,6 +147,35 @@ export class ClaudeAIService extends BaseService implements AIService {
     if (block.type !== 'text')
       throw new Error('Claude returned non-text response');
     return block.text;
+  }
+
+  /**
+   * Story 7.2 — AI intelligence strip. Haiku for cost (runs every session).
+   * JSON output, parsed + Zod-validated by wrapper.
+   */
+  async generateIntelligenceStrip(
+    input: IntelligenceStripInput
+  ): Promise<IntelligenceStripFields> {
+    const response = await this.client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 600,
+      system: [
+        {
+          type: 'text',
+          text: INTELLIGENCE_STRIP_SYSTEM_PROMPT_V1,
+          cache_control: { type: 'ephemeral' },
+        },
+      ],
+      messages: [
+        { role: 'user', content: buildIntelligenceStripPrompt(input) },
+      ],
+    });
+
+    const block = response.content[0];
+    if (block.type !== 'text') {
+      throw new Error('Claude returned non-text response');
+    }
+    return parseIntelligenceStrip(block.text);
   }
 
   /**

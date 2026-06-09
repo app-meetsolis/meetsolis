@@ -1,4 +1,8 @@
-import { SessionSummaryResult, ActionItemsResult } from '@meetsolis/shared';
+import {
+  SessionSummaryResult,
+  ActionItemsResult,
+  IntelligenceStripFields,
+} from '@meetsolis/shared';
 
 function parseJson(raw: string): Record<string, unknown> {
   let parsed: unknown;
@@ -66,4 +70,29 @@ export function parseActionItems(raw: string): ActionItemsResult {
   });
 
   return { action_items };
+}
+
+/** Story 7.2 — parse intelligence strip JSON. Throws on malformed/missing fields. */
+export function parseIntelligenceStrip(raw: string): IntelligenceStripFields {
+  const obj = parseJson(raw);
+
+  const fields = [
+    'recurring_theme',
+    'theme_frequency',
+    'recent_breakthrough',
+    'current_focus',
+  ] as const;
+
+  for (const f of fields) {
+    if (typeof obj[f] !== 'string' || !obj[f]) {
+      throw new Error(`AI intelligence strip missing required field: ${f}`);
+    }
+  }
+
+  return {
+    recurring_theme: obj.recurring_theme as string,
+    theme_frequency: obj.theme_frequency as string,
+    recent_breakthrough: obj.recent_breakthrough as string,
+    current_focus: obj.current_focus as string,
+  };
 }

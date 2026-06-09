@@ -5,10 +5,12 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import * as Sentry from '@sentry/nextjs';
 import { config } from '@/lib/config/env';
 import { ServiceFactory } from '@/lib/service-factory';
 import { ClientContext } from '@meetsolis/shared';
 import { isPlaceholderTitle } from '@/lib/sessions/session-title';
+import { generateIntelligenceStrip } from '@/lib/clients/generate-intelligence-strip';
 
 function getSupabase() {
   return createClient(config.supabase.url!, config.supabase.serviceRoleKey!);
@@ -68,6 +70,14 @@ export async function runSummarize(
     }
 
     await supabase.from('sessions').update(updates).eq('id', sessionId);
+
+    // Story 7.2 — refresh the client's AI intelligence strip after each session.
+    // Fire-and-forget: a strip failure must NEVER flip session status to error.
+    generateIntelligenceStrip(session.client_id, session.user_id).catch(err => {
+      Sentry.captureException(err, {
+        extra: { sessionId, stage: 'intelligence_strip' },
+      });
+    });
 
     console.log(`[Summarize] Session ${sessionId} complete`);
     return 'complete';

@@ -82,6 +82,59 @@ Respond with the JSON object only.`;
 }
 
 // =============================================================================
+// INTELLIGENCE STRIP PROMPTS (Story 7.2)
+// =============================================================================
+
+import type { IntelligenceStripInput } from '@meetsolis/shared';
+
+export const INTELLIGENCE_STRIP_SYSTEM_PROMPT_V1 = `You are an executive coaching intelligence assistant. You read a client's coaching session history and produce a structured intelligence summary that helps the coach remember what matters about this client across sessions.
+
+Rules:
+- Be specific, never generic. Bad: "client has recurring themes". Good: "imposter syndrome — 5 of 8 sessions".
+- Quote or paraphrase real session content. Never invent details that are not present in the history.
+- Use ICF-aligned coaching language ("explored", "identified", "committed"). Avoid clinical terms.
+- If fewer than 2 sessions exist, set fields to "Building..." placeholders.
+- Output valid JSON only — no markdown, no commentary outside the JSON.`;
+
+export function buildIntelligenceStripPrompt(
+  input: IntelligenceStripInput
+): string {
+  const meta = [
+    `Client: ${input.client.name}`,
+    input.client.goal ? `Coaching goal: ${input.client.goal}` : null,
+    input.client.start_date
+      ? `Coaching since: ${input.client.start_date}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const sessionBlock = input.sessions.length
+    ? input.sessions
+        .map(
+          (s, i) =>
+            `Session ${i + 1} (${s.session_date}):\nTopics: ${s.key_topics.join(', ') || '(none)'}\nSummary: ${s.summary || '(no summary)'}`
+        )
+        .join('\n\n')
+    : '(no sessions yet)';
+
+  return `${meta}
+
+SESSIONS (most recent first):
+${sessionBlock}
+
+Return JSON with this exact schema:
+{
+  "recurring_theme": "string — most frequent recurring theme across sessions, specific phrasing",
+  "theme_frequency": "string — e.g. '5 of 8 sessions' or '3 sessions in a row'",
+  "recent_breakthrough": "string — most notable breakthrough, aha moment, or shift from recent sessions",
+  "current_focus": "string — what client is actively working on across the last 3 sessions"
+}
+
+Respond with the JSON object only.`;
+}
+
+// =============================================================================
 // SOLIS Q&A PROMPTS (Story 4.2)
 // =============================================================================
 

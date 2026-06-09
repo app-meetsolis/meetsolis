@@ -20,6 +20,7 @@ import { Client, ClientActionItem, Session } from '@meetsolis/shared';
 import { Button } from '@/components/ui/button';
 import { Toaster } from 'sonner';
 import { ClientModal } from '@/components/clients/ClientModal';
+import { AIIntelligenceStrip } from '@/components/client/AIIntelligenceStrip';
 import { SessionAccordion } from '@/components/sessions/SessionAccordion';
 import { LiveTranscriptPanel } from '@/components/sessions/LiveTranscriptPanel';
 import { ActionItemsAutoToggle } from '@/components/sessions/ActionItemsAutoToggle';
@@ -272,6 +273,14 @@ export default function ClientDetailPage() {
             )}
           </div>
         </div>
+
+        {/* -- AI Intelligence Strip (Story 7.2) -- */}
+        <AIIntelligenceStrip
+          clientId={id}
+          strip={client.ai_intelligence_strip ?? null}
+          coachNotes={client.coach_notes ?? ''}
+          hasSessions={sessions.length > 0}
+        />
 
         {/* -- Action buttons -- */}
         <div className="flex items-center gap-3">

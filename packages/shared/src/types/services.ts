@@ -57,6 +57,28 @@ export interface ActionItemsResult {
   action_items: ActionItemResult[];
 }
 
+// Story 7.2 — AI intelligence strip input + output (omit generated_at; wrapper adds it).
+export interface IntelligenceStripInput {
+  client: {
+    name: string;
+    goal: string | null;
+    start_date: string | null;
+  };
+  // Most-recent-first. Most recent 3 are passed verbatim; older are condensed by caller.
+  sessions: Array<{
+    session_date: string;
+    summary: string;
+    key_topics: string[];
+  }>;
+}
+
+export interface IntelligenceStripFields {
+  recurring_theme: string;
+  theme_frequency: string;
+  recent_breakthrough: string;
+  current_focus: string;
+}
+
 export interface AIService extends ExternalService {
   generateSummary(text: string): Promise<string>;
   analyzeText(text: string): Promise<any>;
@@ -75,6 +97,13 @@ export interface AIService extends ExternalService {
    * Higher-temperature, creative output (NOT JSON). Returns plain text.
    */
   generatePrepNote(systemPrompt: string, userPrompt: string): Promise<string>;
+  /**
+   * Story 7.2 — AI intelligence strip for Client Card. JSON output, 4 fields.
+   * Wrapper (generate-intelligence-strip.ts) adds generated_at + writes to DB.
+   */
+  generateIntelligenceStrip(
+    input: IntelligenceStripInput
+  ): Promise<IntelligenceStripFields>;
 }
 
 export interface TranscriptionResult {
