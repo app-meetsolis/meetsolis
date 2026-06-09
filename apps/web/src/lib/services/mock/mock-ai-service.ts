@@ -5,6 +5,8 @@ import {
   ActionItemsResult,
   ServiceStatus,
   ServiceInfo,
+  IntelligenceStripInput,
+  IntelligenceStripFields,
 } from '@meetsolis/shared';
 import { BaseService } from '../base-service';
 
@@ -294,6 +296,25 @@ export class MockAIService extends BaseService implements AIService {
         'Based on the available session history, your client has been focused on leadership transitions and delegation challenges. Key themes include building trust and managing organizational change.',
       cited_sessions: [],
     });
+  }
+
+  async generateIntelligenceStrip(
+    input: IntelligenceStripInput
+  ): Promise<IntelligenceStripFields> {
+    if (input.sessions.length < 2) {
+      return {
+        recurring_theme: 'Building...',
+        theme_frequency: 'Building...',
+        recent_breakthrough: 'Building...',
+        current_focus: 'Building...',
+      };
+    }
+    return {
+      recurring_theme: 'Imposter syndrome surfacing in high-stakes moments',
+      theme_frequency: `${input.sessions.length} of ${input.sessions.length} sessions`,
+      recent_breakthrough: `${input.client.name} reframed self-doubt as a signal to slow down, not a verdict.`,
+      current_focus: 'Delegating decisions without re-litigating outcomes',
+    };
   }
 
   async generatePrepNote(

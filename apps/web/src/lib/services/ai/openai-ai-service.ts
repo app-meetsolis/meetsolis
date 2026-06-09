@@ -6,14 +6,22 @@ import {
   ActionItemsResult,
   ServiceStatus,
   ServiceInfo,
+  IntelligenceStripInput,
+  IntelligenceStripFields,
 } from '@meetsolis/shared';
 import { BaseService } from '../base-service';
 import {
   COACHING_SYSTEM_PROMPT,
   buildSummarizePrompt,
   buildActionItemsPrompt,
+  INTELLIGENCE_STRIP_SYSTEM_PROMPT_V1,
+  buildIntelligenceStripPrompt,
 } from '../../ai/prompts';
-import { parseSummary, parseActionItems } from '../../ai/summarize';
+import {
+  parseSummary,
+  parseActionItems,
+  parseIntelligenceStrip,
+} from '../../ai/summarize';
 
 export class OpenAIAIService extends BaseService implements AIService {
   private client: OpenAI;
@@ -131,6 +139,29 @@ export class OpenAIAIService extends BaseService implements AIService {
     const content = response.choices[0]?.message?.content;
     if (!content) throw new Error('OpenAI returned empty response');
     return content;
+  }
+
+  /**
+   * Story 7.2 — AI intelligence strip. gpt-4o-mini for cost (runs every session).
+   * JSON output, parsed + Zod-validated by wrapper.
+   */
+  async generateIntelligenceStrip(
+    input: IntelligenceStripInput
+  ): Promise<IntelligenceStripFields> {
+    const response = await this.client.chat.completions.create({
+      model: 'gpt-4o-mini',
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: INTELLIGENCE_STRIP_SYSTEM_PROMPT_V1 },
+        { role: 'user', content: buildIntelligenceStripPrompt(input) },
+      ],
+      temperature: 0.3,
+      max_tokens: 600,
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error('OpenAI returned empty response');
+    return parseIntelligenceStrip(content);
   }
 
   /**
