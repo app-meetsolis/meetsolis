@@ -5,6 +5,9 @@
  * output via Zod, then writes to `clients.ai_intelligence_strip`. Never
  * touches `clients.coach_notes` (BRAINSTORM §2: coach_notes is sacred).
  *
+ * Story 7.7 retrofit: respects `clients.ai_intelligence_strip_overrides`.
+ * Any field flagged as coach-edited is preserved verbatim across regens.
+ *
  * Fire-and-forget from summarize-session.ts — callers MUST NOT block on this.
  */
 
@@ -12,7 +15,10 @@ import { createClient } from '@supabase/supabase-js';
 import * as Sentry from '@sentry/nextjs';
 import {
   AIIntelligenceStripSchema,
+  STRIP_FIELDS,
   type AIIntelligenceStrip,
+  type AIIntelligenceStripOverrides,
+  type StripField,
 } from '@meetsolis/shared';
 import { config } from '@/lib/config/env';
 import { ServiceFactory } from '@/lib/service-factory';
@@ -37,6 +43,25 @@ function truncate(text: string | null, limit: number): string {
   return text.length <= limit ? text : `${text.slice(0, limit).trimEnd()}…`;
 }
 
+/**
+ * Merge AI candidate with existing strip, preserving coach-edited fields.
+ * Exported for unit-testing.
+ */
+export function mergeWithOverrides(
+  aiCandidate: Omit<AIIntelligenceStrip, 'generated_at'>,
+  existing: AIIntelligenceStrip | null,
+  overrides: AIIntelligenceStripOverrides
+): Omit<AIIntelligenceStrip, 'generated_at'> {
+  const merged = { ...aiCandidate };
+  if (!existing) return merged;
+  for (const field of STRIP_FIELDS) {
+    if (overrides[field as StripField] === true) {
+      merged[field] = existing[field];
+    }
+  }
+  return merged;
+}
+
 export async function generateIntelligenceStrip(
   clientId: string,
   userId: string
@@ -45,7 +70,9 @@ export async function generateIntelligenceStrip(
 
   const { data: client, error: clientErr } = await supabase
     .from('clients')
-    .select('id, user_id, name, goal, start_date')
+    .select(
+      'id, user_id, name, goal, start_date, ai_intelligence_strip, ai_intelligence_strip_overrides'
+    )
     .eq('id', clientId)
     .eq('user_id', userId)
     .single();
@@ -99,8 +126,16 @@ export async function generateIntelligenceStrip(
     };
   }
 
+  const existingStrip =
+    (client.ai_intelligence_strip as AIIntelligenceStrip | null) ?? null;
+  const overrides =
+    (client.ai_intelligence_strip_overrides as AIIntelligenceStripOverrides | null) ??
+    {};
+
+  const merged = mergeWithOverrides(fields, existingStrip, overrides);
+
   const candidate: AIIntelligenceStrip = {
-    ...fields,
+    ...merged,
     generated_at: new Date().toISOString(),
   };
 

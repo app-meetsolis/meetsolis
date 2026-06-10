@@ -10,13 +10,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
+import { z } from 'zod';
 import { config } from '@/lib/config/env';
 import { getInternalUserId } from '@/lib/helpers/user';
 import { getUserTier } from '@/lib/billing/checkUsage';
 import { generateIntelligenceStrip } from '@/lib/clients/generate-intelligence-strip';
 import {
-  AIIntelligenceStripSchema,
+  STRIP_FIELDS,
   type AIIntelligenceStrip,
+  type AIIntelligenceStripOverrides,
+  type StripField,
 } from '@meetsolis/shared';
 
 export const runtime = 'nodejs';
@@ -32,14 +35,27 @@ function err(code: string, message: string, status: number) {
   return NextResponse.json({ error: { code, message } }, { status });
 }
 
-// PATCH body: any subset of AI fields, NEVER generated_at.
-const StripPatchSchema = AIIntelligenceStripSchema.omit({
-  generated_at: true,
-})
-  .partial()
-  .refine(obj => Object.keys(obj).length > 0, {
-    message: 'At least one field required',
-  });
+// PATCH body: any subset of AI fields (coach edit) OR clear list to drop
+// override flags. NEVER generated_at. At least one of the two MUST be set.
+const StripFieldEnum = z.enum(STRIP_FIELDS);
+const StripPatchSchema = z
+  .object({
+    recurring_theme: z.string().optional(),
+    theme_frequency: z.string().optional(),
+    recent_breakthrough: z.string().optional(),
+    current_focus: z.string().optional(),
+    /** Story 7.7. List of fields to drop coach-override (so AI regenerates them next time). */
+    clear_overrides: z.array(StripFieldEnum).optional(),
+  })
+  .strict()
+  .refine(
+    obj => {
+      const editKeys = Object.keys(obj).filter(k => k !== 'clear_overrides');
+      const clearLen = obj.clear_overrides?.length ?? 0;
+      return editKeys.length > 0 || clearLen > 0;
+    },
+    { message: 'At least one field or clear_overrides entry required' }
+  );
 
 export async function POST(
   _request: NextRequest,
@@ -161,7 +177,7 @@ export async function PATCH(
 
     const { data: existing, error: fetchErr } = await supabase
       .from('clients')
-      .select('ai_intelligence_strip')
+      .select('ai_intelligence_strip, ai_intelligence_strip_overrides')
       .eq('id', clientId)
       .eq('user_id', userId)
       .maybeSingle();
@@ -184,18 +200,40 @@ export async function PATCH(
       );
     }
 
+    const { clear_overrides: clearList, ...editPatch } = parsed.data;
+    const existingOverrides =
+      (existing.ai_intelligence_strip_overrides as AIIntelligenceStripOverrides | null) ??
+      {};
+
+    // Coach edits → flag the field as overridden (so AI regen preserves them)
+    const nextOverrides: AIIntelligenceStripOverrides = {
+      ...existingOverrides,
+    };
+    for (const k of Object.keys(editPatch) as StripField[]) {
+      nextOverrides[k] = true;
+    }
+    // Clear list → drop overrides so next AI regen can rewrite those fields
+    if (clearList) {
+      for (const k of clearList) {
+        delete nextOverrides[k];
+      }
+    }
+
     const merged: AIIntelligenceStrip = {
       ...current,
-      ...parsed.data,
+      ...editPatch,
       generated_at: current.generated_at,
     };
 
     const { data: updated, error: updateErr } = await supabase
       .from('clients')
-      .update({ ai_intelligence_strip: merged })
+      .update({
+        ai_intelligence_strip: merged,
+        ai_intelligence_strip_overrides: nextOverrides,
+      })
       .eq('id', clientId)
       .eq('user_id', userId)
-      .select('ai_intelligence_strip')
+      .select('ai_intelligence_strip, ai_intelligence_strip_overrides')
       .single();
 
     if (updateErr || !updated) {
@@ -204,7 +242,10 @@ export async function PATCH(
     }
 
     return NextResponse.json(
-      { strip: updated.ai_intelligence_strip },
+      {
+        strip: updated.ai_intelligence_strip,
+        overrides: updated.ai_intelligence_strip_overrides,
+      },
       { status: 200 }
     );
   } catch (error) {

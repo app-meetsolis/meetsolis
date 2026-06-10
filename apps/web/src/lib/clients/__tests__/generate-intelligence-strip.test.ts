@@ -30,7 +30,10 @@ jest.mock('@/lib/service-factory', () => ({
 import { createClient } from '@supabase/supabase-js';
 import * as Sentry from '@sentry/nextjs';
 import { ServiceFactory } from '@/lib/service-factory';
-import { generateIntelligenceStrip } from '../generate-intelligence-strip';
+import {
+  generateIntelligenceStrip,
+  mergeWithOverrides,
+} from '../generate-intelligence-strip';
 
 const mockCreateClient = createClient as jest.MockedFunction<
   typeof createClient
@@ -253,5 +256,55 @@ describe('generateIntelligenceStrip', () => {
     };
     const result = AIIntelligenceStripSchema.safeParse(good);
     expect(result.success).toBe(true);
+  });
+
+  describe('mergeWithOverrides (Story 7.7)', () => {
+    const ai = {
+      recurring_theme: 'AI-theme',
+      theme_frequency: 'AI-freq',
+      recent_breakthrough: 'AI-breakthrough',
+      current_focus: 'AI-focus',
+    };
+    const existing = {
+      recurring_theme: 'coach-theme',
+      theme_frequency: 'coach-freq',
+      recent_breakthrough: 'coach-breakthrough',
+      current_focus: 'coach-focus',
+      generated_at: '2026-06-01T00:00:00.000Z',
+    };
+
+    it('returns AI candidate verbatim when existing is null', () => {
+      expect(mergeWithOverrides(ai, null, {})).toEqual(ai);
+    });
+
+    it('returns AI candidate verbatim when no overrides set', () => {
+      expect(mergeWithOverrides(ai, existing, {})).toEqual(ai);
+    });
+
+    it('preserves single coach-edited field', () => {
+      const merged = mergeWithOverrides(ai, existing, {
+        recurring_theme: true,
+      });
+      expect(merged.recurring_theme).toBe('coach-theme');
+      expect(merged.recent_breakthrough).toBe('AI-breakthrough');
+      expect(merged.current_focus).toBe('AI-focus');
+    });
+
+    it('preserves multiple coach-edited fields', () => {
+      const merged = mergeWithOverrides(ai, existing, {
+        recurring_theme: true,
+        current_focus: true,
+      });
+      expect(merged.recurring_theme).toBe('coach-theme');
+      expect(merged.current_focus).toBe('coach-focus');
+      expect(merged.recent_breakthrough).toBe('AI-breakthrough');
+    });
+
+    it('ignores override flags set to false', () => {
+      const merged = mergeWithOverrides(ai, existing, {
+        recurring_theme: false,
+      });
+      expect(merged.recurring_theme).toBe('AI-theme');
+    });
   });
 });

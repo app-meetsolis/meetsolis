@@ -11,19 +11,32 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { differenceInDays, formatDistanceToNow, parseISO } from 'date-fns';
-import { Lock, RefreshCw, Sparkles } from 'lucide-react';
+import { Lock, RefreshCw, RotateCcw, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import type {
   AIIntelligenceStrip as Strip,
+  AIIntelligenceStripOverrides,
+  StripField,
   UsageResponse,
 } from '@meetsolis/shared';
 import { ClickToEdit } from './ClickToEdit';
+import { AIIndicator } from './AIIndicator';
 
 interface Props {
   clientId: string;
   strip: Strip | null;
   coachNotes: string;
   hasSessions: boolean;
+  /** Story 7.7 — per-field coach override flags. Missing = treated as {}. */
+  overrides?: AIIntelligenceStripOverrides;
+}
+
+interface StripPatch {
+  recurring_theme?: string;
+  theme_frequency?: string;
+  recent_breakthrough?: string;
+  current_focus?: string;
+  clear_overrides?: StripField[];
 }
 
 function formatGeneratedAt(iso: string | undefined | null): string {
@@ -55,6 +68,7 @@ export function AIIntelligenceStrip({
   strip,
   coachNotes,
   hasSessions,
+  overrides = {},
 }: Props) {
   const queryClient = useQueryClient();
 
@@ -103,7 +117,7 @@ export function AIIntelligenceStrip({
   }, [strip, hasSessions, refreshMutation]);
 
   const updateStripMutation = useMutation({
-    mutationFn: async (patch: Partial<Strip>) => {
+    mutationFn: async (patch: StripPatch) => {
       const r = await fetch(`/api/clients/${clientId}/intelligence-strip`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -115,12 +129,18 @@ export function AIIntelligenceStrip({
       }
       return (await r.json()).strip as Strip;
     },
-    onSuccess: () => {
-      toast.success('Updated.');
+    onSuccess: (_data, vars) => {
+      const wasClear = (vars.clear_overrides?.length ?? 0) > 0;
+      toast.success(
+        wasClear ? 'Reset — AI will rewrite next time.' : 'Updated.'
+      );
       queryClient.invalidateQueries({ queryKey: ['client', clientId] });
     },
     onError: (err: Error) => toast.error(err.message),
   });
+
+  const clearOverride = (field: StripField) =>
+    updateStripMutation.mutate({ clear_overrides: [field] });
 
   const updateNotesMutation = useMutation({
     mutationFn: async (coach_notes: string) => {
@@ -217,22 +237,28 @@ export function AIIntelligenceStrip({
       <div className="space-y-4">
         <ThemeRow
           strip={strip}
+          isOverridden={overrides.recurring_theme === true}
           onSave={value =>
             updateStripMutation.mutate({ recurring_theme: value })
           }
+          onClearOverride={() => clearOverride('recurring_theme')}
         />
         <EditableStripField
           label="Recent breakthrough"
           value={strip.recent_breakthrough}
+          isOverridden={overrides.recent_breakthrough === true}
           onSave={value =>
             updateStripMutation.mutate({ recent_breakthrough: value })
           }
+          onClearOverride={() => clearOverride('recent_breakthrough')}
           isSaving={updateStripMutation.isPending}
         />
         <EditableStripField
           label="Current focus"
           value={strip.current_focus}
+          isOverridden={overrides.current_focus === true}
           onSave={value => updateStripMutation.mutate({ current_focus: value })}
+          onClearOverride={() => clearOverride('current_focus')}
           isSaving={updateStripMutation.isPending}
         />
         <CoachNotesField
@@ -247,10 +273,14 @@ export function AIIntelligenceStrip({
 
 function ThemeRow({
   strip,
+  isOverridden,
   onSave,
+  onClearOverride,
 }: {
   strip: Strip;
+  isOverridden: boolean;
   onSave: (value: string) => void;
+  onClearOverride: () => void;
 }) {
   return (
     <div>
@@ -261,6 +291,10 @@ function ThemeRow({
             {strip.theme_frequency}
           </span>
         )}
+        <RowIndicators
+          isOverridden={isOverridden}
+          onClearOverride={onClearOverride}
+        />
       </div>
       <ClickToEdit
         value={strip.recurring_theme}
@@ -274,18 +308,26 @@ function ThemeRow({
 function EditableStripField({
   label,
   value,
+  isOverridden,
   onSave,
+  onClearOverride,
   isSaving,
 }: {
   label: string;
   value: string;
+  isOverridden: boolean;
   onSave: (value: string) => void;
+  onClearOverride: () => void;
   isSaving: boolean;
 }) {
   return (
     <div>
-      <div className="text-[11px] uppercase tracking-wider text-foreground/40 mb-1">
-        {label}
+      <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-foreground/40 mb-1">
+        <span>{label}</span>
+        <RowIndicators
+          isOverridden={isOverridden}
+          onClearOverride={onClearOverride}
+        />
       </div>
       <ClickToEdit value={value} onSave={onSave} ariaLabel={label} />
       {isSaving && (
@@ -293,6 +335,34 @@ function EditableStripField({
       )}
     </div>
   );
+}
+
+function RowIndicators({
+  isOverridden,
+  onClearOverride,
+}: {
+  isOverridden: boolean;
+  onClearOverride: () => void;
+}) {
+  if (isOverridden) {
+    return (
+      <>
+        <span className="inline-flex items-center rounded-full bg-foreground/8 px-2 py-0.5 text-[10px] font-medium text-foreground/60 normal-case tracking-normal">
+          Coach edited
+        </span>
+        <button
+          type="button"
+          onClick={onClearOverride}
+          title="Regenerate this field from AI on next refresh"
+          className="inline-flex items-center gap-0.5 text-[10px] text-primary/70 hover:text-primary normal-case tracking-normal"
+        >
+          <RotateCcw className="h-3 w-3" />
+          Regenerate
+        </button>
+      </>
+    );
+  }
+  return <AIIndicator />;
 }
 
 function CoachNotesField({
