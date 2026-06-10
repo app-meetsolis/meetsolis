@@ -85,7 +85,10 @@ Respond with the JSON object only.`;
 // INTELLIGENCE STRIP PROMPTS (Story 7.2)
 // =============================================================================
 
-import type { IntelligenceStripInput } from '@meetsolis/shared';
+import type {
+  IntelligenceStripInput,
+  ClassifySessionTagsInput,
+} from '@meetsolis/shared';
 
 export const INTELLIGENCE_STRIP_SYSTEM_PROMPT_V1 = `You are an executive coaching intelligence assistant. You read a client's coaching session history and produce a structured intelligence summary that helps the coach remember what matters about this client across sessions.
 
@@ -130,6 +133,43 @@ Return JSON with this exact schema:
   "recent_breakthrough": "string — most notable breakthrough, aha moment, or shift from recent sessions",
   "current_focus": "string — what client is actively working on across the last 3 sessions"
 }
+
+Respond with the JSON object only.`;
+}
+
+// =============================================================================
+// SESSION TAG CLASSIFICATION (Story 7.7)
+// =============================================================================
+
+export const SESSION_TAGS_SYSTEM_PROMPT_V1 = `You are classifying an executive coaching session by its dominant outcome. You read a session summary and key topics, then assign 1–2 tags from a fixed enum.
+
+Available tags (use these exact strings):
+- "breakthrough": client had a clear aha moment, shift in perspective, or major insight
+- "stuck": client struggled, was blocked, or made no forward momentum
+- "milestone": client completed a specific goal or achieved something significant
+- "goal-setting": session focused on defining, clarifying, or refining goals
+
+Rules:
+- Conservative: if uncertain, return only 1 tag.
+- Default for unclear sessions: "goal-setting".
+- Never return tags outside the enum.
+- Output valid JSON only — no markdown, no commentary outside the JSON.`;
+
+export function buildSessionTagsPrompt(
+  input: ClassifySessionTagsInput
+): string {
+  return `Session summary:
+${input.summary || '(no summary)'}
+
+Key topics:
+${input.key_topics.length ? input.key_topics.join(', ') : '(none)'}
+
+Return JSON with this exact schema:
+{
+  "tags": ["string", "string"]
+}
+
+Use 1 or 2 tags from: "breakthrough", "stuck", "milestone", "goal-setting".
 
 Respond with the JSON object only.`;
 }

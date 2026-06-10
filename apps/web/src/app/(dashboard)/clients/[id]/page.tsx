@@ -1,29 +1,37 @@
+/**
+ * Story 7.7 — Living Client Card page (orchestrator).
+ *
+ * Vertical 5-section LinkedIn-style profile:
+ *   1. Header (avatar, identity, stats, goal)
+ *   2. Open Action Items slot (Story 7.6 will own; placeholder for now)
+ *   3. AI Intelligence Strip (Story 7.2)
+ *   4. Session Feed
+ *   5. ABOUT
+ *
+ * This file is intentionally thin — heavy lifting lives in client/* components.
+ */
+
 'use client';
 
+import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { format, parseISO } from 'date-fns';
-import {
-  ArrowLeft,
-  Building2,
-  Calendar,
-  FileText,
-  MoreHorizontal,
-  Pencil,
-  Sparkles,
-  StickyNote,
-  Target,
-  Layers,
-} from 'lucide-react';
-import { Client, ClientActionItem, Session } from '@meetsolis/shared';
-import { Button } from '@/components/ui/button';
+import { ArrowLeft, FileText, MoreHorizontal, Sparkles } from 'lucide-react';
 import { Toaster } from 'sonner';
+import type {
+  Client,
+  ClientActionItem,
+  Session,
+  CalendarEvent,
+} from '@meetsolis/shared';
+import { Button } from '@/components/ui/button';
 import { ClientModal } from '@/components/clients/ClientModal';
+import { ClientHeader } from '@/components/client/ClientHeader';
 import { AIIntelligenceStrip } from '@/components/client/AIIntelligenceStrip';
-import { SessionAccordion } from '@/components/sessions/SessionAccordion';
+import { OpenActionItemsSlot } from '@/components/client/OpenActionItemsSlot';
+import { SessionFeed } from '@/components/client/SessionFeed';
+import { AboutSection } from '@/components/client/AboutSection';
 import { LiveTranscriptPanel } from '@/components/sessions/LiveTranscriptPanel';
-import { ActionItemsAutoToggle } from '@/components/sessions/ActionItemsAutoToggle';
 import {
   Dialog,
   DialogContent,
@@ -35,15 +43,6 @@ import { SolisPanel } from '@/components/solis/SolisPanel';
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function initials(name: string) {
-  return name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-}
 
 export default function ClientDetailPage() {
   const params = useParams();
@@ -94,7 +93,21 @@ export default function ClientDetailPage() {
     staleTime: 60_000,
   });
 
-  // Detect an in-progress (or just-ended) bot meeting for this client.
+  // Story 7.7 — next upcoming calendar event matched to this client.
+  const { data: nextEvent } = useQuery<CalendarEvent | null>({
+    queryKey: ['next-event', id],
+    queryFn: async () => {
+      const r = await fetch(
+        `/api/calendar/events?client_id=${id}&upcoming=true&limit=1`
+      );
+      if (!r.ok) return null;
+      const events = (await r.json()).events ?? [];
+      return events[0] ?? null;
+    },
+    enabled: isValid && !!client,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: liveSession } = useQuery<{ session_id: string | null }>({
     queryKey: ['live-session', id],
     queryFn: async () => {
@@ -106,6 +119,11 @@ export default function ClientDetailPage() {
     refetchInterval: 15_000,
     staleTime: 10_000,
   });
+
+  const sessionById = useMemo(
+    () => new Map(sessions.map(s => [s.id, s])),
+    [sessions]
+  );
 
   if (!isValid)
     return (
@@ -154,254 +172,80 @@ export default function ClientDetailPage() {
       </div>
     );
 
-  const ini = initials(client.name);
-  const coachingSince = client.start_date
-    ? format(parseISO(client.start_date), 'MMM yyyy')
-    : null;
-  const lastSession = client.last_session_at
-    ? format(new Date(client.last_session_at), 'MMM d, yyyy')
-    : '—';
-  const pendingCount = allItems.filter(i => !i.completed).length;
-  const roleCompany =
-    [client.role, client.company].filter(Boolean).join(' · ') || null;
-  const sessionById = new Map(sessions.map(s => [s.id, s]));
-
   return (
     <>
       <Toaster position="top-right" duration={3000} />
-
-      <div className="px-7 py-6 space-y-5">
-        {/* -- Breadcrumb -- */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.push('/clients')}
-          className="h-auto p-0 gap-1.5 text-[12px] text-foreground/35 hover:text-foreground/70 hover:bg-transparent transition-colors"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          All Clients
-        </Button>
-
-        {/* -- Profile card -- */}
-        <div className="rounded-[12px] bg-card shadow-card px-6 py-5">
-          <div className="flex items-start justify-between mb-5">
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-[18px] font-bold bg-primary/15 text-primary">
-                {ini}
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-[22px] font-bold tracking-[-0.02em] text-foreground leading-tight">
-                    {client.name}
-                  </h1>
-                  {client.is_demo && (
-                    <span
-                      title="Demo — explore MeetSolis with this sample client"
-                      className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-medium text-foreground/55"
-                    >
-                      Demo
-                    </span>
-                  )}
-                </div>
-                {roleCompany && (
-                  <div className="flex items-center gap-1.5 mt-1 text-[12px] text-foreground/40">
-                    <Building2 className="h-3 w-3 shrink-0" />
-                    <span>{roleCompany}</span>
-                  </div>
-                )}
-                {client.goal && (
-                  <div className="flex items-center gap-1.5 mt-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/8 px-3 py-1 text-[11px] text-primary">
-                      <Target className="h-3 w-3 shrink-0" />
-                      {client.goal}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setEditOpen(true)}
-                className="h-8 gap-1.5 text-[12px] border-border bg-transparent text-foreground/60 hover:text-foreground hover:bg-foreground/[0.06]"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-                Edit
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-foreground/30 hover:text-foreground/70"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Stats row */}
-          <div className="flex items-center gap-6 pt-4 border-t border-border">
-            <div className="flex items-center gap-2 text-[12px]">
-              <Layers className="h-3.5 w-3.5 text-foreground/30" />
-              <span className="font-semibold text-foreground">
-                {sessions.length}
-              </span>
-              <span className="text-foreground/35">total sessions</span>
-            </div>
-            <div className="flex items-center gap-2 text-[12px]">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              <span className="font-semibold text-foreground">
-                {pendingCount}
-              </span>
-              <span className="text-foreground/35">pending actions</span>
-            </div>
-            <div className="flex items-center gap-2 text-[12px]">
-              <Calendar className="h-3.5 w-3.5 text-foreground/30" />
-              <span className="text-foreground/35">Last session</span>
-              <span className="font-semibold text-foreground">
-                {lastSession}
-              </span>
-            </div>
-            {coachingSince && (
-              <div className="flex items-center gap-2 text-[12px]">
-                <span className="text-foreground/35">Coaching since</span>
-                <span className="font-semibold text-foreground">
-                  {coachingSince}
-                </span>
-              </div>
-            )}
+      <div className="px-7 py-6 space-y-5 max-w-4xl mx-auto">
+        <div className="flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push('/clients')}
+            className="h-auto p-0 gap-1.5 text-[12px] text-foreground/35 hover:text-foreground/70 hover:bg-transparent transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            All clients
+          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSolisOpen(true)}
+              className="h-8 gap-1.5 text-[12px]"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Ask Solis
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push(`/brief/manual/${id}`)}
+              className="h-8 gap-1.5 text-[12px]"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              Coach Brief
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setEditOpen(true)}
+              className="h-8 w-8 text-foreground/30 hover:text-foreground/70"
+              aria-label="More actions"
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
-        {/* -- AI Intelligence Strip (Story 7.2) -- */}
+        {/* 1. Header */}
+        <ClientHeader
+          client={client}
+          sessionCount={sessions.length}
+          nextSessionAt={nextEvent?.start_time ?? null}
+        />
+
+        {/* 2. Open Action Items slot — Story 7.6 will own this */}
+        {/* TODO Story 7.6: replace OpenActionItemsSlot with the rich action items section */}
+        <OpenActionItemsSlot actionItems={allItems} sessionById={sessionById} />
+
+        {/* 3. AI Intelligence Strip (Story 7.2) */}
         <AIIntelligenceStrip
           clientId={id}
           strip={client.ai_intelligence_strip ?? null}
           coachNotes={client.coach_notes ?? ''}
           hasSessions={sessions.length > 0}
+          overrides={client.ai_intelligence_strip_overrides ?? {}}
         />
 
-        {/* -- Action buttons -- */}
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={() => setSolisOpen(true)}
-            className="rounded-lg px-4 py-2 text-[13px] font-semibold gap-2"
-          >
-            <Sparkles className="h-4 w-4" />
-            Ask Solis
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => router.push(`/brief/manual/${id}`)}
-            className="rounded-lg border-border bg-transparent px-4 py-2 text-[13px] font-medium gap-2"
-          >
-            <FileText className="h-4 w-4" />
-            Coach Brief
-          </Button>
-          <Button
-            variant="outline"
-            className="rounded-lg border-border bg-transparent px-4 py-2 text-[13px] font-medium gap-2"
-          >
-            <StickyNote className="h-4 w-4" />
-            Add Note
-          </Button>
-        </div>
-
-        {/* -- Live transcript (only while a bot meeting is active) -- */}
         {liveSession?.session_id && (
           <LiveTranscriptPanel sessionId={liveSession.session_id} />
         )}
 
-        {/* -- 2-col body -- */}
-        <div className="grid grid-cols-12 gap-5">
-          {/* LEFT — session history */}
-          <div className="col-span-8">
-            <div className="flex items-center gap-2.5 mb-4">
-              <h2 className="text-[15px] font-semibold text-foreground">
-                Session History
-              </h2>
-              {sessions.length > 0 && (
-                <span className="rounded-full bg-foreground/[0.08] px-2 py-0.5 text-[11px] font-semibold text-foreground/50">
-                  {sessions.length}
-                </span>
-              )}
-            </div>
-            <SessionAccordion
-              sessions={sessions}
-              actionItems={allItems}
-              clientId={id}
-            />
-          </div>
+        {/* 4. Session Feed */}
+        <SessionFeed sessions={sessions} actionItems={allItems} clientId={id} />
 
-          {/* RIGHT — open action items */}
-          <div className="col-span-4 space-y-4">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2.5">
-                <h2 className="text-[15px] font-semibold text-foreground">
-                  Open Actions
-                </h2>
-                {allItems.filter(i => !i.completed).length > 0 && (
-                  <span className="rounded-full bg-foreground/[0.08] px-2 py-0.5 text-[11px] font-semibold text-foreground/50">
-                    {allItems.filter(i => !i.completed).length}
-                  </span>
-                )}
-              </div>
-              <ActionItemsAutoToggle />
-            </div>
-            <div className="rounded-[12px] bg-card shadow-card overflow-hidden">
-              {allItems.filter(i => !i.completed).length === 0 ? (
-                <div className="flex items-center justify-center gap-2 py-10">
-                  <p className="text-[12px] text-foreground/30">
-                    All caught up
-                  </p>
-                </div>
-              ) : (
-                <div className="divide-y divide-white/[0.04]">
-                  {allItems
-                    .filter(i => !i.completed)
-                    .slice(0, 8)
-                    .map(item => {
-                      const fromSession = item.session_id
-                        ? sessionById.get(item.session_id)
-                        : undefined;
-                      return (
-                        <div
-                          key={item.id}
-                          className="flex items-start gap-3 px-5 py-3.5"
-                        >
-                          <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[12px] text-muted-foreground leading-relaxed">
-                              {item.description}
-                            </p>
-                            <div className="mt-1 flex items-center gap-2">
-                              {item.assignee && (
-                                <span className="inline-block rounded px-1.5 py-0.5 text-[9px] font-bold tracking-wide bg-primary/10 text-primary">
-                                  {item.assignee === 'coach'
-                                    ? 'COACH'
-                                    : 'CLIENT'}
-                                </span>
-                              )}
-                              {fromSession && (
-                                <span className="truncate text-[10px] text-foreground/35">
-                                  {fromSession.title} ·{' '}
-                                  {format(
-                                    parseISO(fromSession.session_date),
-                                    'MMM d'
-                                  )}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        {/* 5. ABOUT */}
+        <AboutSection client={client} />
       </div>
 
       <ClientModal
@@ -419,7 +263,7 @@ export default function ClientDetailPage() {
           <DialogHeader>
             <DialogTitle>Ask Solis about {client.name}</DialogTitle>
             <DialogDescription className="sr-only">
-              AI Q&A about {client.name}
+              AI Q&amp;A about {client.name}
             </DialogDescription>
           </DialogHeader>
           <SolisPanel clientId={id} clientName={client.name} />

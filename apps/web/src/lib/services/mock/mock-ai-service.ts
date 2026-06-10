@@ -7,6 +7,8 @@ import {
   ServiceInfo,
   IntelligenceStripInput,
   IntelligenceStripFields,
+  ClassifySessionTagsInput,
+  ClassifySessionTagsResult,
 } from '@meetsolis/shared';
 import { BaseService } from '../base-service';
 
@@ -315,6 +317,20 @@ export class MockAIService extends BaseService implements AIService {
       recent_breakthrough: `${input.client.name} reframed self-doubt as a signal to slow down, not a verdict.`,
       current_focus: 'Delegating decisions without re-litigating outcomes',
     };
+  }
+
+  async classifySessionTags(
+    input: ClassifySessionTagsInput
+  ): Promise<ClassifySessionTagsResult> {
+    const text = `${input.summary} ${input.key_topics.join(' ')}`.toLowerCase();
+    const tags: string[] = [];
+    if (/breakthrough|aha|insight|reframed|shifted/.test(text))
+      tags.push('breakthrough');
+    if (/stuck|blocked|frustrat|spinning/.test(text)) tags.push('stuck');
+    if (/completed|achieved|launched|milestone|delivered/.test(text))
+      tags.push('milestone');
+    if (/goal|priorit|focus|plan|defin/.test(text)) tags.push('goal-setting');
+    return { tags: tags.length ? tags.slice(0, 2) : ['goal-setting'] };
   }
 
   async generatePrepNote(

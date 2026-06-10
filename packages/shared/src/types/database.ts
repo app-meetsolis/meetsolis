@@ -460,6 +460,8 @@ export interface Session {
   source: SessionSource;
   /** Story 6.2b — links a bot session to its recall_sessions row. */
   recall_session_id: string | null;
+  /** Story 7.7 — AI-classified tags (1–2 of: breakthrough, stuck, milestone, goal-setting). */
+  tags: string[];
   created_at: string;
   updated_at: string;
   action_items?: { id: string; status: string }[];

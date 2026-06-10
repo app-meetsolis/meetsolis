@@ -8,29 +8,35 @@
 
 'use client';
 
-import {
-  ChangeEvent,
-  FocusEvent,
-  KeyboardEvent,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { differenceInDays, formatDistanceToNow, parseISO } from 'date-fns';
-import { Lock, RefreshCw, Sparkles } from 'lucide-react';
+import { Lock, RefreshCw, RotateCcw, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import type {
   AIIntelligenceStrip as Strip,
+  AIIntelligenceStripOverrides,
+  StripField,
   UsageResponse,
 } from '@meetsolis/shared';
+import { ClickToEdit } from './ClickToEdit';
+import { AIIndicator } from './AIIndicator';
 
 interface Props {
   clientId: string;
   strip: Strip | null;
   coachNotes: string;
   hasSessions: boolean;
+  /** Story 7.7 — per-field coach override flags. Missing = treated as {}. */
+  overrides?: AIIntelligenceStripOverrides;
+}
+
+interface StripPatch {
+  recurring_theme?: string;
+  theme_frequency?: string;
+  recent_breakthrough?: string;
+  current_focus?: string;
+  clear_overrides?: StripField[];
 }
 
 function formatGeneratedAt(iso: string | undefined | null): string {
@@ -62,6 +68,7 @@ export function AIIntelligenceStrip({
   strip,
   coachNotes,
   hasSessions,
+  overrides = {},
 }: Props) {
   const queryClient = useQueryClient();
 
@@ -110,7 +117,7 @@ export function AIIntelligenceStrip({
   }, [strip, hasSessions, refreshMutation]);
 
   const updateStripMutation = useMutation({
-    mutationFn: async (patch: Partial<Strip>) => {
+    mutationFn: async (patch: StripPatch) => {
       const r = await fetch(`/api/clients/${clientId}/intelligence-strip`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -122,12 +129,18 @@ export function AIIntelligenceStrip({
       }
       return (await r.json()).strip as Strip;
     },
-    onSuccess: () => {
-      toast.success('Updated.');
+    onSuccess: (_data, vars) => {
+      const wasClear = (vars.clear_overrides?.length ?? 0) > 0;
+      toast.success(
+        wasClear ? 'Reset — AI will rewrite next time.' : 'Updated.'
+      );
       queryClient.invalidateQueries({ queryKey: ['client', clientId] });
     },
     onError: (err: Error) => toast.error(err.message),
   });
+
+  const clearOverride = (field: StripField) =>
+    updateStripMutation.mutate({ clear_overrides: [field] });
 
   const updateNotesMutation = useMutation({
     mutationFn: async (coach_notes: string) => {
@@ -224,22 +237,28 @@ export function AIIntelligenceStrip({
       <div className="space-y-4">
         <ThemeRow
           strip={strip}
+          isOverridden={overrides.recurring_theme === true}
           onSave={value =>
             updateStripMutation.mutate({ recurring_theme: value })
           }
+          onClearOverride={() => clearOverride('recurring_theme')}
         />
         <EditableStripField
           label="Recent breakthrough"
           value={strip.recent_breakthrough}
+          isOverridden={overrides.recent_breakthrough === true}
           onSave={value =>
             updateStripMutation.mutate({ recent_breakthrough: value })
           }
+          onClearOverride={() => clearOverride('recent_breakthrough')}
           isSaving={updateStripMutation.isPending}
         />
         <EditableStripField
           label="Current focus"
           value={strip.current_focus}
+          isOverridden={overrides.current_focus === true}
           onSave={value => updateStripMutation.mutate({ current_focus: value })}
+          onClearOverride={() => clearOverride('current_focus')}
           isSaving={updateStripMutation.isPending}
         />
         <CoachNotesField
@@ -254,10 +273,14 @@ export function AIIntelligenceStrip({
 
 function ThemeRow({
   strip,
+  isOverridden,
   onSave,
+  onClearOverride,
 }: {
   strip: Strip;
+  isOverridden: boolean;
   onSave: (value: string) => void;
+  onClearOverride: () => void;
 }) {
   return (
     <div>
@@ -268,6 +291,10 @@ function ThemeRow({
             {strip.theme_frequency}
           </span>
         )}
+        <RowIndicators
+          isOverridden={isOverridden}
+          onClearOverride={onClearOverride}
+        />
       </div>
       <ClickToEdit
         value={strip.recurring_theme}
@@ -281,18 +308,26 @@ function ThemeRow({
 function EditableStripField({
   label,
   value,
+  isOverridden,
   onSave,
+  onClearOverride,
   isSaving,
 }: {
   label: string;
   value: string;
+  isOverridden: boolean;
   onSave: (value: string) => void;
+  onClearOverride: () => void;
   isSaving: boolean;
 }) {
   return (
     <div>
-      <div className="text-[11px] uppercase tracking-wider text-foreground/40 mb-1">
-        {label}
+      <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-foreground/40 mb-1">
+        <span>{label}</span>
+        <RowIndicators
+          isOverridden={isOverridden}
+          onClearOverride={onClearOverride}
+        />
       </div>
       <ClickToEdit value={value} onSave={onSave} ariaLabel={label} />
       {isSaving && (
@@ -300,6 +335,34 @@ function EditableStripField({
       )}
     </div>
   );
+}
+
+function RowIndicators({
+  isOverridden,
+  onClearOverride,
+}: {
+  isOverridden: boolean;
+  onClearOverride: () => void;
+}) {
+  if (isOverridden) {
+    return (
+      <>
+        <span className="inline-flex items-center rounded-full bg-foreground/8 px-2 py-0.5 text-[10px] font-medium text-foreground/60 normal-case tracking-normal">
+          Coach edited
+        </span>
+        <button
+          type="button"
+          onClick={onClearOverride}
+          title="Regenerate this field from AI on next refresh"
+          className="inline-flex items-center gap-0.5 text-[10px] text-primary/70 hover:text-primary normal-case tracking-normal"
+        >
+          <RotateCcw className="h-3 w-3" />
+          Regenerate
+        </button>
+      </>
+    );
+  }
+  return <AIIndicator />;
 }
 
 function CoachNotesField({
@@ -369,102 +432,4 @@ function RefreshButton({
       {isPending ? 'Refreshing…' : 'Refresh insights'}
     </button>
   );
-}
-
-function ClickToEdit({
-  value,
-  onSave,
-  multiline,
-  ariaLabel,
-  placeholder,
-}: {
-  value: string;
-  onSave: (value: string) => void;
-  multiline?: boolean;
-  ariaLabel: string;
-  placeholder?: string;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value);
-  const inputRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    if (!editing) setDraft(value);
-  }, [value, editing]);
-
-  useEffect(() => {
-    if (editing && inputRef.current) {
-      inputRef.current.focus();
-      try {
-        const len = inputRef.current.value.length;
-        inputRef.current.setSelectionRange(len, len);
-      } catch {
-        // Some browsers throw on setSelectionRange for non-text inputs; ignore.
-      }
-    }
-  }, [editing]);
-
-  const commit = () => {
-    setEditing(false);
-    const trimmed = draft.trim();
-    if (trimmed !== value.trim()) onSave(trimmed);
-  };
-
-  const cancel = () => {
-    setDraft(value);
-    setEditing(false);
-  };
-
-  const handleKey = (
-    e: KeyboardEvent<HTMLTextAreaElement | HTMLInputElement>
-  ) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      cancel();
-      return;
-    }
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      commit();
-    }
-  };
-
-  if (!editing) {
-    const trimmed = value?.trim() ?? '';
-    const isPlaceholder = !trimmed;
-    const isBuilding = trimmed === 'Building...';
-    const display = isPlaceholder ? (placeholder ?? 'Click to add…') : value;
-    const tone =
-      isPlaceholder || isBuilding
-        ? 'italic text-foreground/35'
-        : 'text-foreground/85';
-    return (
-      <button
-        type="button"
-        onClick={() => setEditing(true)}
-        aria-label={`Edit ${ariaLabel}`}
-        className={`block w-full text-left text-[13px] leading-relaxed transition-colors py-1 px-2 -mx-2 rounded-md hover:text-foreground hover:ring-1 hover:ring-primary/20 hover:bg-primary/[0.03] ${tone}`}
-      >
-        {display}
-      </button>
-    );
-  }
-
-  const sharedProps = {
-    ref: inputRef as never,
-    value: draft,
-    onChange: (e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) =>
-      setDraft(e.target.value),
-    onBlur: (_e: FocusEvent<HTMLTextAreaElement | HTMLInputElement>) =>
-      commit(),
-    onKeyDown: handleKey,
-    'aria-label': ariaLabel,
-    className:
-      'w-full bg-background border border-primary/30 rounded-md px-2 py-1 text-[13px] text-foreground focus:outline-none focus:border-primary',
-  };
-
-  if (multiline) {
-    return <textarea {...sharedProps} rows={3} />;
-  }
-  return <input type="text" {...sharedProps} />;
 }
