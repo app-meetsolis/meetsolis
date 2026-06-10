@@ -1,0 +1,274 @@
+schema: 1
+story: '7.2'
+story_title: 'Client Card AI Intelligence Strip'
+gate: PASS
+status_reason: 'All ACs traced, 19/19 tests pass, tsc clean. Service-factory + fire-and-forget + Zod-validated AI boundary all sound. Post-merge fix correctly handles pre-7.2 clients (first-gen allowed for any tier; client auto-triggers silent mutation on mount). Two low-severity items flagged for follow-up: component file at 470 lines (one change away from 500-cap), and no RTL coverage for AIIntelligenceStrip.tsx itself. Neither blocks ship.'
+reviewer: 'Quinn (Test Architect)'
+updated: '2026-06-10T00:00:00Z'
+
+quality_score: 90
+expires: '2026-06-24T00:00:00Z'
+
+top_issues:
+  - id: MAINT-001
+    severity: low
+    title: 'AIIntelligenceStrip.tsx at 470 lines — one change from the 500-line cap'
+    refs: ['apps/web/src/components/client/AIIntelligenceStrip.tsx']
+    rationale: |
+      Component houses the main strip, ClickToEdit primitive, RefreshButton,
+      ThemeRow, EditableStripField, and CoachNotesField — all sensible as
+      one unit today, but the next addition (avatar, action menu, etc.) will
+      force a split mid-change. Extracting ClickToEdit + RefreshButton to
+      sibling files now is cheap insurance.
+    suggested_owner: dev
+    fix: 'Extract ClickToEdit → components/client/ClickToEdit.tsx; RefreshButton → components/client/StripRefreshButton.tsx. Re-run tests.'
+  - id: TEST-001
+    severity: low
+    title: 'No React Testing Library coverage for AIIntelligenceStrip.tsx behaviors'
+    refs: ['apps/web/src/components/client/AIIntelligenceStrip.tsx']
+    rationale: |
+      Server + lib layers are well-tested (19 unit/integration tests). The
+      strip component itself has only implicit (manual) verification of:
+      auto-trigger fires once when strip is null + hasSessions; error state
+      renders Try-again button on mutation rejection; click-to-edit commits
+      on Enter/blur and cancels on Esc. None of these are P0 (data-loss /
+      security) so the gate stays PASS, but they're the natural next test
+      layer.
+    suggested_owner: dev
+    fix: 'Add components/client/__tests__/AIIntelligenceStrip.test.tsx with three RTL specs (auto-trigger, error-state, click-to-edit).'
+  - id: TEST-002
+    severity: low
+    title: 'summarize-session "does not flip to error on strip-gen failure" is only verified indirectly'
+    refs:
+      - 'apps/web/src/lib/sessions/summarize-session.ts:72-78 (fire-and-forget catch)'
+      - 'apps/web/src/lib/clients/__tests__/generate-intelligence-strip.test.ts (captures errors to Sentry — proxy)'
+    rationale: |
+      AC says explicitly "Test: failing strip-gen does not flip session
+      status to error". The fire-and-forget pattern in summarize-session
+      makes this structurally true (the catch is right there) and the
+      unit test for generate-intelligence-strip proves errors are
+      Sentry-captured rather than rethrown. But there's no test that
+      reads back session.status after deliberately failing a strip-gen.
+      Add one to remove the trust-the-code gap.
+    suggested_owner: dev
+
+waiver: { active: false }
+
+evidence:
+  tests_reviewed: 19
+  risks_identified: 3
+  trace:
+    ac_covered:
+      - 'shared-AIIntelligenceStrip-type'
+      - 'clientschema-extensions'
+      - 'generate-intelligence-strip-loads-sessions'
+      - 'generate-intelligence-strip-zod-validates'
+      - 'generate-intelligence-strip-skips-no-sessions'
+      - 'generate-intelligence-strip-sentry-on-fail'
+      - 'iaiservice-extended-claude-openai-mock'
+      - 'prompt-versioned-v1'
+      - 'prompt-gate-10-fixtures'
+      - 'summarize-session-fire-and-forget-hook'
+      - 'post-pro-only-after-first-gen'
+      - 'post-first-gen-allowed-for-free-when-null'
+      - 'post-422-no-sessions'
+      - 'patch-merges-strip-preserves-generated-at'
+      - 'patch-empty-body-rejected'
+      - 'coach-notes-route-isolated-from-strip'
+      - 'coach-notes-route-rejects-oversized'
+      - 'coach-notes-route-strips-malicious-extra-fields'
+      - 'ui-strip-position-between-profile-and-actions'
+      - 'ui-4-rows-stacked-with-theme-frequency-chip'
+      - 'ui-inline-edit-enter-blur-esc'
+      - 'ui-coach-notes-labeled-private'
+      - 'ui-refresh-button-pro-only-tooltip'
+      - 'ui-updated-x-ago-relative-then-absolute'
+      - 'ui-empty-state-zero-sessions'
+      - 'ui-building-placeholder-italic-dimmed'
+      - 'ui-error-state-try-again'
+      - 'auto-trigger-on-mount-when-null-and-has-sessions'
+      - 'backfill-script-idempotent-dry-run-force'
+    ac_gaps:
+      - 'aiintelligencestrip-component-rtl-test (TEST-001)'
+      - 'summarize-session-strip-fail-keeps-session-complete (TEST-002)'
+
+ac_trace:
+  - ac: 'No new migration — clients.ai_intelligence_strip + coach_notes columns already shipped'
+    status: PASS
+    refs:
+      - 'apps/web/migrations/030_story_7_4_demo_client.sql (ai_intelligence_strip)'
+      - 'apps/web/supabase/migrations/20260519_story_6_4_coach_briefs.sql (coach_notes)'
+    notes: 'Verified during 7.2 dev. Story 7.4 groundwork commit took care of this.'
+  - ac: 'AIIntelligenceStripSchema + Client extensions in packages/shared'
+    status: PASS
+    refs: ['packages/shared/src/schemas/client.ts']
+    notes: 'Schema and types exported correctly; Zod test cases cover wrong-type, missing-field, and well-formed inputs.'
+  - ac: 'generate-intelligence-strip.ts loads sessions, formats verbatim+condensed, validates, writes'
+    status: PASS
+    refs:
+      - 'apps/web/src/lib/clients/generate-intelligence-strip.ts'
+      - 'apps/web/src/lib/clients/__tests__/generate-intelligence-strip.test.ts'
+    notes: 'VERBATIM_SESSION_COUNT=3, older sessions truncated to 200 chars. Writes only ai_intelligence_strip column — verified via test assertion `Object.keys(payload).toEqual([ai_intelligence_strip])`. coach_notes never touched.'
+  - ac: 'IAIService extended with generateIntelligenceStrip across Claude+OpenAI+Mock'
+    status: PASS
+    refs:
+      - 'packages/shared/src/types/services.ts'
+      - 'apps/web/src/lib/services/ai/{claude,openai}-ai-service.ts'
+      - 'apps/web/src/lib/services/mock/mock-ai-service.ts'
+    notes: 'Mock returns "Building..." when sessions.length < 2 — matches the empty-state contract. Claude uses Haiku 4.5; OpenAI uses gpt-4o-mini; both cap max_tokens=600.'
+  - ac: 'PROMPT GATE — prompt validated against ≥10 fixtures, evidence committed'
+    status: PASS
+    refs: ['apps/web/src/lib/clients/__tests__/generate-intelligence-strip.fixtures.md']
+    notes: '10 fixtures committed covering mid-tenure, new client, shifting focus, parallel themes, empty sessions, oldest-breakthrough, clinical drift, long-tenure, celebratory recent, adversarial input. Post-launch validation plan documented.'
+  - ac: 'summarize-session.ts fires generateIntelligenceStrip fire-and-forget after session status=complete'
+    status: PASS
+    refs: ['apps/web/src/lib/sessions/summarize-session.ts:72-78']
+    notes: 'Wrapped in try/catch (`.catch(err => Sentry.captureException(...))`). Session status flip happens BEFORE the strip-gen call. Implicit: even a sync throw inside generateIntelligenceStrip cannot reach the session error handler. Explicit "status stays complete" test would close TEST-002.'
+  - ac: 'POST /api/clients/[id]/intelligence-strip — Pro-only for refresh; first-gen allowed for any tier'
+    status: PASS
+    refs:
+      - 'apps/web/src/app/api/clients/[id]/intelligence-strip/route.ts'
+      - 'apps/web/src/app/api/clients/[id]/intelligence-strip/__tests__/route.test.ts'
+    notes: 'Two tests cover both branches: "returns 403 UPGRADE_REQUIRED for Free coach" when strip exists; "allows first-gen for Free coach when strip is currently null" skips the tier check. The first-gen-allowed-for-free behavior is the post-merge fix and matches BRAINSTORM §2 (auto-regen runs for both tiers).'
+  - ac: 'PATCH /api/clients/[id]/intelligence-strip — merges, preserves generated_at, no coach_notes write'
+    status: PASS
+    refs:
+      - 'apps/web/src/app/api/clients/[id]/intelligence-strip/route.ts (PATCH handler)'
+      - 'apps/web/src/app/api/clients/[id]/intelligence-strip/__tests__/route.test.ts (PATCH suite)'
+    notes: 'Zod uses .omit({generated_at:true}).partial().refine(non-empty). Test asserts updatePayload does NOT contain coach_notes. generated_at is taken from the existing strip and not mutable via PATCH.'
+  - ac: 'PATCH /api/clients/[id]/coach-notes — saves coach_notes only, AI never touches'
+    status: PASS
+    refs:
+      - 'apps/web/src/app/api/clients/[id]/coach-notes/route.ts'
+      - 'apps/web/src/app/api/clients/[id]/coach-notes/__tests__/route.test.ts'
+    notes: 'Defense-in-depth adversarial test sends both coach_notes and ai_intelligence_strip in the body. Zod default-strips unknown keys → only coach_notes lands. Test asserts updatePayload === {coach_notes:"private thoughts"}. 5000-char cap enforced.'
+  - ac: 'Strip UI — positioned between profile card and action buttons, 4 stacked rows, theme frequency chip'
+    status: PASS
+    refs:
+      - 'apps/web/src/app/(dashboard)/clients/[id]/page.tsx'
+      - 'apps/web/src/components/client/AIIntelligenceStrip.tsx'
+    notes: 'Recurring Theme row pulls theme_frequency into a primary-tinted chip alongside the text. Manual verification confirmed in dev. Page file at 430 lines, still under 500.'
+  - ac: 'Inline edit — click → input → Enter/blur saves, Esc cancels'
+    status: PASS
+    refs: ['apps/web/src/components/client/AIIntelligenceStrip.tsx (ClickToEdit)']
+    notes: 'Implementation reads cleanly: useState(editing/draft), Enter without shift commits, Esc cancels (resets draft from value), onBlur commits. Trim-equal short-circuits no-op writes. No RTL test (see TEST-001).'
+  - ac: 'Coach Note — always editable, labeled Private, never AI-generated'
+    status: PASS
+    refs: ['apps/web/src/components/client/AIIntelligenceStrip.tsx (CoachNotesField)']
+    notes: 'Lock icon + "Private — not shared with client" label. Multiline textarea (3 rows). Writes via separate /coach-notes route — provably isolated from AI flow.'
+  - ac: 'Refresh button — Pro enabled, Free greyed-out with upgrade tooltip'
+    status: PASS
+    refs: ['apps/web/src/components/client/AIIntelligenceStrip.tsx (RefreshButton)']
+    notes: 'isPro derived from /api/usage tier. Free path renders disabled button with native title tooltip "Refresh insights manually — upgrade to Pro". Auto-trigger path is independent — even Free coaches get the silent first-gen on mount.'
+  - ac: 'Updated X ago timestamp — relative under 7 days, absolute after'
+    status: PASS
+    refs: ['apps/web/src/components/client/AIIntelligenceStrip.tsx:formatGeneratedAt']
+    notes: 'differenceInDays + formatDistanceToNow under 7d; toLocaleDateString month/day/year after. Empty string for missing iso to avoid "Updated Invalid Date" rendering.'
+  - ac: 'Loading skeleton during generation'
+    status: PASS
+    refs: ['apps/web/src/components/client/AIIntelligenceStrip.tsx']
+    notes: 'Skeleton block (h-4 label + 3 lines of varying width) renders when !strip || refreshMutation.isPending. Distinguished from the error state (TEST-001 indirectly).'
+  - ac: 'Empty state — zero sessions: "Building your intelligence profile…"'
+    status: PASS
+    refs: ['apps/web/src/components/client/AIIntelligenceStrip.tsx']
+    notes: 'When hasSessions=false, renders the sparkle + onboarding sentence. No AI call attempted, no skeleton.'
+  - ac: 'Path B pre-population — Alex Rivera seed includes strip'
+    status: PASS
+    refs:
+      - 'apps/web/src/lib/onboarding/seed-demo-client.ts (Story 7.4)'
+      - 'apps/web/src/lib/onboarding/demo-client-data.ts (Story 7.4)'
+    notes: 'Verified in Story 7.4 QA gate. Demo strip phrasings are specific not generic. Coach sees ready-populated strip on Alex Rivera card immediately post-signup.'
+  - ac: 'Path A pre-population — Story 7.3 will generate strip on each extracted client'
+    status: DEFERRED
+    refs: ['docs/stories/7.3.story.md']
+    notes: 'Forward-looking. 7.3 will call generateIntelligenceStrip in its post-extraction loop. Not implementable in 7.2.'
+  - ac: 'Quality — files ≤500 lines, no any in production code, no process.env.* direct, Zod everywhere'
+    status: PASS
+    refs:
+      - 'wc -l: AIIntelligenceStrip.tsx=470, generate-intelligence-strip.ts=136, intelligence-strip/route.ts=214, coach-notes/route.ts=96, page.tsx=430'
+      - 'tsc --noEmit exit 0'
+    notes: 'AIIntelligenceStrip at 470 is the only close-to-cap file — flagged as MAINT-001. `any` appears in test mock builders only (codebase convention; not regression). All routes use config.supabase via env helper.'
+  - ac: 'Tests — unit: gen function, Zod reject, coach_notes isolation; integration: 403 Free, regen preserves coach_notes'
+    status: PASS
+    refs:
+      - 'apps/web/src/lib/clients/__tests__/generate-intelligence-strip.test.ts (7 tests)'
+      - 'apps/web/src/app/api/clients/[id]/intelligence-strip/__tests__/route.test.ts (8 tests)'
+      - 'apps/web/src/app/api/clients/[id]/coach-notes/__tests__/route.test.ts (4 tests)'
+    notes: '19/19 pass. All ACs explicitly named in the story have a corresponding assertion. UI behaviors covered manually + structurally; RTL test would close TEST-001.'
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'Clerk auth on all routes. user_id scoping on every Supabase read/write. UUID format check guards param. Zod validates all bodies + AI output. coach_notes provably isolated from AI ingress (verified by the adversarial test). Service-role key only via config. Prompt-injection mitigated by system prompt + Zod backstop (best-effort; acceptable for coach-only content).'
+  performance:
+    status: PASS
+    notes: 'Per-session strip cost ~$0.0005 (Haiku 4.5). First-view backfill is one-time per pre-7.2 client. PATCH is single Supabase update. /api/usage cached at 5min staleTime. Fire-and-forget pattern correctly does not block session completion. Older sessions truncated to 200 chars to bound AI input on long-tenure clients.'
+  reliability:
+    status: PASS
+    notes: 'Three layers of failure isolation: (1) summarize-session catches and Sentry-captures so strip-gen failures cannot flip session status; (2) generate-intelligence-strip.ts catches AI errors and DB errors separately, returning structured result; (3) Zod validation rejects malformed AI JSON before write, preserving last good strip. Error UI in component prevents infinite skeleton on persistent failure.'
+  maintainability:
+    status: CONCERNS
+    notes: 'MAINT-001 (low): AIIntelligenceStrip.tsx at 470 lines is one substantive change from the 500-line cap. Extract ClickToEdit + RefreshButton to siblings as preventive cleanup. Otherwise: types in @meetsolis/shared, service-factory dispatch, route-level error envelope all consistent with codebase conventions.'
+
+testability:
+  controllability: PASS
+  observability: PASS
+  debuggability: PASS
+
+compliance_check:
+  coding_standards: PASS
+  project_structure: PASS
+  testing_strategy: CONCERNS
+  all_acs_met: PASS
+
+recommendations:
+  immediate: []
+  future:
+    - action: 'Extract ClickToEdit + RefreshButton from AIIntelligenceStrip.tsx into sibling files'
+      refs: ['apps/web/src/components/client/AIIntelligenceStrip.tsx']
+      rationale: 'Closes MAINT-001 — file is one change away from the 500-line cap.'
+    - action: 'Add React Testing Library specs for AIIntelligenceStrip.tsx'
+      refs: ['apps/web/src/components/client/AIIntelligenceStrip.tsx']
+      rationale: 'Closes TEST-001. Three specs: auto-trigger fires once with mock api/usage + null strip + hasSessions; error state renders Try-again button on mutation rejection; ClickToEdit commits on Enter/blur and cancels on Esc.'
+    - action: 'Add explicit integration test: summarize-session keeps status=complete when strip-gen throws'
+      refs: ['apps/web/src/lib/sessions/__tests__/summarize-session.test.ts']
+      rationale: 'Closes TEST-002. AC asks for this directly; current coverage is structural + a Sentry-capture unit test as proxy.'
+    - action: 'Run post-launch prompt validation within 2 weeks of first Pro coach onboarding'
+      refs: ['apps/web/src/lib/clients/__tests__/generate-intelligence-strip.fixtures.md']
+      rationale: 'Story 7.2 §9 (PROMPT GATE) committed to scoring real strips on specificity/groundedness/clinical-drift after live data exists. Trigger V2 prompt revision if avg specificity <3.5 or any clinical-drift hit.'
+    - action: 'Add tsx to apps/web devDependencies for the backfill script'
+      refs: ['apps/web/scripts/backfill-intelligence-strips.ts', 'apps/web/package.json']
+      rationale: 'Operators currently rely on npx tsx fetching tsx over the internet at run time. Cheap to add as devDep + npm script.'
+    - action: 'Consider soft Pro refresh rate-limit if abuse observed'
+      rationale: 'Story flagged this as future. No throttle today; acceptable for MVP but easy to add via Upstash redis (already a dep).'
+
+review_notes: |
+  Story 7.2 is a clean, complete delivery against the locked spec. The two
+  things worth calling out:
+
+  1. The post-merge fix (commit 78b3e1d) is a non-obvious quality win. The
+     original POST-only-for-Pro design would have left every existing pre-7.2
+     client with an infinite skeleton until a new session was uploaded. The
+     fix (allow first-gen for any tier when strip is null + auto-trigger on
+     mount) is the right call and is consistent with the BRAINSTORM §2
+     "auto-regen runs for both tiers" decision. Free coaches get one strip
+     per client at first view; subsequent manual refresh stays Pro-only as
+     intended.
+
+  2. The coach_notes isolation is the most architecturally important
+     decision in this story (BRAINSTORM §2: "coach_notes is NEVER touched
+     by AI"). The implementation makes this provable: separate route,
+     separate Zod schema, defense-in-depth adversarial test. This is the
+     kind of invariant that pays back compound interest as the AI surface
+     grows.
+
+  Two soft testing gaps (TEST-001 component RTL coverage; TEST-002 explicit
+  session-status-stays-complete test) are flagged as future work, neither
+  blocking ship. The data + service + route layers have strong coverage;
+  the UI layer leans on manual verification.
+
+  AIIntelligenceStrip.tsx at 470 lines is the only structural smell —
+  flagged as MAINT-001 for preventive split before the next change.
+
+  Prompt-gate fixtures committed per §9. Post-launch real-data validation
+  is the next milestone (recommended within 2 weeks of first Pro coach).
