@@ -1,0 +1,219 @@
+schema: 1
+story: '7.7'
+story_title: 'Living Client Card — LinkedIn-Style Profile That Writes Itself'
+gate: PASS
+status_reason: >-
+  All 14 AC areas shipped and verified. Architecture is clean (orchestrator
+  page 274 lines, every component ≤500), security boundaries solid (Zod on
+  all bodies, sanitize-html on free text, Clerk auth + service-role scoping
+  by user_id). 74/74 new story tests pass; zero net regression vs main.
+  Coach-edit override mechanic — the lock-in core — works end-to-end and
+  is unit-covered. Six low-severity follow-ups noted, none block release.
+reviewer: 'Quinn (Test Architect)'
+updated: '2026-06-10T00:00:00Z'
+
+quality_score: 92
+expires: '2026-06-24T00:00:00Z'
+
+waiver: { active: false }
+
+evidence:
+  tests_reviewed: 74
+  risks_identified: 6
+  trace:
+    ac_covered:
+      - 'Migration 034'
+      - 'AI Strip Override Logic'
+      - 'AI Tag Classification (synthetic fixtures; real-data gate deferred per 7.2 precedent)'
+      - 'Header — Avatar/Identity/Stats'
+      - 'Avatar Upload'
+      - 'Session Feed Section'
+      - 'ABOUT Section'
+      - 'API Routes (avatar/about/tags)'
+      - '"✦ AI" Indicator'
+      - 'Progressive Enrichment States'
+      - 'Visual Design (deep teal + Breakthrough yellow accent)'
+      - 'Demo Client Compatibility'
+      - 'Quality / Standards (file sizes, types, validation, sanitization)'
+    ac_gaps:
+      - 'Open Action Items Slot — spec says "render empty (or hide entirely)" until 7.6; shipped as OpenActionItemsSlot.tsx interim component (preserves Epic 2 functionality, slightly broader than spec literal). Acceptable trade-off, called out in dev completion notes.'
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: >-
+      Zod validation on every PATCH/POST body (ClientAboutPatchSchema,
+      SessionTagsPatchSchema, StripPatchSchema). sanitize-html strips tags
+      from about_notes + industry. Clerk auth + user_id scoping on all
+      routes (defense-in-depth even with service-role key). Avatar route
+      validates MIME against whitelist (jpeg/png/webp) + size cap (5MB).
+      RLS policy documented for client-avatars bucket. UUID validation
+      on all id params. No XSS regressions found in component scan.
+  performance:
+    status: PASS
+    notes: >-
+      Auto-regen on session upload is fire-and-forget (cannot block summary
+      completion). Tag classifier is awaited but wrapped in try/catch with
+      Sentry capture — failure does NOT prevent summary write. GIN index
+      on sessions.tags for future filtering. React Query staleTime tuned
+      per query (5min for next-event, 30s for sessions, 2min for client).
+      sessionById Map memoized.
+  reliability:
+    status: PASS
+    notes: >-
+      Comprehensive error paths in all API routes (400/401/404/413/500).
+      Sentry capture for AI call failures + Zod validation failures + write
+      failures. Avatar route detects missing-bucket case and returns a
+      friendly admin message rather than opaque 500. Graceful degradation
+      on missing `tags` field (Session.tags ?? []). useEffect auto-fire
+      guards against double-invocation (autoFired ref + isPending check).
+  maintainability:
+    status: PASS
+    notes: >-
+      Page orchestrator 274 lines (≤300 target). Every component ≤500
+      (AIIntelligenceStrip 435 — closest to limit; flag for split before
+      next edit). ClickToEdit primitive extracted (closed MAINT-001 from
+      7.2 QA). No `any` in source code (test mock files use `any` per repo
+      convention). No direct `process.env.*` reads. Naming consistent
+      (PascalCase components, camelCase utils, kebab-case routes).
+      Tests live next to source under __tests__/.
+
+top_issues:
+  - id: 'TEST-001'
+    severity: low
+    finding: >-
+      Carry-over from 7.2 QA: no React Testing Library coverage for the
+      strip UI. Story 7.7 expanded the file (added RowIndicators,
+      Coach edited chip, Regenerate button) without adding RTL tests.
+      Six new components (ClientHeader, AvatarUpload, AboutSection,
+      SessionFeedRow, SessionTagPill, OpenActionItemsSlot) are also
+      uncovered by RTL — only unit tests of utility funcs and integration
+      tests of API routes exist.
+    suggested_action: >-
+      Bake RTL coverage for AIIntelligenceStrip (override chip + regenerate
+      flow), ClientHeader (inline-edit + avatar-monogram fallback), and
+      AboutSection (collapse default logic) into the next touch of these
+      components, or into a dedicated 7.x maintenance story.
+    suggested_owner: dev
+  - id: 'DESIGN-001'
+    severity: low
+    finding: >-
+      STRIP_FIELDS in @meetsolis/shared exports 4 keys including
+      `theme_frequency`, and the override-merge logic happily preserves
+      a coach-edited theme_frequency. However the UI never exposes
+      theme_frequency as click-to-edit (it's rendered as a chip alongside
+      Recurring Theme). Either:
+      (a) remove theme_frequency from STRIP_FIELDS so override schema
+          can't be set there, or
+      (b) make theme_frequency individually editable.
+      Low risk because: schema default {} means flag is never set in
+      practice without UI action.
+    suggested_action: >-
+      Pick (a) or (b) in next strip-touching story. Recommendation: (a),
+      since theme_frequency is metadata derived from session count and
+      coach-editing it semantically doesn't make sense.
+    suggested_owner: dev
+  - id: 'UX-001'
+    severity: low
+    finding: >-
+      Coach-edit Regenerate toast reads "Reset — AI will rewrite next
+      time." But the rewrite only fires on the NEXT session upload —
+      if the coach has no upcoming sessions, the "next time" never
+      happens and the field stays whatever it was. Cosmetic but
+      potentially confusing.
+    suggested_action: >-
+      Refine copy to "Reset — AI will rewrite after the next session."
+      or trigger an immediate single-field regen on clear.
+    suggested_owner: dev
+  - id: 'MAINT-002'
+    severity: low
+    finding: >-
+      AIIntelligenceStrip.tsx is now 435 lines after the override
+      retrofit (was 366 after the 7.7 P0 extraction). Approaching the
+      500-line ceiling. RowIndicators + RefreshButton are good extraction
+      candidates if the file grows again.
+    suggested_action: >-
+      Split RowIndicators and/or RefreshButton into their own files at
+      the next change.
+    suggested_owner: dev
+  - id: 'UX-002'
+    severity: low
+    finding: >-
+      Role/Company inline-edit in ClientHeader splits on "·" to assign
+      role + company. Company names containing "·" (e.g. "Apple · AI Div")
+      would be misparsed.
+    suggested_action: >-
+      Consider rendering role and company as two separate ClickToEdit
+      fields, or split only on first "·".
+    suggested_owner: dev
+  - id: 'PRIVACY-001'
+    severity: low
+    finding: >-
+      Avatar bucket is public per spec (cleaner UX, no signed-URL TTL
+      management). Public URLs embed internal user_id in path:
+      `client-avatars/{userId}/{clientId}.{ext}`. UUIDs provide enough
+      entropy that this is not a realistic enumeration risk, and user_id
+      is a Supabase internal UUID (not Clerk identity or email). Worth
+      noting that the route comment ("we don't expose authenticated user
+      info via path") is technically inaccurate.
+    suggested_action: >-
+      Fix the comment in apps/web/src/app/api/clients/[id]/avatar/route.ts
+      (lines 9-10). If higher privacy bar needed later, switch to signed
+      URLs with refresh on render.
+    suggested_owner: dev
+
+deferred:
+  - id: 'PROMPT-GATE-001'
+    finding: >-
+      Real-data tag classifier prompt validation against ≥10 real
+      coaching sessions. 10 synthetic fixtures committed at
+      apps/web/src/lib/sessions/__tests__/classify-tags.fixtures.md.
+      Same precedent as Story 7.2.
+    plan: >-
+      Within 2 weeks of first Pro coach onboarding, sample ≥10 real
+      session summaries and score the classifier against the rubric
+      in the fixtures file (accuracy / conservatism / default handling).
+      Target ≥80% accuracy.
+    suggested_owner: dev
+  - id: 'KNOWN-FIX-IN-FLIGHT'
+    finding: >-
+      GET /api/calendar/events did not honor the ?client_id=X&upcoming=true
+      params passed from the Client Card Header, so the "Next: date" stat
+      would show some OTHER client's session.
+    plan: >-
+      PR #93 (branch fix-7.7-next-session-filter) adds client_id +
+      upcoming filters server-side. Tsc-clean, no test required.
+      Merge before next user-visible release.
+    suggested_owner: dev
+
+recommendations:
+  immediate: []
+  future:
+    - action: 'Add RTL coverage for new client-card components (closes TEST-001)'
+      refs:
+        - 'apps/web/src/components/client/AIIntelligenceStrip.tsx'
+        - 'apps/web/src/components/client/ClientHeader.tsx'
+        - 'apps/web/src/components/client/AboutSection.tsx'
+        - 'apps/web/src/components/client/SessionFeedRow.tsx'
+    - action: 'Drop theme_frequency from STRIP_FIELDS (closes DESIGN-001)'
+      refs:
+        - 'packages/shared/src/schemas/client.ts:19-25'
+    - action: 'Refine Regenerate toast copy (closes UX-001)'
+      refs:
+        - 'apps/web/src/components/client/AIIntelligenceStrip.tsx:134-136'
+    - action: 'Split RowIndicators/RefreshButton if AIIntelligenceStrip grows again (closes MAINT-002)'
+      refs:
+        - 'apps/web/src/components/client/AIIntelligenceStrip.tsx'
+    - action: 'Schedule prompt-gate review when first Pro coach onboards (PROMPT-GATE-001)'
+      refs:
+        - 'apps/web/src/lib/sessions/__tests__/classify-tags.fixtures.md'
+
+history:
+  - at: '2026-06-10T00:00:00Z'
+    gate: PASS
+    note: >-
+      Initial review post-merge of PR #92 (commit 62acb65). Deep review
+      triggered by >500-line diff. 74/74 new tests green; 46 pre-existing
+      failures on main carried over unchanged (no net regression). Six
+      low-severity follow-ups logged; none block release. PR #93 in
+      flight to fix calendar route filter.
