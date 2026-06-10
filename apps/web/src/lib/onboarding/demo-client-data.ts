@@ -46,6 +46,15 @@ export const DEMO_CLIENT_PROFILE = {
   company: 'Northridge Logistics',
   goal: 'Step into executive presence and build a stronger leadership voice with the senior team.',
   email: null as string | null,
+  // Story 7.7 — ABOUT fields prefilled so demo lands on a rich profile
+  industry: 'Technology' as string,
+  company_size: '201-1000' as
+    | 'solo'
+    | '2-10'
+    | '11-50'
+    | '51-200'
+    | '201-1000'
+    | '1000+',
 } as const;
 
 // ---------------------------------------------------------------------------

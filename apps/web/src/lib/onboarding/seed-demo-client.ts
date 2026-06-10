@@ -77,6 +77,9 @@ export async function seedDemoClient(userId: string): Promise<SeedDemoResult> {
       start_date: dates.startDate,
       is_demo: true,
       ai_intelligence_strip: aiStrip,
+      // Story 7.7 — ABOUT-section fields pre-filled
+      industry: DEMO_CLIENT_PROFILE.industry,
+      company_size: DEMO_CLIENT_PROFILE.company_size,
       // last_session_at mirrors the latest session below so the client card
       // shows realistic "last session" copy immediately.
       last_session_at: new Date(`${dates.session4}T12:00:00Z`).toISOString(),
