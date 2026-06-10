@@ -79,6 +79,18 @@ export interface IntelligenceStripFields {
   current_focus: string;
 }
 
+// Story 7.7 — AI session-tag classification input/output. Closed-set tags.
+export interface ClassifySessionTagsInput {
+  summary: string;
+  key_topics: string[];
+}
+
+export interface ClassifySessionTagsResult {
+  // 1-2 of: 'breakthrough', 'stuck', 'milestone', 'goal-setting'.
+  // Validated against SESSION_TAGS by caller — service returns raw model output.
+  tags: string[];
+}
+
 export interface AIService extends ExternalService {
   generateSummary(text: string): Promise<string>;
   analyzeText(text: string): Promise<any>;
@@ -104,6 +116,13 @@ export interface AIService extends ExternalService {
   generateIntelligenceStrip(
     input: IntelligenceStripInput
   ): Promise<IntelligenceStripFields>;
+  /**
+   * Story 7.7 — classify a session into 1–2 of 4 tags.
+   * Returns raw tags array; caller validates against SESSION_TAGS enum.
+   */
+  classifySessionTags(
+    input: ClassifySessionTagsInput
+  ): Promise<ClassifySessionTagsResult>;
 }
 
 export interface TranscriptionResult {

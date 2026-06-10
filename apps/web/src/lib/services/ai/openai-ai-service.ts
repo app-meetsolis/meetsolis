@@ -8,6 +8,8 @@ import {
   ServiceInfo,
   IntelligenceStripInput,
   IntelligenceStripFields,
+  ClassifySessionTagsInput,
+  ClassifySessionTagsResult,
 } from '@meetsolis/shared';
 import { BaseService } from '../base-service';
 import {
@@ -16,11 +18,14 @@ import {
   buildActionItemsPrompt,
   INTELLIGENCE_STRIP_SYSTEM_PROMPT_V1,
   buildIntelligenceStripPrompt,
+  SESSION_TAGS_SYSTEM_PROMPT_V1,
+  buildSessionTagsPrompt,
 } from '../../ai/prompts';
 import {
   parseSummary,
   parseActionItems,
   parseIntelligenceStrip,
+  parseSessionTags,
 } from '../../ai/summarize';
 
 export class OpenAIAIService extends BaseService implements AIService {
@@ -162,6 +167,27 @@ export class OpenAIAIService extends BaseService implements AIService {
     const content = response.choices[0]?.message?.content;
     if (!content) throw new Error('OpenAI returned empty response');
     return parseIntelligenceStrip(content);
+  }
+
+  /**
+   * Story 7.7 — classify session into 1–2 tags. gpt-4o-mini for cost. JSON output.
+   */
+  async classifySessionTags(
+    input: ClassifySessionTagsInput
+  ): Promise<ClassifySessionTagsResult> {
+    const response = await this.client.chat.completions.create({
+      model: 'gpt-4o-mini',
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: SESSION_TAGS_SYSTEM_PROMPT_V1 },
+        { role: 'user', content: buildSessionTagsPrompt(input) },
+      ],
+      temperature: 0.2,
+      max_tokens: 100,
+    });
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error('OpenAI returned empty response');
+    return parseSessionTags(content);
   }
 
   /**

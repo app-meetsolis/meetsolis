@@ -57,9 +57,25 @@ export async function runSummarize(
     );
     const embedding = await aiService.generateEmbedding(summary.summary);
 
+    // Story 7.7 — tag classification. Awaited (1 fewer race, output is small)
+    // but failure does NOT block summary completion — caught + Sentry'd.
+    let tags: string[] = [];
+    try {
+      const result = await aiService.classifySessionTags({
+        summary: summary.summary,
+        key_topics: summary.key_topics,
+      });
+      tags = result.tags;
+    } catch (err) {
+      Sentry.captureException(err, {
+        extra: { sessionId, stage: 'classify_session_tags' },
+      });
+    }
+
     const updates: Record<string, unknown> = {
       summary: summary.summary,
       key_topics: summary.key_topics,
+      tags,
       embedding: JSON.stringify(embedding),
       status: 'complete',
     };

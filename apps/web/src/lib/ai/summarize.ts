@@ -2,6 +2,8 @@ import {
   SessionSummaryResult,
   ActionItemsResult,
   IntelligenceStripFields,
+  ClassifySessionTagsResult,
+  SESSION_TAGS,
 } from '@meetsolis/shared';
 
 function parseJson(raw: string): Record<string, unknown> {
@@ -70,6 +72,33 @@ export function parseActionItems(raw: string): ActionItemsResult {
   });
 
   return { action_items };
+}
+
+/**
+ * Story 7.7 — parse session tag classification JSON.
+ *
+ * AI returns { "tags": [...] }. Filter to closed-set SESSION_TAGS values, dedupe,
+ * cap at 2, fallback to ['goal-setting'] if empty after filtering (conservative
+ * default per prompt spec).
+ */
+export function parseSessionTags(raw: string): ClassifySessionTagsResult {
+  const obj = parseJson(raw);
+  if (!Array.isArray(obj.tags)) {
+    throw new Error('AI tag response missing required field: tags');
+  }
+  const allowed = new Set<string>(SESSION_TAGS);
+  const seen = new Set<string>();
+  const filtered: string[] = [];
+  for (const t of obj.tags as unknown[]) {
+    if (typeof t !== 'string') continue;
+    const tag = t.toLowerCase().trim();
+    if (!allowed.has(tag) || seen.has(tag)) continue;
+    seen.add(tag);
+    filtered.push(tag);
+    if (filtered.length >= 2) break;
+  }
+  const tags = filtered.length ? filtered : ['goal-setting'];
+  return { tags };
 }
 
 /** Story 7.2 — parse intelligence strip JSON. Throws on malformed/missing fields. */

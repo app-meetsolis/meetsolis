@@ -8,6 +8,8 @@ import {
   ServiceInfo,
   IntelligenceStripInput,
   IntelligenceStripFields,
+  ClassifySessionTagsInput,
+  ClassifySessionTagsResult,
 } from '@meetsolis/shared';
 import { BaseService } from '../base-service';
 import {
@@ -16,11 +18,14 @@ import {
   buildActionItemsPrompt,
   INTELLIGENCE_STRIP_SYSTEM_PROMPT_V1,
   buildIntelligenceStripPrompt,
+  SESSION_TAGS_SYSTEM_PROMPT_V1,
+  buildSessionTagsPrompt,
 } from '../../ai/prompts';
 import {
   parseSummary,
   parseActionItems,
   parseIntelligenceStrip,
+  parseSessionTags,
 } from '../../ai/summarize';
 
 export class ClaudeAIService extends BaseService implements AIService {
@@ -176,6 +181,31 @@ export class ClaudeAIService extends BaseService implements AIService {
       throw new Error('Claude returned non-text response');
     }
     return parseIntelligenceStrip(block.text);
+  }
+
+  /**
+   * Story 7.7 — classify session into 1–2 tags. Haiku for cost; JSON output.
+   */
+  async classifySessionTags(
+    input: ClassifySessionTagsInput
+  ): Promise<ClassifySessionTagsResult> {
+    const response = await this.client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 100,
+      system: [
+        {
+          type: 'text',
+          text: SESSION_TAGS_SYSTEM_PROMPT_V1,
+          cache_control: { type: 'ephemeral' },
+        },
+      ],
+      messages: [{ role: 'user', content: buildSessionTagsPrompt(input) }],
+    });
+    const block = response.content[0];
+    if (block.type !== 'text') {
+      throw new Error('Claude returned non-text response');
+    }
+    return parseSessionTags(block.text);
   }
 
   /**
