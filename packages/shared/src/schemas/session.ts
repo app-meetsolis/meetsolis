@@ -1,26 +1,55 @@
 import { z } from 'zod';
 
-export const SessionCreateSchema = z.object({
-  client_id: z.string().uuid(),
-  title: z.string().min(1, 'Title required').max(500).trim(),
-  session_date: z.string(),
-  transcript_text: z.string().max(50000).optional().nullable(),
-  transcript_file_url: z.string().url().optional().nullable(),
-  transcript_audio_url: z.string().url().optional().nullable(),
-  summary: z.string().max(10000).optional().nullable(),
-  key_topics: z.array(z.string()).optional(),
-}).strict();
+/**
+ * Story 7.7 — Session classification tags. Closed set of 4; AI assigns 1–2
+ * at the end of summarize-session pipeline; coach can edit. `Breakthrough` is
+ * rendered with a warm-yellow accent (intentional brand-color exception).
+ */
+export const SESSION_TAGS = [
+  'breakthrough',
+  'stuck',
+  'milestone',
+  'goal-setting',
+] as const;
+export type SessionTag = (typeof SESSION_TAGS)[number];
 
-export const SessionUpdateSchema = z.object({
-  title: z.string().min(1).max(500).trim().optional(),
-  session_date: z.string().optional(),
-  transcript_text: z.string().max(50000).nullable().optional(),
-  transcript_file_url: z.string().url().nullable().optional(),
-  transcript_audio_url: z.string().url().nullable().optional(),
-  summary: z.string().max(10000).nullable().optional(),
-  key_topics: z.array(z.string()).optional(),
-  status: z.enum(['pending', 'processing', 'complete', 'error']).optional(),
-}).strict();
+export const SessionTagSchema = z.enum(SESSION_TAGS);
+
+export const SessionTagsPatchSchema = z
+  .object({
+    tags: z.array(SessionTagSchema).max(2, 'At most 2 tags allowed'),
+  })
+  .strict();
+export type SessionTagsPatch = z.infer<typeof SessionTagsPatchSchema>;
+
+export const SessionCreateSchema = z
+  .object({
+    client_id: z.string().uuid(),
+    title: z.string().min(1, 'Title required').max(500).trim(),
+    session_date: z.string(),
+    transcript_text: z.string().max(50000).optional().nullable(),
+    transcript_file_url: z.string().url().optional().nullable(),
+    transcript_audio_url: z.string().url().optional().nullable(),
+    summary: z.string().max(10000).optional().nullable(),
+    key_topics: z.array(z.string()).optional(),
+  })
+  .strict();
+
+export const SessionUpdateSchema = z
+  .object({
+    title: z.string().min(1).max(500).trim().optional(),
+    session_date: z.string().optional(),
+    transcript_text: z.string().max(50000).nullable().optional(),
+    transcript_file_url: z.string().url().nullable().optional(),
+    transcript_audio_url: z.string().url().nullable().optional(),
+    summary: z.string().max(10000).nullable().optional(),
+    key_topics: z.array(z.string()).optional(),
+    status: z
+      .enum(['pending', 'processing', 'complete', 'error'])
+      .optional(),
+    tags: z.array(SessionTagSchema).max(2).optional(),
+  })
+  .strict();
 
 export type SessionCreateInput = z.infer<typeof SessionCreateSchema>;
 export type SessionUpdateInput = z.infer<typeof SessionUpdateSchema>;
