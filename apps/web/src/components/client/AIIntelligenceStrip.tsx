@@ -11,7 +11,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { differenceInDays, formatDistanceToNow, parseISO } from 'date-fns';
-import { Lock, RefreshCw, RotateCcw, Sparkles } from 'lucide-react';
+import { Lock, RefreshCw, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import type {
   AIIntelligenceStrip as Strip,
@@ -20,7 +20,8 @@ import type {
   UsageResponse,
 } from '@meetsolis/shared';
 import { ClickToEdit } from './ClickToEdit';
-import { AIIndicator } from './AIIndicator';
+import { RowIndicators } from './strip/RowIndicators';
+import { RefreshButton } from './strip/RefreshButton';
 
 interface Props {
   clientId: string;
@@ -33,7 +34,6 @@ interface Props {
 
 interface StripPatch {
   recurring_theme?: string;
-  theme_frequency?: string;
   recent_breakthrough?: string;
   current_focus?: string;
   clear_overrides?: StripField[];
@@ -132,7 +132,9 @@ export function AIIntelligenceStrip({
     onSuccess: (_data, vars) => {
       const wasClear = (vars.clear_overrides?.length ?? 0) > 0;
       toast.success(
-        wasClear ? 'Reset — AI will rewrite next time.' : 'Updated.'
+        wasClear
+          ? 'Reset — AI will rewrite after the next session.'
+          : 'Updated.'
       );
       queryClient.invalidateQueries({ queryKey: ['client', clientId] });
     },
@@ -337,34 +339,6 @@ function EditableStripField({
   );
 }
 
-function RowIndicators({
-  isOverridden,
-  onClearOverride,
-}: {
-  isOverridden: boolean;
-  onClearOverride: () => void;
-}) {
-  if (isOverridden) {
-    return (
-      <>
-        <span className="inline-flex items-center rounded-full bg-foreground/8 px-2 py-0.5 text-[10px] font-medium text-foreground/60 normal-case tracking-normal">
-          Coach edited
-        </span>
-        <button
-          type="button"
-          onClick={onClearOverride}
-          title="Regenerate this field from AI on next refresh"
-          className="inline-flex items-center gap-0.5 text-[10px] text-primary/70 hover:text-primary normal-case tracking-normal"
-        >
-          <RotateCcw className="h-3 w-3" />
-          Regenerate
-        </button>
-      </>
-    );
-  }
-  return <AIIndicator />;
-}
-
 function CoachNotesField({
   value,
   onSave,
@@ -396,40 +370,5 @@ function CoachNotesField({
         <p className="text-[10px] text-foreground/30 mt-1">Saving…</p>
       )}
     </div>
-  );
-}
-
-function RefreshButton({
-  isPro,
-  isPending,
-  onClick,
-}: {
-  isPro: boolean;
-  isPending: boolean;
-  onClick: () => void;
-}) {
-  if (!isPro) {
-    return (
-      <button
-        type="button"
-        title="Refresh insights manually — upgrade to Pro"
-        disabled
-        className="inline-flex items-center gap-1.5 text-[11px] text-foreground/30 cursor-not-allowed"
-      >
-        <RefreshCw className="h-3.5 w-3.5" />
-        Refresh insights
-      </button>
-    );
-  }
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={isPending}
-      className="inline-flex items-center gap-1.5 text-[11px] text-foreground/55 hover:text-foreground transition-colors disabled:opacity-50"
-    >
-      <RefreshCw className={`h-3.5 w-3.5 ${isPending ? 'animate-spin' : ''}`} />
-      {isPending ? 'Refreshing…' : 'Refresh insights'}
-    </button>
   );
 }

@@ -35,13 +35,14 @@ function err(code: string, message: string, status: number) {
   return NextResponse.json({ error: { code, message } }, { status });
 }
 
-// PATCH body: any subset of AI fields (coach edit) OR clear list to drop
-// override flags. NEVER generated_at. At least one of the two MUST be set.
+// PATCH body: any subset of AI-narrative fields (coach edit) OR clear list to
+// drop override flags. NEVER generated_at. NEVER theme_frequency — that's
+// AI-computed metadata, not coach-editable (DESIGN-001). At least one of the
+// two MUST be set.
 const StripFieldEnum = z.enum(STRIP_FIELDS);
 const StripPatchSchema = z
   .object({
     recurring_theme: z.string().optional(),
-    theme_frequency: z.string().optional(),
     recent_breakthrough: z.string().optional(),
     current_focus: z.string().optional(),
     /** Story 7.7. List of fields to drop coach-override (so AI regenerates them next time). */

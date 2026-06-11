@@ -16,9 +16,11 @@ export const AIIntelligenceStripSchema = z.object({
 export type AIIntelligenceStrip = z.infer<typeof AIIntelligenceStripSchema>;
 
 // Story 7.7 — per-field coach-override flags. Coach-edited fields are skipped on AI regen.
+// theme_frequency intentionally excluded — it's AI-computed metadata
+// ("3 of 5 sessions"), not a coach-editable narrative field. The UI does
+// not expose it as inline-editable.
 export const STRIP_FIELDS = [
   'recurring_theme',
-  'theme_frequency',
   'recent_breakthrough',
   'current_focus',
 ] as const;
@@ -27,7 +29,6 @@ export type StripField = (typeof STRIP_FIELDS)[number];
 export const AIIntelligenceStripOverridesSchema = z
   .object({
     recurring_theme: z.boolean().optional(),
-    theme_frequency: z.boolean().optional(),
     recent_breakthrough: z.boolean().optional(),
     current_focus: z.boolean().optional(),
   })
