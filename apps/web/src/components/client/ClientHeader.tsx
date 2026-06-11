@@ -72,9 +72,6 @@ export function ClientHeader({ client, sessionCount, nextSessionAt }: Props) {
     [client.start_date]
   );
 
-  const roleCompany =
-    [client.role, client.company].filter(Boolean).join(' · ') || null;
-
   const nextLabel = nextSessionAt
     ? format(parseISO(nextSessionAt), 'MMM d')
     : '—';
@@ -108,31 +105,24 @@ export function ClientHeader({ client, sessionCount, nextSessionAt }: Props) {
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 mt-1 text-[12px] text-foreground/45">
+          <div className="flex items-center gap-1.5 mt-1 text-[12px] text-foreground/45 flex-wrap">
             <Building2 className="h-3 w-3 shrink-0" />
-            <span className="flex-1 max-w-md">
-              {roleCompany ? (
-                <ClickToEdit
-                  value={roleCompany}
-                  onSave={value => {
-                    // value is "Role · Company"; split first " · " only
-                    const parts = value.split('·').map(p => p.trim());
-                    patchMutation.mutate({
-                      role: parts[0] ?? '',
-                      company: parts.slice(1).join(' · ') ?? '',
-                    });
-                  }}
-                  ariaLabel="Role and company"
-                  placeholder="Add role · company…"
-                />
-              ) : (
-                <ClickToEdit
-                  value=""
-                  onSave={value => patchMutation.mutate({ role: value })}
-                  ariaLabel="Role and company"
-                  placeholder="Add role · company…"
-                />
-              )}
+            <span className="min-w-[80px]">
+              <ClickToEdit
+                value={client.role ?? ''}
+                onSave={value => patchMutation.mutate({ role: value })}
+                ariaLabel="Role"
+                placeholder="Add role…"
+              />
+            </span>
+            <span className="text-foreground/25">·</span>
+            <span className="min-w-[80px]">
+              <ClickToEdit
+                value={client.company ?? ''}
+                onSave={value => patchMutation.mutate({ company: value })}
+                ariaLabel="Company"
+                placeholder="Add company…"
+              />
             </span>
           </div>
 

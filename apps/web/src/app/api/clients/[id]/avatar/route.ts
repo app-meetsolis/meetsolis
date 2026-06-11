@@ -7,7 +7,9 @@
  *
  * The bucket must be created manually in Supabase dashboard:
  *   - name: client-avatars
- *   - public: yes (public URLs; we don't expose authenticated user info via path)
+ *   - public: yes (URLs are guessable but contain UUIDs only — internal
+ *     Supabase user_id + client_id, no Clerk identity / email / name).
+ *     If a higher privacy bar is needed later, switch to signed URLs.
  *   - file size limit: 5 MB
  *   - allowed MIME: image/jpeg, image/png, image/webp
  *
