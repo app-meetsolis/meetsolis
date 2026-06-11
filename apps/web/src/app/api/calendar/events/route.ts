@@ -26,17 +26,27 @@ export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const limitParam = url.searchParams.get('limit');
   const limit = Math.min(Math.max(parseInt(limitParam ?? '5', 10) || 5, 1), 20);
+  // Story 7.7 — optional filters for Client Card "Next session" lookup
+  const clientIdParam = url.searchParams.get('client_id');
+  const upcomingOnly = url.searchParams.get('upcoming') === 'true';
 
   const now = new Date();
   const past = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+  const since = upcomingOnly ? now.toISOString() : past;
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('calendar_events')
     .select(
       'id, google_event_id, title, start_time, end_time, attendees, client_id, meet_link, bot_status, bot_skipped, synced_at, created_at, user_id, clients(name)'
     )
     .eq('user_id', userId)
-    .gte('start_time', past)
+    .gte('start_time', since);
+
+  if (clientIdParam) {
+    query = query.eq('client_id', clientIdParam);
+  }
+
+  const { data, error } = await query
     .order('start_time', { ascending: true })
     .limit(limit);
 
