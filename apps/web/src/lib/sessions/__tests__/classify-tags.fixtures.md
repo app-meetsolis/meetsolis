@@ -80,10 +80,25 @@ Conservative rules:
 
 ## How to validate (post-launch)
 
-1. Pull ≥10 real session summaries (consented coach sessions only)
-2. Run `classifySessionTags` against each
-3. Score:
-   - **Accuracy** — does the AI tag match what a coach would assign? Target ≥80%
-   - **Conservatism** — does it over-assign tags (>2 wrong) or invent enum values? Target 0 invented
-   - **Default handling** — does it fall back to `goal-setting` on unclear sessions? Target yes
-4. If score <80% or any invented tags, iterate on `SESSION_TAGS_SYSTEM_PROMPT_V1` in `apps/web/src/lib/ai/prompts.ts`
+**One command — when ≥10 real sessions exist from a consented Pro coach:**
+
+```bash
+cd apps/web
+npx tsx scripts/validate-session-tags.ts             # 10 most-recent completed sessions
+npx tsx scripts/validate-session-tags.ts --limit=20
+npx tsx scripts/validate-session-tags.ts --user=<uuid>  # scope to one coach
+```
+
+The script:
+
+- Loads N most-recent completed sessions
+- Re-runs each through the live AI service's `classifySessionTags`
+- Prints per-session detail + an aggregate score
+- Flags out-of-enum (invented) tags
+- Exits PASS if accuracy ≥80% AND zero invented tags
+
+If FAIL: iterate `SESSION_TAGS_SYSTEM_PROMPT_V1` in `apps/web/src/lib/ai/prompts.ts`, bump version to `V2` if shipped, re-run script.
+
+**Privacy:** the script reads raw session summaries. Run only with explicit coach consent. Output contains transcript-derived text — do NOT paste into public channels.
+
+**Cost:** ~$0.00005 per classification (Haiku 4.5). 50 sessions ≈ $0.0025.
