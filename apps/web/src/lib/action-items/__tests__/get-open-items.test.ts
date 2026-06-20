@@ -3,10 +3,17 @@ import {
   getOpenItemsAcrossClients,
 } from '../get-open-items';
 
+// Captures the last select() string so tests can assert the PostgREST embed
+// form (guards against DATA-001: an aliased embed that errors on the live DB).
+let lastSelect = '';
+
 // Chainable + awaitable query stub: eq/neq return self, awaiting resolves data.
 function makeQuery(result: { data: unknown; error: unknown }) {
   const q: Record<string, unknown> = {};
-  q.select = () => q;
+  q.select = (s: string) => {
+    lastSelect = s;
+    return q;
+  };
   q.eq = jest.fn(() => q);
   q.neq = jest.fn(() => q);
   q.then = (resolve: (v: unknown) => unknown) => resolve(result);
@@ -43,6 +50,15 @@ describe('getOpenItemsForClient', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockRpc.mockResolvedValue({ data: 3 });
+  });
+
+  it('embeds sessions/clients with the unaliased PostgREST form (DATA-001 guard)', async () => {
+    mockFrom.mockReturnValue(makeQuery({ data: [row()], error: null }));
+    await getOpenItemsForClient('c1');
+    // Aliased `table:column(...)` errors on the live DB; require the bare form.
+    expect(lastSelect).toMatch(/\bsessions\(/);
+    expect(lastSelect).toMatch(/\bclients\(/);
+    expect(lastSelect).not.toMatch(/sessions:session_id|clients:client_id/);
   });
 
   it('maps rows to OpenActionItem with computed open_session_count', async () => {
