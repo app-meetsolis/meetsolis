@@ -28,7 +28,7 @@ import { Button } from '@/components/ui/button';
 import { ClientModal } from '@/components/clients/ClientModal';
 import { ClientHeader } from '@/components/client/ClientHeader';
 import { AIIntelligenceStrip } from '@/components/client/AIIntelligenceStrip';
-import { OpenActionItemsSlot } from '@/components/client/OpenActionItemsSlot';
+import { ClientCardActionItemsSection } from '@/components/client/ClientCardActionItemsSection';
 import { SessionFeed } from '@/components/client/SessionFeed';
 import { AboutSection } from '@/components/client/AboutSection';
 import { LiveTranscriptPanel } from '@/components/sessions/LiveTranscriptPanel';
@@ -224,9 +224,12 @@ export default function ClientDetailPage() {
           nextSessionAt={nextEvent?.start_time ?? null}
         />
 
-        {/* 2. Open Action Items slot — Story 7.6 will own this */}
-        {/* TODO Story 7.6: replace OpenActionItemsSlot with the rich action items section */}
-        <OpenActionItemsSlot actionItems={allItems} sessionById={sessionById} />
+        {/* 2. Open Action Items (Story 7.6) */}
+        <ClientCardActionItemsSection
+          clientId={id}
+          actionItems={allItems}
+          sessionById={sessionById}
+        />
 
         {/* 3. AI Intelligence Strip (Story 7.2) */}
         <AIIntelligenceStrip

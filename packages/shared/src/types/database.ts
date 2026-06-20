@@ -374,7 +374,8 @@ export interface UsageAlertUpdate {
 // =============================================================================
 
 export type ActionItemStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
-export type ActionItemAssignee = 'coach' | 'client';
+// 'unknown' (Story 7.6) — AI could not confidently attribute the commitment.
+export type ActionItemAssignee = 'coach' | 'client' | 'unknown';
 
 export interface ClientActionItem {
   id: string;

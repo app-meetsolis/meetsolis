@@ -20,6 +20,7 @@ import { SessionsList } from '@/components/dashboard/SessionsList';
 import { ActionItemsAccordion } from '@/components/dashboard/ActionItemsAccordion';
 import { SolisFab } from '@/components/dashboard/SolisFab';
 import { UpcomingSessionsCard } from '@/components/dashboard/UpcomingSessionsCard';
+import { OpenActionItemsCard } from '@/components/dashboard/OpenActionItemsCard';
 import { CoachBriefBanner } from '@/components/dashboard/CoachBriefBanner';
 import { LiveTranscriptPanel } from '@/components/dashboard/LiveTranscriptPanel';
 import type {
@@ -185,6 +186,9 @@ export default function DashboardPage() {
 
         {/* Coach Brief banner — Story 6.4 */}
         <CoachBriefBanner />
+
+        {/* Open action items summary across all clients — Story 7.6 */}
+        <OpenActionItemsCard />
 
         {/* Upcoming Sessions — Story 6.1 */}
         <UpcomingSessionsCard />

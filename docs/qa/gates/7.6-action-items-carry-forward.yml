@@ -1,0 +1,80 @@
+schema: 1
+story: '7.6'
+story_title: 'Action Items Carry-Forward + Action Items Everywhere'
+gate: CONCERNS
+status_reason: 'A feature-breaking PostgREST embed bug was found and fixed during review; remaining issues are low-priority test-coverage gaps and a deferred prompt gate. Safe to merge.'
+reviewer: 'Quinn (Test Architect)'
+updated: '2026-06-20T00:00:00Z'
+
+waiver: { active: false }
+
+quality_score: 85
+expires: '2026-07-04T00:00:00Z'
+
+top_issues:
+  - id: 'DATA-001'
+    severity: high
+    finding: 'get-open-items.ts used aliased PostgREST embed (sessions:session_id) which errors against live DB and silently returns no open items.'
+    status: resolved
+    resolution: 'Fixed in review — switched to unaliased sessions(...)/clients(...) embed (matches api/sessions/active convention). Committed on branch.'
+    suggested_owner: dev
+    refs: ['apps/web/src/lib/action-items/get-open-items.ts']
+  - id: 'TEST-001'
+    severity: low
+    finding: 'No route tests for PATCH /api/action-items/[id]/assignee and GET /api/action-items/open.'
+    suggested_owner: dev
+    refs:
+      - 'apps/web/src/app/api/action-items/[id]/assignee/route.ts'
+      - 'apps/web/src/app/api/action-items/open/route.ts'
+  - id: 'TEST-002'
+    severity: low
+    finding: 'No RTL coverage for ClientCardActionItemsSection (NULL/unknown hidden, completed accordion) or OpenActionItemsCard (empty/populated). Manually verified by owner.'
+    suggested_owner: dev
+    refs:
+      - 'apps/web/src/components/client/ClientCardActionItemsSection.tsx'
+      - 'apps/web/src/components/dashboard/OpenActionItemsCard.tsx'
+  - id: 'TEST-003'
+    severity: low
+    finding: 'get-open-items unit test over-mocks the query builder, masking malformed select strings (allowed DATA-001 through).'
+    suggested_owner: dev
+    refs: ['apps/web/src/lib/action-items/__tests__/get-open-items.test.ts']
+  - id: 'AC-001'
+    severity: low
+    finding: 'Doc-AC "newly extracted current-session items rendered below summary on session detail" not implemented; items surface on Client Card session feed instead. Pre-existing, not a regression.'
+    suggested_owner: po
+    refs: ['apps/web/src/app/(dashboard)/clients/[id]/sessions/[sessionId]/page.tsx']
+
+evidence:
+  tests_reviewed: 4
+  risks_identified: 5
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 7] # migration logic, assignee unknown, backfill-hide, carry-forward, complete route, reusable lib
+    ac_gaps: [6, 8] # client-card/dashboard RTL gaps; assignee+open route tests
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'Clerk auth + internal-user resolution + row ownership on all 3 routes; /open verifies client ownership; UUID validation; Zod on PATCH bodies. Live cross-account confirmation parked in tech-debt.'
+  performance:
+    status: PASS
+    notes: 'N+1 get_open_session_count RPC bounded (top-5 for dashboard; small per-client sets). Future: batch via set-returning SQL if volume grows.'
+  reliability:
+    status: PASS
+    notes: 'Graceful [] on query error; mutation failure toasts and resets optimistic state; FK ON DELETE CASCADE prevents orphan items.'
+  maintainability:
+    status: PASS
+    notes: 'Files <200 lines, shared OpenItemRow keeps the three surfaces DRY, well-commented.'
+
+recommendations:
+  immediate: []
+  future:
+    - action: 'Add route tests for assignee + open endpoints; RTL for card + dashboard; loosen get-open-items mock.'
+      refs:
+        - 'apps/web/src/app/api/action-items/[id]/assignee/route.ts'
+        - 'apps/web/src/app/api/action-items/open/route.ts'
+        - 'apps/web/src/components/client/ClientCardActionItemsSection.tsx'
+        - 'apps/web/src/components/dashboard/OpenActionItemsCard.tsx'
+    - action: 'Run deferred PROMPT GATE (assignee unknown rate <30%) at first Pro-coach onboarding.'
+      refs: ['apps/web/src/lib/ai/prompts.ts']
+    - action: 'Live-DB confirm migration 035 constraint + get_open_session_count + cross-account RLS (tracked in TECHNICAL_DEBT.md item 6).'
+      refs: ['apps/web/migrations/035_story_7_6_action_items.sql']

@@ -60,14 +60,15 @@ export function parseActionItems(raw: string): ActionItemsResult {
     if (typeof ai.description !== 'string' || !ai.description) {
       throw new Error(`action_items[${i}].description missing`);
     }
-    if (ai.assigned_to !== 'coach' && ai.assigned_to !== 'client') {
-      throw new Error(
-        `action_items[${i}].assigned_to must be 'coach' or 'client'`
-      );
-    }
+    // Story 7.6 — accept coach|client|unknown; default anything else to
+    // 'unknown' (queryable, explicit) rather than throwing.
+    const assigned_to: 'coach' | 'client' | 'unknown' =
+      ai.assigned_to === 'coach' || ai.assigned_to === 'client'
+        ? ai.assigned_to
+        : 'unknown';
     return {
       description: ai.description,
-      assigned_to: ai.assigned_to as 'coach' | 'client',
+      assigned_to,
     };
   });
 

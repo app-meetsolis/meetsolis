@@ -50,7 +50,8 @@ export interface SessionSummaryResult {
 
 export interface ActionItemResult {
   description: string;
-  assigned_to: 'coach' | 'client';
+  // 'unknown' (Story 7.6) — ambiguous attribution ("we should...").
+  assigned_to: 'coach' | 'client' | 'unknown';
 }
 
 export interface ActionItemsResult {

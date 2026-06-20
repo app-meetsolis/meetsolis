@@ -83,13 +83,20 @@ describe('parseActionItems', () => {
     );
   });
 
-  it('throws on invalid assigned_to', () => {
+  it('accepts an explicit unknown assignee (Story 7.6)', () => {
+    const input = JSON.stringify({
+      action_items: [
+        { description: 'we should revisit this', assigned_to: 'unknown' },
+      ],
+    });
+    expect(parseActionItems(input).action_items[0].assigned_to).toBe('unknown');
+  });
+
+  it('defaults invalid assigned_to to unknown (Story 7.6)', () => {
     const input = JSON.stringify({
       action_items: [{ description: 'do something', assigned_to: 'manager' }],
     });
-    expect(() => parseActionItems(input)).toThrow(
-      "must be 'coach' or 'client'"
-    );
+    expect(parseActionItems(input).action_items[0].assigned_to).toBe('unknown');
   });
 
   it('throws on missing description', () => {
