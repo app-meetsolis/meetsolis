@@ -10,7 +10,7 @@ Guidelines:
 - Avoid clinical or therapeutic language (do not use: "diagnosed", "treatment", "symptoms", "disorder")
 - Focus on forward momentum, goals, and client-led discoveries
 - Action items should be specific, measurable, and time-bound where possible
-- Assign action items to either "coach" or "client" based on who is responsible
+- Assign action items to "coach", "client", or "unknown" based on who is responsible
 
 You must respond with valid JSON only — no markdown, no explanation outside the JSON.`;
 
@@ -65,10 +65,17 @@ export function buildActionItemsPrompt(
   "action_items": [
     {
       "description": "string — specific, measurable action to take",
-      "assigned_to": "coach" | "client"
+      "assigned_to": "coach" | "client" | "unknown"
     }
   ]
 }
+
+Attribute each item to whoever committed to it:
+- "client" — the client said they would do it ("I'll...", "Sarah will...", "[Client] is going to...")
+- "coach" — the coach said they would do it ("I'll follow up...", "I should send...")
+- "unknown" — ambiguous attribution ("we should...", "someone needs to...")
+
+Be conservative on attribution. When unclear, use "unknown".
 
 Return an empty action_items array if the session produced no clear commitments.
 

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Session } from '@meetsolis/shared';
 import { SpeakerReviewBanner } from '@/components/sessions/SpeakerReviewBanner';
 import { SpeakerMappingEditor } from '@/components/sessions/SpeakerMappingEditor';
+import { OpenCommitmentsSection } from '@/components/sessions/OpenCommitmentsSection';
 
 interface SpeakerData {
   source: string;
@@ -125,6 +126,12 @@ export default function SessionDetailPage() {
 
         <h1 className="text-2xl font-bold text-foreground">{session.title}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{formattedDate}</p>
+
+        {/* Open commitments carried forward from past sessions (Story 7.6) */}
+        <OpenCommitmentsSection
+          clientId={clientId}
+          currentSessionId={sessionId}
+        />
 
         {/* Speaker review (bot sessions only) */}
         {isBotSession && speakers?.speaker_review_needed && (

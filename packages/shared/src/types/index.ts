@@ -6,6 +6,7 @@
 export * from './auth';
 export * from './services';
 export * from './database';
+export * from './action-item';
 export * from './dashboard';
 export * from './errors';
 export * from './analytics';
