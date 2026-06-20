@@ -30,9 +30,13 @@ interface RawRow {
   clients: { name: string } | null;
 }
 
+// Single FK from action_items to each of sessions/clients, so the unaliased
+// embed form resolves unambiguously and returns `sessions`/`clients` keys
+// (matches the codebase convention, e.g. api/sessions/active). The aliased
+// `sessions:session_id(...)` form errors against live PostgREST.
 const SELECT =
   'id, description, assignee, session_id, client_id, ' +
-  'sessions:session_id (session_date, title), clients:client_id (name)';
+  'sessions(session_date, title), clients(name)';
 
 /** Oldest source session first; items without a source session sort last. */
 function bySourceDateAsc(a: RawRow, b: RawRow): number {
