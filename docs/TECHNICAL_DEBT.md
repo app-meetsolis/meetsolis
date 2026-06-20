@@ -186,6 +186,21 @@ Fold checks 1, 2, 4 into the BMad `@qa` gate for 7.6 (QA has code + DB access). 
 
 **Estimated effort:** 20 min (1–2 + 4 during QA); check 3 is event-triggered, not effort-bound.
 
+### 6b. Manual UI re-test after DATA-001 fix (NON-CODER — you can do this)
+
+**Why this exists:** During QA review a bug was found and fixed (the open-items query was malformed and returned nothing). The code fix + a regression test are merged, but a human should still click through once to confirm real items now appear. **Deferred by product owner 2026-06-20 — do after the current story push.** No code needed; just click around the running app.
+
+**Steps (5 min):**
+1. Pick a client who has **several past sessions** with **unchecked** action items.
+2. Open one of that client's sessions → at the **top of the session page** look for the box **"Open Commitments from Past Sessions"**.
+   - ✅ PASS = it lists unfinished items from the client's *other* sessions (not empty).
+3. Go to that client's **Client Card** → the **"Open Action Items"** area.
+   - ✅ PASS = items appear under **"Client's commitments"** and/or **"My commitments"** (not "None open" everywhere when you know items exist).
+4. Tick a checkbox on an item → it fades out and stays gone after refresh.
+
+**If anything shows empty when you KNOW open items exist** → note it and ping dev; the fix may need another look.
+**If items appear** → 7.6 is fully confirmed; this item can be marked ✅ RESOLVED.
+
 ---
 
 ## Maintenance Guidelines
