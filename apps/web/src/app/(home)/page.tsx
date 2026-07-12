@@ -1,40 +1,17 @@
-import NoveraNavbar from '@/components/novera-dark/NoveraNavbar';
-import NoveraHeroSection from '@/components/novera-dark/NoveraHeroSection';
-import NoveraSocialProof from '@/components/novera-dark/NoveraSocialProof';
-import NoveraHowItWorks from '@/components/novera-dark/NoveraHowItWorks';
-import NoveraDetailedFeatures from '@/components/novera-dark/NoveraDetailedFeatures';
-import NoveraTrustSafety from '@/components/novera-dark/NoveraTrustSafety';
-import NoveraPricing from '@/components/novera-dark/NoveraPricing';
-import NoveraFeaturedTestimonial from '@/components/novera-dark/NoveraFeaturedTestimonial';
-import NoveraTestimonials from '@/components/novera-dark/NoveraTestimonials';
-import NoveraFAQ from '@/components/novera-dark/NoveraFAQ';
-import NoveraCTASection from '@/components/novera-dark/NoveraCTASection';
-import NoveraFooter from '@/components/novera-dark/NoveraFooter';
-
 export const metadata = {
-  title: "MeetSolis — Never forget a client's breakthrough moment again",
-  description:
-    'Post-meeting intelligence platform built for executive coaches. Capture every insight, recall any moment, never lose client context again.',
+  title: 'MeetSolis — Coming Soon',
+  description: 'MeetSolis is on pause. Check back soon.',
 };
 
 export default function HomePage() {
   return (
     <main
-      className="w-full"
-      style={{ backgroundColor: '#0b1612', overflowX: 'clip' }}
+      className="flex min-h-screen w-full items-center justify-center px-6 text-center"
+      style={{ backgroundColor: '#0b1612' }}
     >
-      <NoveraNavbar />
-      <NoveraHeroSection />
-      <NoveraSocialProof />
-      <NoveraHowItWorks />
-      <NoveraDetailedFeatures />
-      <NoveraTrustSafety />
-      <NoveraPricing />
-      <NoveraFeaturedTestimonial />
-      <NoveraTestimonials />
-      <NoveraFAQ />
-      <NoveraCTASection />
-      <NoveraFooter />
+      <p className="text-xl font-medium text-white sm:text-2xl">
+        MeetSolis is taking a break — coming back soon.
+      </p>
     </main>
   );
 }
