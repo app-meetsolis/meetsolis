@@ -19,7 +19,23 @@ const isPublicRoute = createRouteMatcher([
   '/api/billing/webhook',
 ]);
 
+// Project-hold switch. Set PROJECT_PARKED=true (Vercel env) + redeploy to park;
+// unset (or redeploy with it false) to fully unpark. No other code change needed.
+const PARKED = process.env.PROJECT_PARKED === 'true';
+const PARKED_ALLOWLIST = ['/', '/privacy', '/terms', '/refund', '/contact'];
+
 export default clerkMiddleware(async (auth, req) => {
+  if (PARKED) {
+    const path = req.nextUrl.pathname;
+    const isAllowed =
+      PARKED_ALLOWLIST.includes(path) ||
+      path.startsWith('/api/webhooks') ||
+      path === '/api/billing/webhook';
+    if (!isAllowed) {
+      return NextResponse.redirect(new URL('/', req.url));
+    }
+  }
+
   const { userId, sessionClaims } = await auth();
 
   const isProtectedRoute =
